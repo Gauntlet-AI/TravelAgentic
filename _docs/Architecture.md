@@ -12,7 +12,8 @@ This document defines the complete technical architecture, repository structure,
 | API Orchestration | Supabase/Vercel Edge Functions (Deno/TypeScript) |
 | Database & Auth  | Supabase |
 | Frontend         | Next.js (Vercel) |
-| PDF Generation   | Puppeteer (HTML to PDF) |
+| PDF Generation   | React-PDF (@react-pdf/renderer) |
+| Browser Automation Fallbacks | Playwright + browser-use |
 | AI Voice Calling | Twilio Voice + ElevenLabs + OpenAI GPT |
 | Deployment       | Vercel (for web, serverless functions, and previews) |
 
@@ -25,11 +26,17 @@ TravelAgentic/
 │
 ├── .github/                → GitHub workflows, issue templates, etc.
 │
+├── _docs/                  → Project documentation.
+│   ├── Architecture.md     → Complete technical architecture (this file).
+│   └── Commit-Style-Guide.md → Git commit conventions.
+│
 ├── README.md               → Project overview, setup, contribution guide.
 │
 ├── LICENSE                 → Open-source license (MIT or Apache 2.0).
 │
 ├── CONTRIBUTING.md         → Contributor guide.
+│
+├── .gitignore              → Git ignore patterns.
 │
 ├── packages/               → Core services.
 │   │
@@ -62,6 +69,18 @@ TravelAgentic/
 │
 └── docker-compose.yml      → (Optional) Dev environment for Langflow & DB.
 ```
+
+### ✅ Implementation Status
+
+The repository structure above represents the target architecture. Current implementation status:
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Core Structure | ✅ Complete | All directories and main files implemented |
+| CI/CD Pipeline | ✅ Complete | GitHub Actions workflow matches specification |
+| Environment Config | ✅ Complete | `.env.example` contains all required variables |
+| Documentation | ✅ Enhanced | Added `_docs/` directory for better organization |
+| Missing Files | ⚠️ Needs Creation | `packages/edge-functions/supabase.ts` - DB helpers |
 
 ---
 
@@ -208,7 +227,8 @@ jobs:
 
 ### ✅ Advanced Testing Techniques (OSS-Focused)
 - Mock APIs ensure all contributors can run tests without real API keys.
-- Playwright or Cypress recommended for end-to-end UI tests with mocks.
+- Playwright used for end-to-end UI tests with mocks and browser automation fallback testing.
+- browser-use integration tests validate AI-powered booking flows.
 - GitHub Actions pipeline uses `USE_MOCK_APIS=true` by default for CI.
 - Optional local testing with real APIs after mock-based testing passes.
 
@@ -257,19 +277,35 @@ if (isEnabled) {
 
 ## ✅ Advanced Design Notes
 
-### ✅ AI Voice Calling Costs & Fallback Strategy
-We use Twilio Voice + ElevenLabs + OpenAI GPT for outbound voice bookings when APIs fail.
+### ✅ Comprehensive Fallback Strategy
+
+#### **Multi-Layer Fallback Hierarchy**
+1. **Primary API** (always try first with 3 retries)
+2. **Secondary API** (different provider for same service)
+3. **Browser Automation** (Playwright + browser-use for web scraping)
+4. **Voice Calling** (Twilio + ElevenLabs for manual booking)
+5. **User Manual Input** (pause and request user intervention)
+
+#### **Browser Automation Fallbacks**
+- **Playwright + browser-use** for AI-powered web automation when APIs fail
+- **Flight Search**: Google Flights, Kayak fallback scraping
+- **Hotel Booking**: Booking.com, Expedia direct automation
+- **Restaurant Reservations**: OpenTable automation
+- **Activity Booking**: GetYourGuide, Viator web interface
+- **Respectful Automation**: Rate limiting, human-like behavior, proper user agents
+
+#### **AI Voice Calling Costs & Strategy**
+We use Twilio Voice + ElevenLabs + OpenAI GPT for outbound voice bookings when all digital methods fail.
 - **Estimated Cost per US Call:** ~$0.03 - $0.05 per call (3 mins typical length).
 - **Twilio:** ~0.85 cents/minute for US outbound calls.
 - **ElevenLabs & OpenAI GPT:** costs are minimal per call.
 - **OSS-Friendly Design:** Voice calling is optional and fully mocked in tests.
 
-### ✅ Fallback Booking Strategy:
-- Based on the automation slider (0-10 scale):
-  - **0:** Fully manual (pause and ask user).
-  - **5:** Mix of automatic fallback and manual checks.
-  - **10:** Fully autonomous with voice call fallbacks.
-- Agent decides whether to retry, fallback, pause, or call based on slider level.
+#### **Automation-Level Based Fallback Strategy**
+Based on the automation slider (0-10 scale):
+- **0-3:** Pause and ask user on every failure
+- **4-7:** Auto-retry → browser automation → ask user
+- **8-10:** Auto-retry → browser automation → voice call → user notification
 
 ### ✅ Automation Slider & Booking Fallback Logic
 - Slider value stored in agent memory; controls automation level.
@@ -291,7 +327,7 @@ Post-checkout, the system generates a PDF itinerary including:
 
 ### ✅ Implementation:
 - Langflow generates text-based itinerary & packing tips.
-- Edge Functions generate the PDF using Puppeteer (HTML-to-PDF) or pdf-lib (structured PDF).
+- Edge Functions generate the PDF using React-PDF for structured, programmatic PDF creation.
 - Delivered via email or stored in Supabase Storage for download.
 
 ---
@@ -318,24 +354,45 @@ SUPABASE_URL=your_supabase_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_KEY=your_supabase_service_key
 
-# API Keys
+# Phase 1 APIs (Essential - Days 1-2)
 OPENAI_API_KEY=your_openai_key
+STRIPE_SECRET_KEY=your_stripe_key
 LANGFLOW_API_KEY=your_langflow_key
 
-# External APIs
-AMADEUS_API_KEY=your_amadeus_key
+# Phase 2 APIs (Enhanced - Days 3-4)
+TEQUILA_API_KEY=your_tequila_key
 BOOKING_API_KEY=your_booking_key
+VIATOR_API_KEY=your_viator_key
+WEATHER_API_KEY=your_weather_key
+CURRENCY_API_KEY=your_currency_key
+ANTHROPIC_API_KEY=your_anthropic_key
+
+# Phase 3 APIs (Advanced - Days 5-6)
 TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 ELEVENLABS_API_KEY=your_elevenlabs_key
+ROME2RIO_API_KEY=your_rome2rio_key
+FLIGHTAWARE_API_KEY=your_flightaware_key
+FOURSQUARE_API_KEY=your_foursquare_key
+
+# Browser Automation (Playwright + browser-use)
+PLAYWRIGHT_BROWSERS_PATH=/path/to/browsers
+BROWSER_USE_HEADLESS=true
+BROWSER_USE_TIMEOUT=30000
+AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
+AUTOMATION_DELAY_MS=2000
 
 # Feature Flags
-FEATURE_ACTIVITY_FILTERS=false
+FEATURE_ACTIVITY_FILTERS=true
 FEATURE_VOICE_CALLING=false
 FEATURE_PDF_GENERATION=true
+FEATURE_BROWSER_FALLBACK=true
+ENABLE_CONCURRENT_SEARCH=true
+ENABLE_AI_SELECTION=true
 
-# Testing
-USE_MOCK_APIS=false
+# Testing & Development
+USE_MOCK_APIS=true
+NODE_ENV=development
 ```
 
 ---
@@ -351,7 +408,8 @@ USE_MOCK_APIS=false
 ### ✅ Development Environment
 - **Local Development:** Docker Compose setup for Langflow + Supabase
 - **Preview Deployments:** Automatic Vercel previews per PR
-- **Testing:** Jest + React Testing Library + Playwright/Cypress
+- **Testing:** Jest + React Testing Library + Playwright
+- **Browser Automation:** Playwright + browser-use for fallback testing
 
 ---
 
@@ -396,11 +454,18 @@ USE_MOCK_APIS=false
 4. Run tests with `npm run test`
 5. Create a feature branch: `git checkout -b feature/your-feature-name`
 
+### ✅ Documentation Structure
+- **`README.md`** - Project overview and quick start guide
+- **`CONTRIBUTING.md`** - Detailed contribution guidelines
+- **`_docs/Architecture.md`** - Complete technical architecture (this document)
+- **`_docs/Commit-Style-Guide.md`** - Git commit conventions and standards
+- **Package-specific READMEs** - Setup and usage guides for each package
+
 ### ✅ Code Quality Standards
 - TypeScript strict mode enabled
 - ESLint + Prettier for code formatting
 - Jest for unit tests (>80% coverage required)
-- Playwright for E2E tests
+- Playwright + browser-use for E2E tests and automation fallback testing
 - JSDoc comments for all public functions
 
 ### ✅ PR Requirements
@@ -423,6 +488,7 @@ USE_MOCK_APIS=false
 
 ### ✅ Phase 2 (Enhanced Features)
 - [ ] Advanced activity filtering
+- [ ] Browser automation fallback system (Playwright + browser-use)
 - [ ] Voice call fallback system
 - [ ] Multi-language support
 - [ ] Mobile app (React Native)

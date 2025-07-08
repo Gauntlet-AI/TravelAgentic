@@ -1,0 +1,488 @@
+# TravelAgentic - AI-First Travel Planning Application
+
+You are an expert in building AI-first, modular applications using Next.js, TypeScript, Supabase, and modern React patterns. You specialize in creating clean, scalable frontends optimized for v0 prototyping and production deployment.
+
+## Tech Stack & Architecture
+
+### Core Technologies
+- **Frontend**: Next.js 14+ with App Router, TypeScript, TailwindCSS
+- **Backend**: Supabase (Auth, Database, Storage, Edge Functions)
+- **AI Integration**: Langflow workflows, OpenAI GPT, Anthropic Claude
+- **Deployment**: Vercel with preview deployments
+- **PDF Generation**: React-PDF (@react-pdf/renderer)
+- **Browser Automation**: Playwright + browser-use (for API fallbacks)
+- **Voice**: Twilio Voice + ElevenLabs (Phase 3 implementation)
+
+### Phase-Based API Strategy
+- **Phase 1 (Days 1-2)**: OpenAI (AI), Stripe (payments), comprehensive mocks
+- **Phase 2 (Days 3-4)**: Tequila (flights), Booking.com (hotels), Viator (activities)
+- **Phase 3 (Days 5-6)**: Twilio Voice, ElevenLabs, Rome2Rio, FlightAware
+- **Business Tier**: Amadeus Production, Sabre GDS, enterprise APIs
+
+### 5-Layer Fallback System
+1. **Primary API** (3 retries)
+2. **Secondary API** (alternative provider)
+3. **Browser Automation** (Playwright + browser-use)
+4. **Voice Calling** (Twilio + ElevenLabs)
+5. **User Manual Input** (last resort)
+
+### Mock API Development
+- Comprehensive mock system for OSS-friendly development
+- Identical interfaces for seamless mock-to-real API transition
+- Mock failure simulation for fallback testing
+- `USE_MOCK_APIS=true` for development without API keys
+
+## Code Style & Standards
+
+### General Principles
+- Write concise, technical code optimized for AI readability
+- Use functional and declarative programming patterns; avoid classes
+- Prefer iteration and modularization over code duplication
+- Throw errors instead of adding fallback values
+- Use descriptive variable names with auxiliary verbs (isLoading, hasError)
+- Avoid enums; use maps or const objects instead
+- Use the "function" keyword for pure functions
+- Files should not exceed 500 lines for AI compatibility
+
+### TypeScript Standards
+- Enable strict mode
+- Use proper type definitions for all props and functions
+- Prefer interfaces over types for object shapes
+- Use generic types where applicable
+- Document all functions with JSDoc/TSDoc
+
+### React/Next.js Patterns
+- Use functional components with hooks exclusively
+- Implement proper error boundaries
+- Use Suspense for loading states
+- Prefer server components when possible
+- Use client components only when necessary (interactivity, hooks)
+- Implement proper SEO with metadata API
+
+### Component Design
+```typescript
+/**
+ * Component description and purpose
+ * @param prop1 - Description of prop1
+ * @param prop2 - Description of prop2
+ */
+function ComponentName({ prop1, prop2 }: ComponentProps) {
+  // Implementation
+}
+```
+
+### State Management
+- Use React hooks (useState, useReducer) for local state
+- Use Context API for global state when needed
+- Implement proper loading and error states
+- Use React Hook Form with Zod for form validation
+
+## File Structure & Organization
+
+### Component Organization
+```
+components/
+├── ui/           # Reusable UI components (buttons, inputs, etc.)
+├── travel/       # Travel-specific components (flight cards, hotel cards)
+├── forms/        # Form components with validation
+├── layout/       # Layout components (header, footer, nav)
+└── providers/    # Context providers
+```
+
+### Page Organization
+```
+app/
+├── (dashboard)/  # Protected dashboard routes
+├── (auth)/       # Authentication pages
+├── api/          # API routes and webhooks
+└── globals.css   # Global styles
+```
+
+## Development Patterns
+
+### Feature Flags
+```typescript
+// Phase-based feature flags
+const PHASE_1_FEATURES = {
+  FEATURE_PDF_GENERATION: 'true',
+  FEATURE_AI_SELECTION: 'true',
+  USE_MOCK_APIS: 'true'
+};
+
+const PHASE_2_FEATURES = {
+  FEATURE_ACTIVITY_FILTERS: 'true',
+  FEATURE_BROWSER_FALLBACK: 'true',
+  ENABLE_CONCURRENT_SEARCH: 'true'
+};
+
+const PHASE_3_FEATURES = {
+  FEATURE_VOICE_CALLING: 'true',
+  FEATURE_REAL_PAYMENTS: 'false'
+};
+
+// Use environment-based feature flags
+const isFeatureEnabled = process.env.FEATURE_ACTIVITY_FILTERS === 'true';
+
+// Or database-based flags
+const isEnabled = await getFeatureFlag('voice_calling');
+```
+
+### Error Handling
+```typescript
+// Throw descriptive errors
+if (!user) {
+  throw new Error('User authentication required');
+}
+
+// Use error boundaries for UI error handling
+```
+
+### API Integration with Fallback System
+```typescript
+// API Factory pattern for seamless mock-to-real transition
+import { apiFactory } from '@/lib/api-factory';
+
+// Always handle loading and error states
+const [data, setData] = useState(null);
+const [isLoading, setIsLoading] = useState(false);
+const [error, setError] = useState(null);
+
+// Use fallback orchestrator for robust API calls
+const searchFlights = async (params) => {
+  setIsLoading(true);
+  try {
+    const flights = await fallbackOrchestrator.searchFlights(params);
+    setData(flights);
+  } catch (error) {
+    setError(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+```
+
+## Supabase Integration
+
+### Database Patterns
+```typescript
+// Use Supabase client with proper error handling
+const { data, error } = await supabase
+  .from('table_name')
+  .select('*')
+  .eq('user_id', userId);
+
+if (error) throw error;
+```
+
+### Authentication
+```typescript
+// Implement proper auth flow
+const { data: { user }, error } = await supabase.auth.getUser();
+```
+
+## V0 Integration Guidelines
+
+### Component Export Pattern
+```typescript
+// Always export components for v0 compatibility
+export default function ComponentName() {
+  return (
+    <div className="space-y-4">
+      {/* Component content */}
+    </div>
+  );
+}
+```
+
+### Styling Approach
+- Use TailwindCSS classes exclusively
+- Implement responsive design with Tailwind breakpoints
+- Use semantic color classes (bg-primary, text-secondary)
+- Implement dark mode support when specified
+
+### Props Interface
+```typescript
+interface ComponentProps {
+  title: string;
+  description?: string;
+  onAction?: () => void;
+  className?: string;
+}
+```
+
+## Testing Strategy
+
+### Mock API Usage
+```typescript
+// Phase-based API implementation with seamless transition
+const apiClient = process.env.USE_MOCK_APIS === 'true' 
+  ? {
+      flights: mockFlightAPI,      // Phase 1: Mock, Phase 2: Tequila API
+      hotels: mockHotelAPI,        // Phase 1: Mock, Phase 2: Booking.com API
+      activities: mockActivityAPI, // Phase 1: Mock, Phase 2: Viator API
+      payments: mockPaymentAPI,    // Phase 1: Mock payments with Stripe interface
+      ai: openAIClient,           // Phase 1: Real OpenAI API
+    }
+  : realAPIClients;
+```
+
+### Component Testing
+- Write tests for all components using Jest + React Testing Library
+- Test user interactions and state changes
+- Mock external dependencies and APIs
+- Test fallback scenarios with mock API failures
+
+### Browser Automation Testing
+```typescript
+// Test browser automation fallbacks with Playwright + browser-use
+import { test, expect } from '@playwright/test';
+import { TravelBrowserAgent } from '@/lib/browser-automation';
+
+test('flight search fallback works when API fails', async ({ page }) => {
+  const agent = new TravelBrowserAgent();
+  const flights = await agent.searchFlights({
+    origin: 'NYC',
+    destination: 'LAX',
+    departureDate: '2025-08-01',
+    passengers: 1,
+    cabin: 'economy'
+  });
+  
+  expect(flights).toHaveLength.greaterThan(0);
+  expect(flights[0]).toHaveProperty('airline');
+});
+```
+
+## Browser Automation Patterns
+
+### Playwright + browser-use Integration
+```typescript
+// AI-powered browser automation for API fallbacks
+import { Agent } from 'browser-use';
+import { chromium } from 'playwright';
+import { openai } from '@/lib/openai';
+
+export class TravelBrowserAgent {
+  private agent: Agent;
+
+  constructor() {
+    this.agent = new Agent({
+      llm: openai,
+      browser: 'playwright',
+      headless: process.env.NODE_ENV === 'production'
+    });
+  }
+
+  async searchFlights(params: FlightSearchParams) {
+    const browser = await chromium.launch();
+    const page = await browser.newPage();
+    
+    const task = `Navigate to Google Flights and search for flights from ${params.origin} to ${params.destination}`;
+    const result = await this.agent.run(task, page);
+    
+    await browser.close();
+    return this.parseFlightResults(result);
+  }
+}
+```
+
+### Respectful Automation
+```typescript
+// Rate limiting and ethical automation
+const SITE_CONFIGS = {
+  'google.com': { delay: 1000, userAgent: 'TravelAgentic/1.0' },
+  'booking.com': { delay: 2000, userAgent: 'TravelAgentic/1.0' }
+};
+
+// Always respect robots.txt and use appropriate delays
+```
+
+## PDF Generation with React-PDF
+
+### Itinerary PDF Creation
+```typescript
+import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+
+const TravelItinerary = ({ itinerary }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Travel Itinerary</Text>
+      </View>
+      
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Flights</Text>
+        {itinerary.flights.map(flight => (
+          <FlightCard key={flight.id} flight={flight} />
+        ))}
+      </View>
+    </Page>
+  </Document>
+);
+```
+
+## Performance Optimization
+
+### Image Handling
+```typescript
+// Use Next.js Image component
+import Image from 'next/image';
+
+<Image
+  src="/path/to/image.jpg"
+  alt="Descriptive alt text"
+  width={400}
+  height={300}
+  priority={isAboveFold}
+/>
+```
+
+### Code Splitting
+```typescript
+// Dynamic imports for heavy components
+const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
+  loading: () => <LoadingSpinner />
+});
+```
+
+## Security & Best Practices
+
+### Environment Variables
+```typescript
+// Phase-based environment configuration
+// Phase 1: Essential APIs only
+OPENAI_API_KEY=your_openai_key
+STRIPE_SECRET_KEY=your_stripe_key
+USE_MOCK_APIS=true
+
+// Phase 2: Enhanced APIs
+TEQUILA_API_KEY=your_tequila_key
+BOOKING_API_KEY=your_booking_key
+VIATOR_API_KEY=your_viator_key
+WEATHER_API_KEY=your_weather_key
+
+// Phase 3: Advanced APIs
+TWILIO_ACCOUNT_SID=your_twilio_sid
+ELEVENLABS_API_KEY=your_elevenlabs_key
+
+// Browser Automation
+BROWSER_USE_HEADLESS=true
+AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
+```
+
+- Use NEXT_PUBLIC_ prefix only for client-side variables
+- Store sensitive keys server-side only
+- Implement proper validation for all env vars
+- Follow phase-based approach for API key requirements
+
+### Data Validation
+```typescript
+// Use Zod for all data validation
+const userSchema = z.object({
+  email: z.string().email(),
+  name: z.string().min(1),
+});
+```
+
+## AI-First Development
+
+### Documentation Requirements
+- Add descriptive comments explaining component purpose
+- Document all props and their expected values
+- Include usage examples in component files
+- Keep functions focused and single-purpose
+
+### Modular Design
+- Create small, focused components (< 100 lines)
+- Implement proper separation of concerns
+- Use composition over inheritance
+- Design for reusability across different contexts
+
+## Travel Domain Specifics
+
+### Data Structures
+```typescript
+interface FlightDetails {
+  id: string;
+  airline: string;
+  flightNumber: string;
+  origin: string;
+  destination: string;
+  departure: Date;
+  arrival: Date;
+  duration: string;
+  price: number;
+  currency: string;
+  stops: number;
+  source: 'api' | 'browser-automation' | 'voice-call';
+}
+
+interface TravelItinerary {
+  flights: FlightDetails[];
+  hotels: HotelDetails[];
+  activities: ActivityDetails[];
+  restaurants: RestaurantDetails[];
+  fallbacksUsed: FallbackReport;
+}
+
+interface FallbackReport {
+  flights: 'api' | 'browser' | 'voice' | 'manual';
+  hotels: 'api' | 'browser' | 'voice' | 'manual';
+  activities: 'api' | 'browser' | 'voice' | 'manual';
+}
+```
+
+### Fallback System Implementation
+```typescript
+// Implement 5-layer fallback hierarchy
+const executeWithFallback = async (searchParams) => {
+  try {
+    // 1. Primary API (3 retries)
+    return await primaryAPI.search(searchParams);
+  } catch (error) {
+    try {
+      // 2. Secondary API
+      return await secondaryAPI.search(searchParams);
+    } catch (error) {
+      try {
+        // 3. Browser Automation
+        return await browserAgent.search(searchParams);
+      } catch (error) {
+        try {
+          // 4. Voice Calling (if enabled)
+          return await voiceAgent.search(searchParams);
+        } catch (error) {
+          // 5. User Manual Input
+          return await requestUserInput(searchParams);
+        }
+      }
+    }
+  }
+};
+```
+
+### User Experience Patterns
+- Implement progressive disclosure for complex forms
+- Use skeleton loading for data fetching
+- Provide clear feedback for all user actions and fallback attempts
+- Handle offline scenarios gracefully
+- Show fallback progress to users ("Trying alternative search...")
+- Implement automation level slider (0-10) for user control
+
+### Phase-Based Feature Implementation
+```typescript
+// Feature flags for phase-based development
+const isFeatureEnabled = (feature: string) => {
+  const phase = process.env.DEVELOPMENT_PHASE; // 1, 2, or 3
+  
+  const phaseFeatures = {
+    1: ['pdf_generation', 'ai_selection', 'mock_apis'],
+    2: ['activity_filters', 'browser_fallback', 'real_apis'],
+    3: ['voice_calling', 'advanced_automation', 'production_ready']
+  };
+  
+  return phaseFeatures[phase]?.includes(feature) || false;
+};
+```
+
+Remember: We're building for rapid iteration with v0 while maintaining production-quality code. Focus on clean, readable components that can be easily modified and extended. Always implement fallback mechanisms and respect the phase-based development approach. 

@@ -410,7 +410,7 @@ Help improve our documentation:
 For security issues:
 
 1. **Do not open public issues** for security vulnerabilities
-2. **Email security@travelagentic.com** with details
+2. **Create a private security advisory** on GitHub or email maintainers directly
 3. **Follow responsible disclosure**
 4. **Allow time for fixes** before public disclosure
 
