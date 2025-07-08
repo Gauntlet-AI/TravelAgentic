@@ -10,7 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Calendar } from "@/components/ui/calendar"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Switch } from "@/components/ui/switch"
-import { CalendarIcon, Plane, Users, ArrowLeftRight, Minus, Plus } from "lucide-react"
+import { CalendarIcon, Plane, Users, ArrowLeftRight, Minus, Plus, Sparkles } from "lucide-react"
 import { format } from "date-fns"
 import type { TravelDetails } from "@/lib/mock-data"
 import { Inter } from "next/font/google"
@@ -511,13 +511,23 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                 </Popover>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full bg-blue-600 hover:bg-blue-700 text-lg py-6"
-                disabled={!isFormValid}
-              >
-                Start Planning
-              </Button>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  className="flex-1 bg-purple-600 hover:bg-purple-700 text-lg py-6 flex items-center justify-center gap-2"
+                  disabled={!isFormValid}
+                >
+                  <Sparkles size={20} />
+                  I'm Feeling Lucky
+                </Button>
+                <Button
+                  type="submit"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-lg py-6"
+                  disabled={!isFormValid}
+                >
+                  Start Planning
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -811,9 +821,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                 </Popover>
               </div>
 
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg" disabled={!isFormValid}>
-                Search
-              </Button>
+              <div className="flex items-center gap-3">
+                <Button 
+                  type="button" 
+                  className="bg-purple-600 hover:bg-purple-700 px-8 py-3 text-lg flex items-center gap-2" 
+                  disabled={!isFormValid}
+                >
+                  <Sparkles size={20} />
+                  I'm Feeling Lucky
+                </Button>
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 px-8 py-3 text-lg" disabled={!isFormValid}>
+                  Search
+                </Button>
+              </div>
             </div>
           </form>
         </CardContent>
