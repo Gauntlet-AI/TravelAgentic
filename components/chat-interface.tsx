@@ -18,6 +18,9 @@ interface ChatInterfaceProps {
 export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hideCard }: ChatInterfaceProps) {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat()
 
+  // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
+  const containerClasses = `${className ?? ""} flex flex-col ${!isMobile ? "sticky top-0 max-h-screen overflow-y-auto" : ""}`
+
   // Legacy mobile collapsed view (no longer used with new bubble)
   if (isMobile && isCollapsed) {
     return (
@@ -52,11 +55,12 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hide
           <div className={`text-center text-muted-foreground py-8 ${hideCard ? 'sticky top-0 bg-white z-10' : 'sticky top-16 bg-white z-10'}`}>
             <MessageCircle className="mx-auto mb-2" size={32} />
             <p>Ask me anything about your vacation plans!</p>
+            <p>Change any detail about your vacation.</p>
           </div>
         )}
         
         {/* Scrollable Messages Area */}
-        <ScrollArea className="flex-1 p-4" style={{ height: messages.length === 0 ? '300px' : hideCard ? 'calc(100vh - 200px)' : '400px' }}>
+        <ScrollArea className="flex-1 p-4 overflow-y-auto">
           {messages.map((message) => (
             <div key={message.id} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
               <div
@@ -124,14 +128,14 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hide
   // Return content with or without Card wrapper
   if (hideCard) {
     return (
-      <div className={`${className} flex flex-col h-full`}>
+      <div className={containerClasses}>
         {chatContent}
       </div>
     )
   }
 
   return (
-    <Card className={`${className} flex flex-col`}>
+    <Card className={containerClasses}>
       {chatContent}
     </Card>
   )
