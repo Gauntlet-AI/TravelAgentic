@@ -799,12 +799,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           <Label className="text-base font-medium">Traveling with pets?</Label>
                           <Switch checked={travelingWithPets} onCheckedChange={setTravelingWithPets} />
                         </div>
-                        <div className="text-sm text-gray-600">
-                          <p>Assistance animals aren't considered pets.</p>
-                          <a href="#" className="text-blue-600 hover:underline">
-                            Read more about traveling with assistance animals
-                          </a>
-                        </div>
                       </div>
 
                       <Button
