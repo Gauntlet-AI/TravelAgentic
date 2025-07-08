@@ -29,8 +29,9 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
   }
 
   return (
-    <Card className={className}>
-      <CardHeader className="pb-3">
+    <Card className={`${className} flex flex-col`}>
+      {/* Sticky Header */}
+      <CardHeader className="pb-3 sticky top-0 bg-white z-10">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg">AI Assistant</CardTitle>
           {isMobile && (
@@ -40,14 +41,18 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-0">
-        <ScrollArea className="h-[400px] p-4">
-          {messages.length === 0 && (
-            <div className="text-center text-muted-foreground py-8">
-              <MessageCircle className="mx-auto mb-2" size={32} />
-              <p>Ask me anything about your vacation plans!</p>
-            </div>
-          )}
+      
+      <CardContent className="p-0 flex flex-col flex-1 relative">
+        {/* Sticky Empty State Message */}
+        {messages.length === 0 && (
+          <div className="sticky top-16 bg-white z-10 text-center text-muted-foreground py-8 ">
+            <MessageCircle className="mx-auto mb-2" size={32} />
+            <p>Ask me anything about your vacation plans!</p>
+          </div>
+        )}
+        
+        {/* Scrollable Messages Area */}
+        <ScrollArea className="flex-1 p-4" style={{ height: messages.length === 0 ? '300px' : '400px' }}>
           {messages.map((message) => (
             <div key={message.id} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
               <div
@@ -65,7 +70,9 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
             </div>
           )}
         </ScrollArea>
-        <div className="p-4 border-t">
+        
+        {/* Sticky Input Form */}
+        <div className="sticky bottom-0 bg-white z-10 p-4">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}
