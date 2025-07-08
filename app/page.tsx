@@ -303,220 +303,218 @@ export default function VacationPlanner() {
     return <TravelInputForm onSubmit={handleTravelDetailsSubmit} isMobile={isMobile} />
   }
 
-  if (isMobile) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        {/* Mobile Chat Interface */}
-        <ChatInterface
-          className={`fixed top-0 left-0 right-0 z-50 transition-transform ${
-            isChatCollapsed ? "transform -translate-y-full" : ""
-          }`}
-          isMobile={true}
-          isCollapsed={isChatCollapsed}
-          onToggle={() => setIsChatCollapsed(!isChatCollapsed)}
-        />
+  const mobileLayout = (
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Chat Interface */}
+      <ChatInterface
+        className={`fixed top-0 left-0 right-0 z-50 transition-transform ${
+          isChatCollapsed ? "transform -translate-y-full" : ""
+        }`}
+        isMobile={true}
+        isCollapsed={isChatCollapsed}
+        onToggle={() => setIsChatCollapsed(!isChatCollapsed)}
+      />
 
-        {/* Mobile Header */}
-        <div className="bg-white shadow-sm p-4">
-          <div className="flex justify-between items-center mb-2">
-            <h1 className="text-xl font-bold">Vacation Planner</h1>
-            <Button variant="outline" size="sm" onClick={resetAll}>
-              <RotateCcw size={16} />
-            </Button>
-          </div>
-          {travelDetails && (
-            <div className="text-sm text-gray-600 mb-2">
-              {travelDetails.departureLocation} → {travelDetails.destination}
-              {travelDetails.startDate && travelDetails.endDate && (
-                <div>
-                  {format(travelDetails.startDate, "MMM d")} - {format(travelDetails.endDate, "MMM d")} ({nights}{" "}
-                  nights) • {travelDetails.adults} adult{travelDetails.adults !== 1 ? "s" : ""}
-                  {travelDetails.children > 0
-                    ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? "ren" : ""}`
-                    : ""}
-                  {travelDetails.travelingWithPets ? " • with pets" : ""}
-                </div>
-              )}
-            </div>
-          )}
+      {/* Mobile Header */}
+      <div className="bg-white shadow-sm p-4">
+        <div className="flex justify-between items-center mb-2">
+          <h1 className="text-xl font-bold">Vacation Planner</h1>
+          <Button variant="outline" size="sm" onClick={resetAll}>
+            <RotateCcw size={16} />
+          </Button>
         </div>
+        {travelDetails && (
+          <div className="text-sm text-gray-600 mb-2">
+            {travelDetails.departureLocation} → {travelDetails.destination}
+            {travelDetails.startDate && travelDetails.endDate && (
+              <div>
+                {format(travelDetails.startDate, "MMM d")} - {format(travelDetails.endDate, "MMM d")} ({nights}{" "}
+                nights) • {travelDetails.adults} adult{travelDetails.adults !== 1 ? "s" : ""}
+                {travelDetails.children > 0
+                  ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? "ren" : ""}`
+                  : ""}
+                {travelDetails.travelingWithPets ? " • with pets" : ""}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
-        {/* Mobile Content */}
-        <div className="p-4">
-          <Tabs defaultValue="activities" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="activities">Activity Types</TabsTrigger>
-              <TabsTrigger value="flights" className="flex items-center gap-1">
-                <span className="hidden sm:inline">Flights</span>
-                <span className="sm:hidden">✈️</span>
-                {isLoadingFlights && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
-              </TabsTrigger>
-              <TabsTrigger value="hotels" className="flex items-center gap-1">
-                <span className="hidden sm:inline">Hotels</span>
-                <span className="sm:hidden">🏨</span>
-                {isLoadingHotels && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
-              </TabsTrigger>
-              <TabsTrigger value="results" className="flex items-center gap-1">
-                <span className="hidden sm:inline">Results</span>
-                <span className="sm:hidden">📍</span>
-                {isLoadingActivities && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
-              </TabsTrigger>
-            </TabsList>
+      {/* Mobile Content */}
+      <div className="p-4">
+        <Tabs defaultValue="activities" className="w-full">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="activities">Activity Types</TabsTrigger>
+            <TabsTrigger value="flights" className="flex items-center gap-1">
+              <span className="hidden sm:inline">Flights</span>
+              <span className="sm:hidden">✈️</span>
+              {isLoadingFlights && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
+            </TabsTrigger>
+            <TabsTrigger value="hotels" className="flex items-center gap-1">
+              <span className="hidden sm:inline">Hotels</span>
+              <span className="sm:hidden">🏨</span>
+              {isLoadingHotels && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
+            </TabsTrigger>
+            <TabsTrigger value="results" className="flex items-center gap-1">
+              <span className="hidden sm:inline">Results</span>
+              <span className="sm:hidden">📍</span>
+              {isLoadingActivities && <Sparkles className="w-3 h-3 animate-pulse text-blue-500" />}
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value="activities" className="space-y-4">
+          <TabsContent value="activities" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>What interests you?</CardTitle>
+                <p className="text-sm text-gray-600">Select activity types to filter recommendations</p>
+              </CardHeader>
+            </Card>
+
+            <div className="grid grid-cols-1 gap-4">
+              {activityTypes.map((type) => (
+                <ActivityTypeCardComponent
+                  key={type.id}
+                  card={type}
+                  isSelected={selectedActivityTypes.includes(type.id)}
+                  onClick={() => handleActivityTypeSelect(type.id)}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="flights" className="space-y-4">
+            {isLoadingFlights ? (
               <Card>
                 <CardHeader>
-                  <CardTitle>What interests you?</CardTitle>
-                  <p className="text-sm text-gray-600">Select activity types to filter recommendations</p>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
+                    AI Flight Agent
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Searching for flights...</p>
                 </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {flightThoughts.map((thought, index) => (
+                      <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>{thought}</p>
+                      </div>
+                    ))}
+                    {flightThoughts.length === 0 && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                        <span>Initializing...</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
               </Card>
-
-              <div className="grid grid-cols-1 gap-4">
-                {activityTypes.map((type) => (
-                  <ActivityTypeCardComponent
-                    key={type.id}
-                    card={type}
-                    isSelected={selectedActivityTypes.includes(type.id)}
-                    onClick={() => handleActivityTypeSelect(type.id)}
-                  />
+            ) : (
+              <div className="space-y-4">
+                {flights.map((flight) => (
+                  <FlightCard key={flight.id} flight={flight} travelers={travelDetails?.travelers || 1} />
                 ))}
               </div>
-            </TabsContent>
+            )}
+          </TabsContent>
 
-            <TabsContent value="flights" className="space-y-4">
-              {isLoadingFlights ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
-                      AI Flight Agent
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">Searching for flights...</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {flightThoughts.map((thought, index) => (
-                        <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <p>{thought}</p>
-                        </div>
-                      ))}
-                      {flightThoughts.length === 0 && (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                          <span>Initializing...</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {flights.map((flight) => (
-                    <FlightCard key={flight.id} flight={flight} travelers={travelDetails?.travelers || 1} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+          <TabsContent value="hotels" className="space-y-4">
+            {isLoadingHotels ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
+                    AI Hotel Agent
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Searching for hotels...</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {hotelThoughts.map((thought, index) => (
+                      <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>{thought}</p>
+                      </div>
+                    ))}
+                    {hotelThoughts.length === 0 && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                        <span>Initializing...</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {hotels.map((hotel) => (
+                  <HotelCard key={hotel.id} hotel={hotel} nights={nights} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
 
-            <TabsContent value="hotels" className="space-y-4">
-              {isLoadingHotels ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
-                      AI Hotel Agent
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">Searching for hotels...</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {hotelThoughts.map((thought, index) => (
-                        <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <p>{thought}</p>
-                        </div>
-                      ))}
-                      {hotelThoughts.length === 0 && (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                          <span>Initializing...</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {hotels.map((hotel) => (
-                    <HotelCard key={hotel.id} hotel={hotel} nights={nights} />
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+          <TabsContent value="results" className="space-y-4">
+            {isLoadingActivities ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
+                    AI Activity Agent
+                  </CardTitle>
+                  <p className="text-sm text-gray-600">Researching activities...</p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {activityThoughts.map((thought, index) => (
+                      <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+                        <p>{thought}</p>
+                      </div>
+                    ))}
+                    {activityThoughts.length === 0 && (
+                      <div className="flex items-center justify-center py-8">
+                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                        <span>Initializing...</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                {selectedActivityTypes.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {selectedActivityTypes.map((typeId) => {
+                      const type = activityTypes.find((t) => t.id === typeId)
+                      return (
+                        <Badge key={typeId} variant="secondary">
+                          {type?.icon} {type?.title}
+                        </Badge>
+                      )
+                    })}
+                  </div>
+                )}
 
-            <TabsContent value="results" className="space-y-4">
-              {isLoadingActivities ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 animate-pulse text-blue-500" />
-                      AI Activity Agent
-                    </CardTitle>
-                    <p className="text-sm text-gray-600">Researching activities...</p>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      {activityThoughts.map((thought, index) => (
-                        <div key={index} className="flex items-start gap-3 text-sm text-gray-600">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
-                          <p>{thought}</p>
-                        </div>
-                      ))}
-                      {activityThoughts.length === 0 && (
-                        <div className="flex items-center justify-center py-8">
-                          <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                          <span>Initializing...</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <div className="space-y-4">
-                  {selectedActivityTypes.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                      {selectedActivityTypes.map((typeId) => {
-                        const type = activityTypes.find((t) => t.id === typeId)
-                        return (
-                          <Badge key={typeId} variant="secondary">
-                            {type?.icon} {type?.title}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                  )}
+                {filteredActivities.map((activity) => (
+                  <ActivityCard key={activity.id} activity={activity} />
+                ))}
 
-                  {filteredActivities.map((activity) => (
-                    <ActivityCard key={activity.id} activity={activity} />
-                  ))}
-
-                  {filteredActivities.length === 0 && allActivities.length > 0 && (
-                    <p className="text-center text-gray-500 py-8">
-                      No activities match your selected types. Try selecting different activity types.
-                    </p>
-                  )}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+                {filteredActivities.length === 0 && allActivities.length > 0 && (
+                  <p className="text-center text-gray-500 py-8">
+                    No activities match your selected types. Try selecting different activity types.
+                  </p>
+                )}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-    )
-  }
+    </div>
+  )
 
   // Desktop Layout
-  return (
+  const desktopLayout = (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Main Content Area */}
       <div className="flex-1 p-6">
@@ -764,27 +762,34 @@ export default function VacationPlanner() {
           <ChatInterface className="h-full border-none shadow-none" />
         </div>
       )}
-      {/* Celebration Modal */}
+    </div>
+  )
+
+  return (
+    <>
+      {isMobile ? mobileLayout : desktopLayout}
+      
+      {/* Celebration Modal - shown on both mobile and desktop */}
       <Dialog open={showCelebrationModal} onOpenChange={setShowCelebrationModal}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md w-[90vw] max-w-[400px] mx-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-2xl text-center justify-center">
-              <PartyPopper className="w-8 h-8 text-yellow-500" />
-              Found your dream vacation!
-              <PartyPopper className="w-8 h-8 text-yellow-500" />
+            <DialogTitle className="flex items-center gap-2 text-xl sm:text-2xl text-center justify-center flex-wrap">
+              <PartyPopper className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
+              <span className="text-center">Found your dream vacation!</span>
+              <PartyPopper className="w-6 h-6 sm:w-8 sm:h-8 text-yellow-500" />
             </DialogTitle>
           </DialogHeader>
           <div className="text-center space-y-4 py-4">
             <div className="flex justify-center gap-2 text-4xl">
             </div>
-            <p className="text-lg text-gray-700">Our AI agents have found amazing options for your trip!</p>
+            <p className="text-base sm:text-lg text-gray-700">Our AI agents have found amazing options for your trip!</p>
             <p className="text-sm text-gray-600">
               Check out the flights, hotels, and activities we've curated just for you.
             </p>
             <div className="pt-4">
               <Button
                 onClick={() => setShowCelebrationModal(false)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-8 py-2"
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 sm:px-8 py-2 w-full sm:w-auto"
               >
                 Let's explore! ✨
               </Button>
@@ -792,6 +797,6 @@ export default function VacationPlanner() {
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   )
 }
