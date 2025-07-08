@@ -12,11 +12,13 @@ interface ChatInterfaceProps {
   isMobile?: boolean
   isCollapsed?: boolean
   onToggle?: () => void
+  hideCard?: boolean  // New prop to hide card styling
 }
 
-export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: ChatInterfaceProps) {
+export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hideCard }: ChatInterfaceProps) {
   const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat()
 
+  // Legacy mobile collapsed view (no longer used with new bubble)
   if (isMobile && isCollapsed) {
     return (
       <div className={`${className} bg-blue-500 text-white p-4 cursor-pointer`} onClick={onToggle}>
@@ -28,31 +30,33 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
     )
   }
 
-  return (
-    <Card className={`${className} flex flex-col`}>
-      {/* Sticky Header */}
-      <CardHeader className="pb-3 sticky top-0 bg-white z-10">
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg">AI Assistant</CardTitle>
-          {isMobile && (
-            <Button variant="ghost" size="sm" onClick={onToggle}>
-              ×
-            </Button>
-          )}
-        </div>
-      </CardHeader>
+  const chatContent = (
+    <>
+      {/* Header - only show if not hiding card */}
+      {!hideCard && (
+        <CardHeader className="pb-3 sticky top-0 bg-white z-10">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg">AI Assistant</CardTitle>
+            {isMobile && (
+              <Button variant="ghost" size="sm" onClick={onToggle}>
+                ×
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+      )}
       
-      <CardContent className="p-0 flex flex-col flex-1 relative">
-        {/* Sticky Empty State Message */}
+      <CardContent className={hideCard ? "p-0 h-full flex flex-col" : ""}>
+        {/* Empty State Message */}
         {messages.length === 0 && (
-          <div className="sticky top-16 bg-white z-10 text-center text-muted-foreground py-8 ">
+          <div className={`text-center text-muted-foreground py-8 ${hideCard ? 'sticky top-0 bg-white z-10' : 'sticky top-16 bg-white z-10'}`}>
             <MessageCircle className="mx-auto mb-2" size={32} />
             <p>Ask me anything about your vacation plans!</p>
           </div>
         )}
         
         {/* Scrollable Messages Area */}
-        <ScrollArea className="flex-1 p-4" style={{ height: messages.length === 0 ? '300px' : '400px' }}>
+        <ScrollArea className="flex-1 p-4" style={{ height: messages.length === 0 ? '300px' : hideCard ? 'calc(100vh - 200px)' : '400px' }}>
           {messages.map((message) => (
             <div key={message.id} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
               <div
@@ -99,7 +103,7 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
           )}
         </ScrollArea>
         
-        {/* Sticky Input Form */}
+        {/* Input Form */}
         <div className="sticky bottom-0 bg-white z-10 p-4">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
@@ -114,6 +118,21 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle }: Ch
           </form>
         </div>
       </CardContent>
+    </>
+  )
+
+  // Return content with or without Card wrapper
+  if (hideCard) {
+    return (
+      <div className={`${className} flex flex-col h-full`}>
+        {chatContent}
+      </div>
+    )
+  }
+
+  return (
+    <Card className={`${className} flex flex-col`}>
+      {chatContent}
     </Card>
   )
 }

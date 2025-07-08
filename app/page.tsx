@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ChatInterface } from "@/components/chat-interface"
+import { MobileChatBubble } from "@/components/mobile-chat-bubble"
 import { ActivityTypeCardComponent } from "@/components/activity-type-card"
 import { HotelCard } from "@/components/hotel-card"
 import { ActivityCard } from "@/components/activity-card"
@@ -27,7 +28,6 @@ export default function VacationPlanner() {
   const [filteredActivities, setFilteredActivities] = useState<Activity[]>([])
   const [isLoadingHotels, setIsLoadingHotels] = useState(false)
   const [isLoadingActivities, setIsLoadingActivities] = useState(false)
-  const [isChatCollapsed, setIsChatCollapsed] = useState(true)
   const [activityResearch, setActivityResearch] = useState<string>("")
 
   // Add new state variables for loading states
@@ -305,15 +305,8 @@ export default function VacationPlanner() {
 
   const mobileLayout = (
     <div className="min-h-screen bg-gray-50">
-      {/* Mobile Chat Interface */}
-      <ChatInterface
-        className={`fixed top-0 left-0 right-0 z-50 transition-transform ${
-          isChatCollapsed ? "transform -translate-y-full" : ""
-        }`}
-        isMobile={true}
-        isCollapsed={isChatCollapsed}
-        onToggle={() => setIsChatCollapsed(!isChatCollapsed)}
-      />
+      {/* Mobile Chat Bubble - only show after all agents complete */}
+      {allAgentsComplete && <MobileChatBubble />}
 
       {/* Mobile Header */}
       <div className="bg-white shadow-sm p-4">
