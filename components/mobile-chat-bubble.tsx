@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { ChatInterface } from "@/components/chat-interface"
-import { MessageCircle, X } from "lucide-react"
+import { MessageCircle } from "lucide-react"
 
 interface MobileChatBubbleProps {
   className?: string
@@ -37,14 +37,7 @@ export function MobileChatBubble({ className }: MobileChatBubbleProps) {
           <DialogHeader className="p-4 pb-2 bg-white rounded-t-2xl">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">AI Assistant</DialogTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setIsChatOpen(false)}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+              {/* Built-in Dialog close button handles closing, so custom button removed to prevent duplicate X icons */}
             </div>
           </DialogHeader>
           
