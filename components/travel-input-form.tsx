@@ -262,16 +262,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         {/* Mobile Logo and Auth Buttons */}
         <div className="relative z-20 mb-4 flex justify-between items-center">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">T</span>
-            </div>
-            <span className={`text-xl font-bold text-gray-800 ${inter.className} font-medium`}>TravelAgentic</span>
+            <span className={`text-xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}>TravelAgentic</span>
           </div>
           <div className="flex gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="text-sm bg-transparent"
+              className="text-white text-sm bg-transparent"
               onClick={() => router.push("/login")}
             >
               Log in
@@ -284,7 +281,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
         <Card className="w-full relative z-10 bg-white/75 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className={`text-center text-2xl ${inter.className} font-medium`}>Plan Your Trip</CardTitle>
+            <CardTitle className={`text-center text-2xl ${inter.className} font-medium`}>Plan Your Perfect Vacation</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <form onSubmit={handleSubmit} className="space-y-6">
