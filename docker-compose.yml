@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # Supabase Database
+  supabase-db:
+    image: supabase/postgres:latest
+    environment:
+      POSTGRES_DB: travelagentic
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - "5432:5432"
+    volumes:
+      - supabase-db:/var/lib/postgresql/data
+      - ./packages/seed:/docker-entrypoint-initdb.d
+    restart: unless-stopped
+
+  # Langflow
+  langflow:
+    image: langflowai/langflow:latest
+    environment:
+      - LANGFLOW_DATABASE_URL=postgresql://postgres:password@supabase-db:5432/travelagentic
+      - LANGFLOW_SUPERUSER=admin
+      - LANGFLOW_SUPERUSER_PASSWORD=admin
+      - LANGFLOW_SECRET_KEY=your-secret-key-here
+    ports:
+      - "7860:7860"
+    depends_on:
+      - supabase-db
+    volumes:
+      - ./packages/langflow/flows:/app/flows
+      - ./packages/langflow/data:/app/data
+    restart: unless-stopped
+
+  # Redis (for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+
+volumes:
+  supabase-db:
+  redis-data: 

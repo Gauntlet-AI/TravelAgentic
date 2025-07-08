@@ -4,29 +4,40 @@
 /node_modules
 /.pnp
 .pnp.js
+**/node_modules
 
 # testing
 /coverage
+**/coverage
 
 # next.js
 /.next/
 /out/
+**/out/
+**/.next/
 
 # production
 /build
+**/build
+**/dist
 
 # misc
 .DS_Store
 *.pem
+.vscode/
+.idea/
 
 # debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
 
 # local env files
 .env*.local
 .env
+.env.development
+.env.production
 
 # vercel
 .vercel
@@ -34,3 +45,58 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# TravelAgentic specific
+# Docker
+docker-compose.override.yml
+*.log
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Supabase
+supabase/.temp
+supabase/functions/_utils
+
+# Langflow
+packages/langflow/data/
+packages/langflow/logs/
+packages/langflow/.cache/
+
+# Edge Functions
+packages/edge-functions/.vercel/
+packages/edge-functions/dist/
+
+# Web
+packages/web/.vercel/
+packages/web/dist/
+
+# Testing
+packages/*/coverage/
+packages/*/test-results/
+packages/*/playwright-report/
+packages/*/test-results/
+packages/*/playwright/.cache/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+.temp/
+
+# OS generated files
+Thumbs.db
+Desktop.ini
+
+# API Keys and sensitive data
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Backup files
+*.bak
+*.backup
+*.old

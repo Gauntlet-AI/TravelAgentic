@@ -1,0 +1,44 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Run Tests (Mock APIs)
+        env:
+          USE_MOCK_APIS: 'true'
+        run: npm run test
+
+      - name: Validate Langflow Flows
+        run: npm run validate:flows
+
+      - name: Lint Code
+        run: npm run lint
+
+  deploy:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Deploy to Production (Vercel)
+        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} 
