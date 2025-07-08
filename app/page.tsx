@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -38,6 +38,8 @@ export default function VacationPlanner() {
   const [activityThoughts, setActivityThoughts] = useState<string[]>([])
   const [allAgentsComplete, setAllAgentsComplete] = useState(false)
   const [showCelebrationModal, setShowCelebrationModal] = useState(false)
+  const [hasShownCelebration, setHasShownCelebration] = useState(false)
+  const celebrationProcessingRef = useRef(false)
 
   useEffect(() => {
     const checkMobile = () => {
@@ -258,9 +260,18 @@ export default function VacationPlanner() {
     // Use setTimeout to ensure state updates have been processed
     setTimeout(() => {
       if (!isLoadingFlights && !isLoadingHotels && !isLoadingActivities) {
-        setAllAgentsComplete(true)
-        setShowCelebrationModal(true)
-        triggerConfetti()
+        // Check if we're already processing the celebration
+        if (!celebrationProcessingRef.current) {
+          celebrationProcessingRef.current = true
+          setAllAgentsComplete(true)
+          
+          // Only show celebration if not already shown
+          if (!hasShownCelebration) {
+            setShowCelebrationModal(true)
+            setHasShownCelebration(true)
+            triggerConfetti()
+          }
+        }
       }
     }, 100)
   }
@@ -279,6 +290,8 @@ export default function VacationPlanner() {
     setActivityThoughts([])
     setAllAgentsComplete(false)
     setShowCelebrationModal(false)
+    setHasShownCelebration(false)
+    celebrationProcessingRef.current = false
   }
 
   const nights =
