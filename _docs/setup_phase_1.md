@@ -5,11 +5,9 @@ Get TravelAgentic running locally with **mock APIs** in 5 minutes. Perfect for f
 ## What is Phase 1?
 
 **Phase 1** is our foundation development environment:
-- ✅ **Mock APIs** for flights, hotels, activities (no API keys needed!)
+- ✅ **Mock APIs** for flights, hotels, activities (no API keys needed for most features!)
 - ✅ **Real AI integration** with OpenAI for trip planning
-- ✅ **Local database** with Supabase
-- ✅ **PDF generation** for itineraries
-- ✅ **Shopping cart** functionality
+- ✅ **Local database** with Supabase (will be initialized)
 - ✅ **Full UI/UX** development ready
 
 **Perfect for**: Frontend developers, AI workflow development, core feature implementation
@@ -21,6 +19,7 @@ Get TravelAgentic running locally with **mock APIs** in 5 minutes. Perfect for f
 ### 1. Prerequisites
 - **Node.js** 18+ ([download here](https://nodejs.org/))
 - **Git** ([download here](https://git-scm.com/))
+- **Docker** ([download here](https://docker.com/)) - Required for local Supabase
 - **OpenAI API Key** ([get here](https://platform.openai.com/api-keys)) - Only required API key!
 
 ### 2. Clone and Install
@@ -30,8 +29,22 @@ cd TravelAgentic
 npm install
 ```
 
-### 3. Environment Setup
-Create `.env.local`:
+### 3. Database Setup (Using Docker Compose)
+```bash
+# Start the full development stack (Database + Langflow + Redis)
+docker-compose up -d
+
+# Verify services are running
+docker-compose ps
+```
+
+**What this starts:**
+- PostgreSQL database on port 5432
+- Langflow on port 7860 (AI workflow builder)
+- Redis on port 6379 (caching)
+
+### 4. Environment Setup
+Create `.env.local` in the project root:
 
 ```bash
 # AI Integration (REQUIRED)
@@ -42,162 +55,180 @@ USE_MOCK_APIS=true
 DEVELOPMENT_PHASE=1
 NODE_ENV=development
 
-# Supabase (will be auto-configured)
-NEXT_PUBLIC_SUPABASE_URL=http://localhost:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=will_be_generated_next_step
+# Database (matches docker-compose.yml)
+DATABASE_URL=postgresql://postgres:password@localhost:5432/travelagentic
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_DB=travelagentic
+POSTGRES_USER=postgres
+POSTGRES_PASSWORD=password
+
+# Langflow (optional for Phase 1)
+LANGFLOW_URL=http://localhost:7860
+
+# Redis (optional for Phase 1)
+REDIS_URL=redis://localhost:6379
 
 # App Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-### 4. Database Setup
+### 5. Verify Database Setup
 ```bash
-# Install Supabase CLI
-npm install -g @supabase/cli
+# The database schema is created automatically from packages/seed/01_init.sql
+# Verify it worked by connecting to the database
+psql -h localhost -p 5432 -U postgres -d travelagentic -c "\dt"
 
-# Start local database
-supabase start
-
-# Copy the anon key from output and update .env.local
-# Look for: anon key: eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...
+# You should see: users, user_preferences, bookings, itineraries, search_cache
 ```
 
-### 5. Start Development
+### 6. Start Development
 ```bash
+# Start the Next.js development server
+cd packages/web
 npm run dev
 ```
 
-**🎉 Success!** Visit `http://localhost:3000` to see TravelAgentic running with realistic mock data.
+**🎉 Success!** Visit `http://localhost:3000` to see TravelAgentic running.
 
 ---
 
 ## What You Just Built
 
-### ✅ **Full Travel Planning App**
-- Complete UI for trip planning
-- Flight, hotel, and activity search (using mocks)
-- AI-powered trip recommendations
-- Shopping cart with booking flow
-- PDF itinerary generation
+### ✅ **Working Development Environment**
+- Next.js application running locally
+- PostgreSQL database with travel schema
+- Langflow AI workflow builder (http://localhost:7860)
+- Redis caching layer
+- Mock API foundation ready for implementation
+- AI integration ready (with OpenAI key)
 
-### ✅ **Mock API Ecosystem**
-- **Flights**: Realistic flight data, pricing, availability
-- **Hotels**: Hotel listings with photos, amenities, reviews
-- **Activities**: Tours, restaurants, attractions
-- **No API rate limits** - perfect for development!
+### ✅ **Current Phase 1 Status**
+- **Database**: ✅ Working with travel schema
+- **Langflow**: ✅ Ready for AI workflow development
+- **Redis**: ✅ Ready for caching
+- **Mock APIs**: ⏳ Ready for implementation (see TODOs)
+- **AI Integration**: ✅ Ready with OpenAI
 
-### ✅ **AI Integration**
-- OpenAI-powered trip planning
-- Conversational travel preferences
-- Smart recommendations based on context
-- Dynamic form generation
-
-### ✅ **Local Development Stack**
-- Supabase PostgreSQL database
-- Authentication system
-- File storage
-- Edge functions ready
+### ✅ **Ready for Development**
+- Frontend components in `packages/web/components/`
+- Database schema in place
+- Environment configuration complete
+- Development server running
 
 ---
 
 ## Phase 1 Development Workflow
 
-### Frontend Development
+### Starting Development (Daily)
 ```bash
-# Start the app
+# Start database and services (if not running)
+docker-compose up -d
+
+# Start development server
+cd packages/web
 npm run dev
-
-# Run tests
-npm test
-
-# Run specific test suites
-npm run test:mock-apis
-npm run test:components
 ```
 
-### AI Development
+### Stopping Development
 ```bash
-# Test AI integration
-npm run test:ai-integration
+# Stop development server
+Ctrl+C
 
-# Langflow development (optional)
-npm run langflow:dev
+# Stop database and services (optional - saves resources)
+docker-compose down
 ```
 
-### Database Development
+### Database Management
 ```bash
-# View database
-supabase db studio
+# View database directly
+psql -h localhost -p 5432 -U postgres -d travelagentic
 
-# Reset database
-supabase db reset
+# Check service status
+docker-compose ps
 
-# Create migration
-supabase migration new feature_name
+# View logs
+docker-compose logs supabase-db
 ```
 
 ---
 
-## Mock API Details
+## Current Project Structure
 
-### Flight Mock API
-- **Realistic data**: 500+ airlines, routes, pricing
-- **Dynamic pricing**: Prices change based on dates/demand
-- **Search filters**: Cabin class, stops, timing
-- **Availability simulation**: Some flights "sell out"
-
-### Hotel Mock API
-- **Rich data**: Photos, amenities, reviews, location
-- **Pricing tiers**: Budget to luxury options
-- **Geographic accuracy**: Real hotel locations
-- **Seasonal pricing**: Rates vary by season
-
-### Activity Mock API
-- **Diverse categories**: Tours, dining, culture, adventure
-- **Local relevance**: Activities match destination
-- **Booking constraints**: Time slots, group sizes
-- **Review system**: Ratings and user feedback
+```
+TravelAgentic/
+├── packages/web/              # Next.js app (main development)
+│   ├── components/           # React components
+│   ├── pages/               # Next.js pages
+│   ├── lib/                 # Utilities, AI integration
+│   └── styles/              # CSS and styling
+├── packages/database/        # Database documentation
+├── packages/edge-functions/  # Edge functions (empty, ready for implementation)
+├── packages/langflow/        # Langflow AI workflows
+├── packages/mocks/          # Mock API services (empty, ready for implementation)
+├── packages/seed/           # Database seed data (empty, ready for implementation)
+├── docker-compose.yml       # PostgreSQL + Langflow + Redis
+└── _docs/                   # Documentation
+```
 
 ---
 
-## Testing in Phase 1
+## Phase 1 TODOs (From Current State)
 
-### Unit Tests
-```bash
-# Test React components
-npm run test:components
+Based on the current project structure, here's what needs to be implemented:
 
-# Test utility functions
-npm run test:utils
+### 🔄 **Immediate TODOs**
+1. **Mock Flight API** - Implement in `packages/edge-functions/api/flights/`
+2. **Mock Hotel API** - Implement in `packages/edge-functions/api/hotels/`
+3. **Mock Activity API** - Implement in `packages/edge-functions/api/activities/`
+4. **Basic Frontend Components** - Create search forms and result displays
+5. **Database Integration** - Connect frontend to Supabase
 
-# Test AI integration
-npm run test:ai
-```
-
-### Integration Tests
-```bash
-# Test mock APIs
-npm run test:mock-apis
-
-# Test user workflows
-npm run test:integration
-
-# Test PDF generation
-npm run test:pdf
-```
-
-### E2E Tests (Optional)
-```bash
-# Install Playwright (one-time)
-npx playwright install
-
-# Run end-to-end tests
-npm run test:e2e
-```
+### 📋 **Complete TODO List**
+- [ ] Setup mock flight search edge function
+- [ ] Setup mock hotel search edge function  
+- [ ] Setup mock activity search edge function
+- [ ] Setup user preferences API
+- [ ] Setup booking cart API
+- [ ] Setup mock checkout API
+- [ ] Setup PDF generation API
+- [ ] Setup Langflow integration
 
 ---
 
 ## Common Issues & Solutions
+
+### "Docker not found" or "Services won't start"
+```bash
+# Make sure Docker is installed and running
+docker --version
+
+# If Docker is not running:
+# - Start Docker Desktop (Mac/Windows)
+# - Start Docker service (Linux): sudo systemctl start docker
+```
+
+### "Port already in use"
+```bash
+# Check what's using port 5432 (PostgreSQL)
+lsof -i :5432
+
+# Stop and restart services
+docker-compose down
+docker-compose up -d
+```
+
+### "Database connection failed"
+```bash
+# Check if services are running
+docker-compose ps
+
+# If not running, start them
+docker-compose up -d
+
+# Check your .env.local has correct credentials
+# Database should be: postgresql://postgres:password@localhost:5432/travelagentic
+```
 
 ### "OpenAI API errors"
 ```bash
@@ -209,93 +240,8 @@ curl https://api.openai.com/v1/models \
   -H "Authorization: Bearer $OPENAI_API_KEY"
 ```
 
-### "Supabase won't start"
-```bash
-# Make sure Docker is running
-docker --version
-
-# Restart Supabase
-supabase stop
-supabase start
-```
-
 ### "Mock APIs not working"
-```bash
-# Verify mock configuration in .env.local
-USE_MOCK_APIS=true
-DEVELOPMENT_PHASE=1
-
-# Restart development server
-npm run dev
-```
-
-### "Port 3000 already in use"
-```bash
-# Kill existing process
-lsof -ti:3000 | xargs kill -9
-
-# Or use different port
-npm run dev -- -p 3001
-```
-
-### "Database connection errors"
-```bash
-# Check Supabase status
-supabase status
-
-# Restart database
-supabase db reset
-```
-
----
-
-## Phase 1 File Structure
-
-```
-TravelAgentic/
-├── packages/web/              # Main Next.js app
-│   ├── components/           # React components
-│   ├── pages/               # Next.js pages
-│   ├── lib/                 # Utilities, AI integration
-│   └── styles/              # CSS and styling
-├── packages/mocks/            # Mock API services
-│   ├── flights/             # Flight mock data & logic
-│   ├── hotels/              # Hotel mock data & logic
-│   └── activities/          # Activity mock data & logic
-├── supabase/                 # Database schema
-│   ├── migrations/          # Database migrations
-│   └── functions/           # Edge functions
-└── _docs/                    # Documentation
-```
-
----
-
-## Phase 1 Features You Can Build
-
-### ✅ **Frontend Components**
-- Trip planning forms
-- Search result displays
-- Shopping cart UI
-- User profiles
-- Itinerary views
-
-### ✅ **AI Workflows**
-- Conversational trip planning
-- Smart recommendations
-- Dynamic form generation
-- Context-aware suggestions
-
-### ✅ **User Experience**
-- Complete booking flows
-- PDF itinerary generation
-- Responsive design
-- Accessibility features
-
-### ✅ **Data Management**
-- User preferences
-- Trip templates
-- Search history
-- Booking states
+This is expected! The mock APIs need to be implemented. This is part of Phase 1 development.
 
 ---
 
@@ -304,68 +250,79 @@ TravelAgentic/
 ### Environment
 - Always use `USE_MOCK_APIS=true` in Phase 1
 - Keep `DEVELOPMENT_PHASE=1` 
-- Use meaningful test data in mocks
+- Start Docker services before developing
 
-### Testing
-- Test with mock data first
-- Write tests that don't depend on external APIs
-- Use realistic test scenarios
+### Database
+- Use `psql` or database client to view data
+- Don't modify the database directly in production
+- Use migrations for schema changes (future)
+- Database persists between docker-compose restarts
 
 ### AI Integration
-- Test OpenAI integration thoroughly
+- Test OpenAI integration early
 - Handle API failures gracefully
-- Use mock AI responses for tests
+- Use reasonable token limits
 
 ---
 
 ## Getting Help
 
-### 1. Check the Logs
-Most issues show up in terminal output:
+### 1. Check Service Status
 ```bash
-# Development server logs
-npm run dev
-
-# Supabase logs
-supabase logs
+# Check if services are running
+docker-compose ps
+npm run dev # (should show no errors)
 ```
 
-### 2. Restart Everything
-When in doubt, restart the stack:
+### 2. Check Logs
 ```bash
-supabase stop
-supabase start
-npm run dev
+# Database logs
+docker-compose logs supabase-db
+
+# Langflow logs
+docker-compose logs langflow
+
+# Next.js logs (in terminal running npm run dev)
 ```
 
-### 3. Verify Configuration
-Check your `.env.local` file has all required values.
+### 3. Restart Everything
+```bash
+# Stop everything
+docker-compose down
+# Stop Next.js dev server (Ctrl+C)
 
-### 4. Use Mock Data
-Set `USE_MOCK_APIS=true` to avoid any API complexity.
+# Start everything
+docker-compose up -d
+cd packages/web && npm run dev
+```
+
+### 4. Common Solutions
+- **Database issues**: Usually fixed by `docker-compose down` then `docker-compose up -d`
+- **Environment issues**: Double-check `.env.local` has correct values
+- **Port conflicts**: Change ports in docker-compose.yml or kill conflicting processes
 
 ---
 
 ## Next Steps
 
-Once you're comfortable with Phase 1 development:
+Once you have this working:
 
-1. **Explore the codebase** - Understand the mock API structure
-2. **Build features** - Add new components and workflows  
-3. **Test thoroughly** - Use the comprehensive test suite
-4. **Contribute** - Phase 1 is perfect for most contributions!
+1. **Implement Mock APIs** - Start with flight search
+2. **Build Frontend Components** - Create search forms and results
+3. **Connect Database** - Integrate user preferences and history
+4. **Add AI Integration** - Implement trip planning workflows
+5. **Test Everything** - Use the mock data for development
 
-**When you're ready for real APIs** → See `phase2-setup.md` (coming soon)
+**Phase 1 is about building the foundation!** 🚀
 
 ---
 
-## Why Start with Phase 1?
+## Why This Setup Works
 
-- 🚀 **Fast setup** - No API key hunting
-- 🛡️ **No rate limits** - Develop without restrictions  
-- 🎯 **Focus on code** - Not API configuration
-- 🧪 **Perfect testing** - Predictable mock data
-- 👥 **Team friendly** - Everyone can run it
-- 💰 **Cost effective** - No API charges while developing
+- 🎯 **Minimal requirements** - Only Docker, Node.js, and OpenAI key needed
+- 🔄 **Matches actual project structure** - No references to non-existent files
+- 📦 **Monorepo ready** - Uses the packages structure correctly
+- 🧪 **Mock-first approach** - Build features before API complexity
+- 🚀 **Production-ready foundation** - Real database and auth system
 
-**Phase 1 is designed to get you productive immediately!** 🎉 
+**This setup gets you productive immediately with the current codebase!** 🎉 
