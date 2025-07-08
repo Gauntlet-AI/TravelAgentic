@@ -86,18 +86,92 @@ The repository structure above represents the target architecture. Current imple
 
 ## ✅ Full End-to-End Application Workflow
 
-1. **User Intake:** Collect broad user preferences (budget, dates, location, etc.).
-2. **Flight Search:** Auto-search flights based on preferences.
-3. **Lodging Search:** Auto-search hotels or Airbnb listings.
-4. **Concurrent Activity Search & User Input:** Run background search for activities while gathering additional activity preferences from the user.
-5. **Activity Filtering:** Combine background results + user choices, present for multi-select.
-6. **Checkout & Booking:** Book all selected options via APIs.
-7. **Fallbacks:** Handle booking failures via auto-retries, fallbacks, pauses, or AI voice calls.
-8. **PDF Itinerary:** Auto-generate a PDF containing:
-   - Flight details (including baggage recheck info).
-   - Lodging and activity schedules.
-   - Packing tips based on itinerary.
-9. **Itinerary Delivery:** Email PDF and store it for download.
+### **Primary User Flows**
+
+#### **Structured Onboarding Flow (User Story 1)**
+1. **Initial Form**: User provides starting location, destination (can be "unsure"), dates
+2. **LLM-Generated Questions**: Contextually relevant multiple choice questions based on initial input
+3. **Preference Collection**: User fills out generated questions (can skip or switch to chat)
+4. **Agent Orchestration**: Flight, hotel, activity agents search simultaneously
+5. **Sequential Recommendations**: Flight selection → Hotel context update → Activity recommendations
+6. **Shopping Cart Review**: Complete cart with dependencies and pricing
+7. **Booking Execution**: Multi-layer fallback system handles booking
+8. **Itinerary Generation**: PDF with todos and personalized recommendations
+
+#### **Conversational Discovery Flow (User Story 2)**
+1. **Natural Conversation**: LLM asks for date, price range, location
+2. **Preference Iteration**: Conversational discovery of travel preferences
+3. **Agent Orchestration**: Specialized agents search based on context
+4. **Auto-Selection**: AI automatically selects best fits
+5. **Shopping Cart Presentation**: Pre-populated cart for user review
+6. **Booking Execution**: Automated booking with manual intervention warnings
+7. **Itinerary Delivery**: Complete travel package with personalized touches
+
+### **Context-Based Preference Management**
+
+#### **Dynamic Preference Collection**
+- **Adaptive Questions**: LLM generates contextually relevant questions based on destination, season, trip type
+- **Constraint Discovery**: Real-time constraint detection (dietary, accessibility, budget)
+- **Confidence Tracking**: System tracks certainty levels for each preference
+- **Conflict Resolution**: Automatic detection and resolution of conflicting preferences
+
+#### **Context Storage Structure**
+```json
+{
+  "collection_method": "structured|conversational",
+  "preferences": {
+    "destination": {"value": "Tokyo", "confidence": 0.95, "source": "user_stated"},
+    "constraints": [
+      {"type": "dietary", "value": "vegetarian", "strictness": "required"},
+      {"type": "accessibility", "value": "mobility_assistance", "applies_to": "companion"}
+    ]
+  },
+  "shopping_cart": {
+    "items": [{"type": "flight", "selected": true, "price": 1050}],
+    "dependencies": {"hotel_1": ["flight_1"], "activity_1": ["hotel_1"]}
+  }
+}
+```
+
+### **Shopping Cart & Backtracking System**
+
+#### **Smart Shopping Cart Management**
+- **Dependency Tracking**: Flight selection influences hotel location context
+- **Real-time Pricing**: Dynamic price updates with availability checking
+- **Version Management**: Context snapshots enable backtracking to any previous state
+- **Conflict Detection**: Automatic detection when new constraints contradict existing selections
+
+#### **Backtracking Capabilities**
+- **Step-by-step**: Go back one decision at a time
+- **Component-level**: Return to specific selections (flights, hotels, activities)
+- **Checkpoint**: Return to major milestones (preference collection, agent results)
+- **Full reset**: Start over while preserving learned context
+
+### **Trip Template System**
+
+#### **Template Import/Export**
+- **Complete Context Capture**: All preferences, constraints, selections, and partial states
+- **Template Sharing**: Export successful trips for others to use as templates
+- **Adaptive Import**: Templates adapt to new dates, budgets, and user preferences
+- **Partial Flow Resume**: Continue from any point in the planning process
+
+#### **Template Structure**
+```json
+{
+  "template_name": "Nancy's Tokyo Adventure",
+  "template_type": "completed|partial|abandoned",
+  "flow_state": {
+    "current_step": "hotel_selection",
+    "completed_steps": ["initial_form", "preference_collection", "flight_selection"],
+    "flow_progress": 0.6
+  },
+  "base_context": {
+    "preferences": {...},
+    "successful_selections": {...},
+    "constraint_history": [...]
+  }
+}
+```
 
 ---
 
@@ -115,7 +189,7 @@ We use a fast, CI/CD-driven **trunk-based development model** for rapid iteratio
 | **Single Stable Main Branch**  | All code merges into `main` via PRs; no dev branch. |
 | **Small, Fast PRs**            | PRs must be small and incremental for fast reviews. |
 | **Mandatory CI/CD**            | Every PR must pass tests and validations (mock APIs, Langflow, etc.). |
-| **Feature Flags**              | Incomplete features can be safely merged but hidden behind feature flags. |
+| **Phase Configuration**         | Incomplete features can be safely merged using phase-based configuration. |
 | **Preview Deployments**        | Each PR auto-deploys to its own preview environment for testing. |
 | **Continuous Deployment**      | Every merge to `main` auto-deploys to production (or via scheduled deploys). |
 
@@ -139,9 +213,9 @@ We use a fast, CI/CD-driven **trunk-based development model** for rapid iteratio
 - Merge only after PR approval and CI passing.
 - Keep PRs small and focused.
 
-### ✅ Feature Flags
-- Use environment-based or DB-based feature flags for incomplete features.
-- You may merge partially complete features safely behind flags.
+### ✅ Phase Configuration
+- Use phase-based configuration for incomplete features.
+- You may merge partially complete features safely using phase controls.
 
 ### ✅ Deployment
 - Merging to `main` triggers auto-deployment to production.
@@ -158,7 +232,7 @@ We use a fast, CI/CD-driven **trunk-based development model** for rapid iteratio
 ### ✅ Risks (and Solutions):
 | Risk                                    | Solution |
 |-----------------------------------------|----------|
-| Accidentally merging unfinished features | Use feature flags to control visibility. |
+| Accidentally merging unfinished features | Use phase configuration to control visibility. |
 | CI/CD failures blocking merges           | Keep pipelines stable, prioritize quick fixes. |
 | Large, risky PRs                        | Require small, focused PRs with clear scopes. |
 
@@ -234,44 +308,39 @@ jobs:
 
 ---
 
-## ✅ Feature Flag Strategy (Lightweight + OSS-Friendly)
+## ✅ Phase-Based Development Strategy
 
-### ✅ Why Feature Flags:
-- Allow unfinished or experimental features to merge safely into `main` without being visible to users.
+### ✅ Why Phase-Based Development:
+- Allows systematic feature rollout across 3 development phases
+- Enables controlled complexity management during rapid development
+- Supports gradual API integration from mocks to production services
 
-### ✅ Implementation Options:
-| Method          | Recommended For |
-|-----------------|-----------------|
-| ENV Variables   | Early-stage features, globally toggled. |
-| Supabase DB Flags | Per-user or per-session flags; more advanced targeting. |
+### ✅ Phase Configuration:
+| Phase           | Focus | Configuration |
+|-----------------|--------|---------------|
+| Phase 1 (Days 1-2) | MVP Foundation | `DEVELOPMENT_PHASE=1`, `USE_MOCK_APIS=true` |
+| Phase 2 (Days 3-4) | Real APIs + Fallbacks | `DEVELOPMENT_PHASE=2`, `USE_MOCK_APIS=false` |
+| Phase 3 (Days 5-6) | Advanced Features | `DEVELOPMENT_PHASE=3`, `ENABLE_ADVANCED_AUTOMATION=true` |
 
-### ✅ Simple ENV Flag Example (Next.js + Edge Functions):
+### ✅ Configuration Example:
 ```ts
-if (process.env.FEATURE_ACTIVITY_FILTERS === 'true') {
-  enableActivityFilters();
-}
-```
+const currentPhase = process.env.DEVELOPMENT_PHASE || 1;
+const config = getPhaseConfig(currentPhase);
 
-### ✅ Supabase DB Flag Example:
-```sql
-CREATE TABLE feature_flags (
-  id SERIAL PRIMARY KEY,
-  feature_name TEXT UNIQUE NOT NULL,
-  is_enabled BOOLEAN DEFAULT FALSE
-);
-```
-
-```ts
-const isEnabled = await getFeatureFlag('activity_filters');
-if (isEnabled) {
-  enableActivityFilters();
+function getPhaseConfig(phase: number) {
+  const configs = {
+    1: { mockApis: true, browserFallback: false, voiceCalling: false },
+    2: { mockApis: false, browserFallback: true, voiceCalling: false },
+    3: { mockApis: false, browserFallback: true, voiceCalling: true }
+  };
+  return configs[phase] || configs[1];
 }
 ```
 
 ### ✅ Best Practices:
-- Document all flags in `/packages/web/README.md` or a `FEATURE_FLAGS.md` file.
-- Remove old flags after features fully launch.
-- Keep flags simple and predictable.
+- Use environment variables for phase-specific configuration
+- Gradually enable features based on development phase
+- Maintain backward compatibility across phases
 
 ---
 
@@ -332,16 +401,83 @@ Post-checkout, the system generates a PDF itinerary including:
 
 ---
 
+### ✅ Comprehensive Langflow Architecture
+
+#### **Context Management Foundation**
+- **Langflow Component**: Context Manager component handles all context operations
+- **Versioned Snapshots**: Every major state change creates a context snapshot
+- **Rollback Support**: Users can return to any previous context state
+- **Conflict Detection**: Real-time constraint checking and resolution
+
+#### **Agent Orchestration System**
+```
+Context Manager (Central Hub)
+├── Flight Agent
+│   ├── Search flights based on context
+│   ├── Update context with flight selection
+│   └── Trigger hotel context update
+├── Hotel Agent
+│   ├── Search hotels near flight location
+│   ├── Update context with hotel selection
+│   └── Trigger activity context update
+└── Activity Agent
+    ├── Search activities based on context
+    ├── Update context with activity selections
+    └── Trigger checkout flow
+```
+
+#### **Shopping Cart Management**
+- **Dependency Tracking**: Flight selection influences hotel location context
+- **Real-time Pricing**: Dynamic price updates with availability checking
+- **Version Management**: Context snapshots enable backtracking to any previous state
+- **Conflict Detection**: Automatic detection when new constraints contradict existing selections
+
+#### **Backtracking Engine**
+- **State Management**: Track all context changes and selections
+- **Granular Control**: Step-by-step, component-level, or checkpoint-based backtracking
+- **Context Preservation**: Maintain user preferences while allowing selection changes
+- **Smart Suggestions**: AI-powered recommendations based on backtracking patterns
+
+#### **Langflow Flow Structure**
+```
+1. Context Initialization
+   ├── User Input Processing
+   ├── Preference Collection (LLM-generated questions)
+   └── Context Storage
+
+2. Agent Orchestration
+   ├── Flight Agent (search → update context)
+   ├── Hotel Agent (search → update context)
+   └── Activity Agent (search → update context)
+
+3. Shopping Cart Management
+   ├── Dependency Resolution
+   ├── Pricing Updates
+   └── Conflict Detection
+
+4. Booking Execution
+   ├── Multi-layer Fallback System
+   ├── Payment Processing
+   └── Confirmation Management
+
+5. Itinerary Generation
+   ├── PDF Creation
+   ├── Personalized Recommendations
+   └── Template Export
+```
+
 ### ✅ Langflow + Edge Functions Rationale
 Why we chose this stack:
-- **Langflow** provides visual, easily editable LLM workflows with context memory.
-- **Edge Functions** (Vercel/Supabase) handle scalable API orchestration with full code flexibility.
-- **OSS-friendly:** Both tools are open source or self-hostable.
-- **Easy testing & contributor onboarding** with mock APIs and modular components.
+- **Langflow** provides visual, easily editable LLM workflows with context memory and agent orchestration
+- **Edge Functions** (Vercel/Supabase) handle scalable API orchestration with full code flexibility
+- **Context Management**: Langflow excels at maintaining stateful conversations and complex decision trees
+- **OSS-friendly:** Both tools are open source or self-hostable
+- **Easy testing & contributor onboarding** with mock APIs and modular components
 
 ### ✅ Alternatives Considered:
-- **n8n:** Too redundant with Langflow; not AI-first.
-- **LangGraph:** Powerful but too complex and code-heavy for initial fast-moving MVP.
+- **n8n:** Too redundant with Langflow; not AI-first, lacks context management
+- **LangGraph:** Powerful but too complex and code-heavy for initial fast-moving MVP
+- **Custom State Management**: Would require significant development time vs. Langflow's visual approach
 
 ---
 
@@ -382,13 +518,11 @@ BROWSER_USE_TIMEOUT=30000
 AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
 AUTOMATION_DELAY_MS=2000
 
-# Feature Flags
-FEATURE_ACTIVITY_FILTERS=true
-FEATURE_VOICE_CALLING=false
-FEATURE_PDF_GENERATION=true
-FEATURE_BROWSER_FALLBACK=true
+# Phase Configuration
+DEVELOPMENT_PHASE=1
+USE_MOCK_APIS=true
 ENABLE_CONCURRENT_SEARCH=true
-ENABLE_AI_SELECTION=true
+ENABLE_ADVANCED_AUTOMATION=false
 
 # Testing & Development
 USE_MOCK_APIS=true
@@ -458,7 +592,14 @@ NODE_ENV=development
 - **`README.md`** - Project overview and quick start guide
 - **`CONTRIBUTING.md`** - Detailed contribution guidelines
 - **`_docs/Architecture.md`** - Complete technical architecture (this document)
+- **`_docs/PRD.md`** - Product requirements and user stories
 - **`_docs/Commit-Style-Guide.md`** - Git commit conventions and standards
+- **`_docs/setup_phase_1.md`** - Phase 1 development setup guide
+- **`_docs/notes/`** - Detailed design documentation:
+  - **`travel_preferences.md`** - Context-based preference collection system
+  - **`profile_preferences.md`** - User profile and system interaction preferences
+  - **`flow.md`** - Detailed user flow design and stories
+  - **`langflow_architecture.md`** - Comprehensive Langflow implementation details
 - **Package-specific READMEs** - Setup and usage guides for each package
 
 ### ✅ Code Quality Standards

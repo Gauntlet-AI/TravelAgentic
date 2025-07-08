@@ -138,15 +138,9 @@ CREATE TABLE public.voice_calls (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Feature flags
-CREATE TABLE public.feature_flags (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  feature_name TEXT UNIQUE NOT NULL,
-  is_enabled BOOLEAN DEFAULT FALSE,
-  user_id UUID REFERENCES users(id), -- NULL for global flags
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
+-- Phase configuration (removed feature_flags table)
+-- Phase-based configuration is now handled through environment variables
+-- See DEVELOPMENT_PHASE environment variable for configuration
 ```
 
 ## Row Level Security (RLS)

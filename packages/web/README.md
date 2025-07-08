@@ -59,10 +59,11 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
 NEXT_PUBLIC_LANGFLOW_URL=http://localhost:7860
 
-# Feature Flags
-NEXT_PUBLIC_FEATURE_ACTIVITY_FILTERS=false
-NEXT_PUBLIC_FEATURE_VOICE_CALLING=false
-NEXT_PUBLIC_FEATURE_PDF_GENERATION=true
+# Phase Configuration
+NEXT_PUBLIC_DEVELOPMENT_PHASE=1
+NEXT_PUBLIC_USE_MOCK_APIS=true
+NEXT_PUBLIC_ENABLE_CONCURRENT_SEARCH=true
+NEXT_PUBLIC_ENABLE_ADVANCED_AUTOMATION=false
 
 # Analytics (optional)
 NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=your_ga_id
@@ -358,25 +359,46 @@ const nextConfig = {
 module.exports = nextConfig
 ```
 
-## Feature Flags
+## Phase Configuration
 
-Feature flags are implemented using environment variables:
+Phase-based configuration is implemented using environment variables:
 
 ```typescript
-// lib/feature-flags.ts
-export const featureFlags = {
-  activityFilters: process.env.NEXT_PUBLIC_FEATURE_ACTIVITY_FILTERS === 'true',
-  voiceCalling: process.env.NEXT_PUBLIC_FEATURE_VOICE_CALLING === 'true',
-  pdfGeneration: process.env.NEXT_PUBLIC_FEATURE_PDF_GENERATION === 'true',
-}
+// lib/phase-config.ts
+export const getPhaseConfig = (phase: number = 1) => {
+  const configs = {
+    1: {
+      mockApis: true,
+      browserFallback: false,
+      voiceCalling: false,
+      realPayments: false
+    },
+    2: {
+      mockApis: false,
+      browserFallback: true,
+      voiceCalling: false,
+      realPayments: false
+    },
+    3: {
+      mockApis: false,
+      browserFallback: true,
+      voiceCalling: true,
+      realPayments: true
+    }
+  };
+  return configs[phase] || configs[1];
+};
 
 // Usage in components
-import { featureFlags } from '../lib/feature-flags'
+import { getPhaseConfig } from '../lib/phase-config'
 
 export const SearchPage = () => {
+  const phase = parseInt(process.env.NEXT_PUBLIC_DEVELOPMENT_PHASE || '1');
+  const config = getPhaseConfig(phase);
+  
   return (
     <div>
-      {featureFlags.activityFilters && <ActivityFilters />}
+      {config.browserFallback && <BrowserFallbackIndicator />}
       {/* ... rest of component */}
     </div>
   )
@@ -391,7 +413,7 @@ export const SearchPage = () => {
 2. Use TypeScript for all new code
 3. Add unit tests for new components
 4. Update component documentation
-5. Test with feature flags enabled/disabled
+5. Test with different phase configurations
 6. Follow the established naming conventions
 
 ### Code Style

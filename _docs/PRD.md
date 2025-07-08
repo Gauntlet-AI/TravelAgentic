@@ -16,6 +16,72 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 
 **Vision:** Become the global standard for AI-powered travel automation, serving millions of travelers through our platform and white-label solutions.
 
+## 👥 Primary User Stories
+
+### **User Story 1: Structured Onboarding Journey**
+**Context:** Nancy, a busy professional, wants to plan a week-long trip to Tokyo but has limited time for research.
+
+**Current Flow:**
+1. **Initial Form**: Simple form with starting location, destination, dates
+2. **LLM-Generated Questions**: System generates contextually relevant multiple choice questions:
+   - "What's your primary motivation for this Tokyo trip?" (Business/Cultural/Culinary/Entertainment)
+   - "What's your preferred accommodation style?" (Modern hotel/Traditional ryokan/Hostel/Apartment)
+   - "How do you prefer to explore?" (Guided tours/Self-directed/Local recommendations)
+3. **Preference Collection**: User completes generated questions, can skip any or switch to chat mode
+4. **Agent Orchestration**: Flight, hotel, and activity agents work simultaneously
+5. **Sequential Recommendations**: Flight selection → Hotel context update → Activity recommendations
+6. **Shopping Cart Review**: Complete cart with dependencies and pricing
+7. **Booking Execution**: Multi-layer fallback system handles booking
+8. **Itinerary Generation**: PDF with todos and personalized recommendations
+
+**Key Features:**
+- Context-aware question generation based on destination and season
+- Ability to skip questions or switch to conversational mode
+- Shopping cart with dependency tracking
+- Backtracking to modify any previous selection
+
+### **User Story 2: Conversational Discovery Journey**
+**Context:** Mark, a frequent traveler, prefers natural conversation over forms and wants AI to handle most decisions.
+
+**Current Flow:**
+1. **Natural Conversation**: LLM initiates with "When do you want to travel and what's your budget?"
+2. **Preference Iteration**: System asks follow-up questions based on responses
+3. **Agent Orchestration**: Specialized agents search based on discovered context
+4. **Auto-Selection**: AI automatically selects best options based on preferences
+5. **Shopping Cart Presentation**: Pre-populated cart for user review
+6. **Booking Execution**: Automated booking with manual intervention warnings
+7. **Itinerary Delivery**: Complete travel package with personalized touches
+
+**Key Features:**
+- Natural language processing for preference discovery
+- AI-powered automatic selection with confidence scoring
+- Manual intervention warnings for high-stakes decisions
+- Conversational backtracking ("Actually, I'd prefer something different...")
+
+### **User Story 3: Trip Template System**
+**Context:** Sarah used TravelAgentic successfully before and wants to share her Tokyo template with friends.
+
+**Template Features:**
+- **Export**: Complete context export including preferences, constraints, and successful selections
+- **Import**: Friends can import Sarah's template and adapt it to their dates/budget
+- **Partial Resume**: Continue from any point in the planning process
+- **Template Sharing**: Community sharing of successful trip templates
+
+**Template Structure:**
+```json
+{
+  "template_name": "Sarah's Tokyo Adventure",
+  "success_rating": 9.2,
+  "template_type": "completed",
+  "adaptable_fields": ["dates", "budget", "group_size"],
+  "base_context": {
+    "destination": "Tokyo",
+    "preferences": {...},
+    "successful_selections": {...}
+  }
+}
+```
+
 ## 🏆 Success Metrics
 
 ### **Development Metrics**
@@ -96,12 +162,22 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 
 ### **1. AI-Powered Travel Planning Engine**
 
-#### **User Intake & Profiling**
-- **Smart Questionnaire**: Adaptive questions based on travel type
-- **Preference Learning**: ML-powered user preference modeling
-- **Travel Style Assessment**: Personality-based recommendations
-- **Budget Optimization**: Dynamic pricing strategy suggestions
-- **Automation Level Control**: 0-10 slider for user control preferences
+#### **Context-Based Preference Collection**
+- **Adaptive Question Generation**: LLM dynamically creates contextually relevant multiple choice questions based on:
+  - Destination characteristics (climate, culture, season)
+  - Trip type (business, leisure, adventure, cultural)
+  - User demographics and travel history
+  - Real-time constraints (budget, dates, group size)
+- **Conversational Discovery**: Natural language preference collection with follow-up questions
+- **Constraint Detection**: Automatic identification of hard constraints (dietary, accessibility, legal)
+- **Confidence Tracking**: System maintains confidence scores for each preference and constraint
+- **Preference Conflicts**: Real-time conflict detection and resolution between preferences
+
+#### **Dynamic Context Management**
+- **Context Versioning**: Every major decision creates a context snapshot for backtracking
+- **Field Discovery**: System discovers new preference fields based on user input rather than predefined lists
+- **Source Attribution**: Track whether preferences came from user input, inference, or template import
+- **Preference Hierarchy**: Automatic prioritization of preferences based on user emphasis and consistency
 
 #### **Intelligent Search & Selection**
 - **Concurrent Multi-API Search**: Flights, hotels, activities simultaneously
@@ -110,7 +186,39 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 - **Availability Optimization**: Smart booking timing recommendations
 - **Alternative Options**: Backup selections for every primary choice
 
-### **2. Advanced Booking & Fallback System**
+### **2. Shopping Cart & Backtracking System**
+
+#### **Smart Shopping Cart Management**
+- **Dependency Tracking**: Flight selection influences hotel search location context
+- **Real-time Pricing**: Dynamic price updates with live availability checking
+- **Conflict Detection**: Automatic detection when new selections contradict existing constraints
+- **Version Control**: Context snapshots enable precise backtracking to any previous state
+- **Pricing Transparency**: Clear breakdown of all costs, fees, and dependencies
+
+#### **Advanced Backtracking Engine**
+- **Granular Control**: Users can backtrack at multiple levels:
+  - **Step-by-step**: Undo one decision at a time
+  - **Component-level**: Return to specific selections (flights, hotels, activities)
+  - **Checkpoint**: Return to major milestones (preference collection, agent results)
+  - **Full reset**: Start over while preserving learned context
+- **Smart Suggestions**: AI-powered recommendations based on backtracking patterns
+- **Context Preservation**: Maintain user preferences while allowing selection changes
+- **Dependency Management**: Handle cascading changes when core selections are modified
+
+#### **Trip Template System**
+- **Template Export**: Complete context capture including:
+  - All preferences and constraints
+  - Successful selections and alternatives
+  - Partial states and decision paths
+  - User feedback and ratings
+- **Template Import**: Seamless import with automatic adaptation to:
+  - New dates and availability
+  - Different budgets and group sizes
+  - User-specific preferences and constraints
+- **Template Sharing**: Community marketplace for successful trip templates
+- **Partial Resume**: Continue from any point in a previous planning process
+
+### **3. Advanced Booking & Fallback System**
 
 #### **Automated Booking Flow**
 - **Real-Time Inventory Checks**: Live availability verification
@@ -330,6 +438,18 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 ### **Days 5-6: Final Submission**
 - Day 5: Production polish + performance optimization
 - Day 6: Final testing + documentation + stretch features
+
+---
+
+## 📚 Related Documentation
+
+For detailed implementation specifications, see:
+- **`_docs/notes/travel_preferences.md`** - Complete context-based preference collection system
+- **`_docs/notes/profile_preferences.md`** - User profile and system interaction preferences  
+- **`_docs/notes/flow.md`** - Detailed user flow design and user stories
+- **`_docs/notes/langflow_architecture.md`** - Comprehensive Langflow implementation architecture
+- **`_docs/Architecture.md`** - Complete technical architecture and development workflow
+- **`_docs/setup_phase_1.md`** - Phase 1 development setup and mock API configuration
 
 ---
 

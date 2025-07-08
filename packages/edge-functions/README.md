@@ -56,7 +56,7 @@ TWILIO_ACCOUNT_SID=your_twilio_sid
 TWILIO_AUTH_TOKEN=your_twilio_token
 ELEVENLABS_API_KEY=your_elevenlabs_key
 
-# Feature Flags
+# Phase Configuration
 USE_MOCK_APIS=false
 ```
 

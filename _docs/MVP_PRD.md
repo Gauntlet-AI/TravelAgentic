@@ -151,16 +151,14 @@ const apiClient = process.env.USE_MOCK_APIS === 'true'
 // - Browser automation fallback simulation
 ```
 
-## 📊 Feature Flags
+## 📊 Development Configuration
 
-| Feature | Default | Purpose |
-|---------|---------|---------|
-| `FEATURE_ACTIVITY_FILTERS` | `true` | Enable activity filtering UI |
-| `FEATURE_PDF_GENERATION` | `true` | Enable itinerary PDF creation |
-| `FEATURE_BROWSER_FALLBACK` | `false` | Disable browser automation in Phase 1 |
-| `FEATURE_VOICE_CALLING` | `false` | Disable voice fallback in MVP |
-| `FEATURE_REAL_PAYMENTS` | `false` | Block real payment processing |
-| `USE_MOCK_APIS` | `true` | Force mock API usage |
+| Configuration | Default | Purpose |
+|---------------|---------|---------|
+| `DEVELOPMENT_PHASE` | `1` | Control which phase features are enabled |
+| `USE_MOCK_APIS` | `true` | Force mock API usage for development |
+| `ENABLE_CONCURRENT_SEARCH` | `true` | Enable parallel API searches |
+| `ENABLE_ADVANCED_AUTOMATION` | `false` | Enable advanced automation features in Phase 3 |
 
 ## 🚀 MVP Scope & Limitations
 
@@ -233,10 +231,23 @@ const apiClient = process.env.USE_MOCK_APIS === 'true'
 
 ---
 
+## 📚 Related Documentation
+
+For detailed implementation specifications, see:
+- **`_docs/notes/travel_preferences.md`** - Context-based preference collection system
+- **`_docs/notes/profile_preferences.md`** - User profile and system interaction preferences
+- **`_docs/notes/flow.md`** - Detailed user flow design and user stories
+- **`_docs/notes/langflow_architecture.md`** - Comprehensive Langflow implementation architecture
+- **`_docs/setup_phase_1.md`** - Complete Phase 1 setup guide with mock API configuration
+- **`_docs/Architecture.md`** - Complete technical architecture and development workflow
+- **`_docs/PRD.md`** - Full product requirements document with enterprise features
+
+---
+
 **Next Steps:**
 1. Validate PRD with stakeholders
-2. Create detailed user stories
-3. Set up development environment
+2. Create detailed user stories (see `_docs/notes/flow.md`)
+3. Set up development environment (see `_docs/setup_phase_1.md`)
 4. Begin Phase 1 implementation
 
 This PRD serves as the foundation for building TravelAgentic MVP, focusing on demonstrating the complete automated booking experience without real financial transactions. 

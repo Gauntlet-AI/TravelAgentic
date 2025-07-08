@@ -23,7 +23,7 @@ TravelAgentic is a **planned** open-source AI-first travel planning platform tha
 | [🚀 Quick Start](#-quick-start) | Get up and running in 5 minutes |
 | [🛡️ Fallback System](#-comprehensive-fallback-system) | 5-layer fallback hierarchy |
 | [🧪 Testing](#-testing) | Mock APIs and browser automation testing |
-| [🔧 Development](#-development) | Feature flags and contribution guide |
+| [🔧 Development](#-development) | Phase-based development and contribution guide |
 | [🎯 Roadmap](#-roadmap) | Current progress and future plans |
 
 ## 🏗️ Architecture
@@ -223,29 +223,41 @@ npm run test:browser-automation
 
 ## 📚 Documentation
 
-- **[Complete Architecture](_docs/Architecture.md)** - Full technical specification
+### **Main Documentation**
+- **[Complete Architecture](_docs/Architecture.md)** - Full technical specification with user flows and Langflow architecture
+- **[Product Requirements](_docs/PRD.md)** - Complete product vision with user stories and enterprise features
+- **[MVP PRD](_docs/MVP_PRD.md)** - 6-day development plan with specific deliverables
+- **[API Strategy](_docs/API.md)** - Comprehensive API comparison and phase-based integration
+- **[Phase 1 Setup](_docs/setup_phase_1.md)** - Complete development setup guide
 - **[Contributing Guide](CONTRIBUTING.md)** - Development workflow and guidelines
-- **[Package READMEs](packages/)** - Detailed documentation for each package
+
+### **Detailed Design Documentation**
+- **[Travel Preferences](_docs/notes/travel_preferences.md)** - Context-based preference collection system
+- **[Profile Preferences](_docs/notes/profile_preferences.md)** - User profile and system interaction preferences
+- **[User Flow Design](_docs/notes/flow.md)** - Detailed user stories and flow specifications
+- **[Langflow Architecture](_docs/notes/langflow_architecture.md)** - Comprehensive Langflow implementation with context management
+
+### **Package Documentation**
+- **[Package READMEs](packages/)** - Detailed documentation for each package (when implemented)
 
 ## 🔧 Development
 
-### Feature Flags
+### Phase-Based Development
 
-Control feature visibility using environment variables:
+Control development configuration using environment variables:
 
 ```bash
-# Phase 1 Features (MVP)
-FEATURE_PDF_GENERATION=true
-FEATURE_AI_SELECTION=true
+# Phase 1 Configuration (MVP)
+DEVELOPMENT_PHASE=1
+USE_MOCK_APIS=true
 
-# Phase 2 Features (Enhanced)
-FEATURE_ACTIVITY_FILTERS=true
-FEATURE_BROWSER_FALLBACK=true
+# Phase 2 Configuration (Enhanced)
+DEVELOPMENT_PHASE=2
 ENABLE_CONCURRENT_SEARCH=true
 
-# Phase 3 Features (Advanced)
-FEATURE_VOICE_CALLING=false
-FEATURE_REAL_PAYMENTS=false
+# Phase 3 Configuration (Advanced)
+DEVELOPMENT_PHASE=3
+ENABLE_ADVANCED_AUTOMATION=true
 ```
 
 ### Mock API Development
@@ -385,9 +397,18 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 **Ready to help plan the future of travel planning?** 🚀
 
 We're currently in the **planning and architecture phase**. Check out our comprehensive documentation:
-- [📋 Complete PRD](_docs/PRD.md) - Full product requirements
-- [📋 MVP PRD](_docs/MVP_PRD.md) - 6-day development plan  
-- [🏗️ Architecture](_docs/Architecture.md) - Technical specifications
-- [🔌 API Strategy](_docs/API.md) - Comprehensive API comparison and fallback strategy
+
+### **Core Documentation**
+- [📋 Complete PRD](_docs/PRD.md) - Full product requirements with user stories and enterprise features
+- [📋 MVP PRD](_docs/MVP_PRD.md) - 6-day development plan with specific deliverables
+- [🏗️ Architecture](_docs/Architecture.md) - Complete technical specifications with Langflow architecture
+- [🔌 API Strategy](_docs/API.md) - Comprehensive API comparison and phase-based integration strategy
+- [⚙️ Phase 1 Setup](_docs/setup_phase_1.md) - Complete development setup guide
+
+### **Detailed Design**
+- [🎯 Travel Preferences](_docs/notes/travel_preferences.md) - Context-based preference collection system
+- [👤 Profile Preferences](_docs/notes/profile_preferences.md) - User profile and system interaction preferences
+- [🔄 User Flow Design](_docs/notes/flow.md) - Detailed user stories and flow specifications
+- [🧠 Langflow Architecture](_docs/notes/langflow_architecture.md) - Comprehensive Langflow implementation with context management, shopping cart, and backtracking
 
 **Development will begin once planning is complete!** 

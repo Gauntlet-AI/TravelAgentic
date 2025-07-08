@@ -75,9 +75,9 @@ We use a fast, CI/CD-driven **trunk-based development model**:
 - Merge only after PR approval and CI passing.
 - Keep PRs small and focused.
 
-### ✅ Feature Flags
-- Use environment-based or DB-based feature flags for incomplete features.
-- You may merge partially complete features safely behind flags.
+### ✅ Phase-Based Development
+- Use phase-based configuration to manage feature rollout.
+- You may merge partially complete features safely by configuring appropriate phases.
 
 ### ✅ Deployment
 - Merging to `main` triggers auto-deployment to production.
@@ -329,36 +329,57 @@ Then create a pull request on GitHub.
 - **Preview deployment** will be created automatically
 - **Small, focused changes** are preferred
 
-## 🚀 Feature Flags
+## 🚀 Phase-Based Development
 
-Use feature flags to safely merge incomplete features:
+Use phase-based configuration to manage feature rollout:
 
 ### Environment Variables
 
 ```bash
-# Enable/disable features
-FEATURE_ACTIVITY_FILTERS=true
-FEATURE_VOICE_CALLING=false
-FEATURE_PDF_GENERATION=true
+# Control development phase
+DEVELOPMENT_PHASE=1
+USE_MOCK_APIS=true
+ENABLE_CONCURRENT_SEARCH=true
+ENABLE_ADVANCED_AUTOMATION=false
 ```
 
 ### Implementation
 
 ```typescript
-// lib/feature-flags.ts
-export const featureFlags = {
-  activityFilters: process.env.FEATURE_ACTIVITY_FILTERS === 'true',
-  voiceCalling: process.env.FEATURE_VOICE_CALLING === 'true',
-  pdfGeneration: process.env.FEATURE_PDF_GENERATION === 'true',
-}
+// lib/phase-config.ts
+export const getPhaseConfig = (phase: number = 1) => {
+  const configs = {
+    1: {
+      mockApis: true,
+      browserFallback: false,
+      voiceCalling: false,
+      realPayments: false
+    },
+    2: {
+      mockApis: false,
+      browserFallback: true,
+      voiceCalling: false,
+      realPayments: false
+    },
+    3: {
+      mockApis: false,
+      browserFallback: true,
+      voiceCalling: true,
+      realPayments: true
+    }
+  };
+  return configs[phase] || configs[1];
+};
 
 // Usage in components
-import { featureFlags } from '../lib/feature-flags'
+import { getPhaseConfig } from '../lib/phase-config'
 
 export const SearchPage = () => {
+  const config = getPhaseConfig(process.env.DEVELOPMENT_PHASE);
+  
   return (
     <div>
-      {featureFlags.activityFilters && <ActivityFilters />}
+      {config.browserFallback && <BrowserFallbackIndicator />}
       {/* ... rest of component */}
     </div>
   )
