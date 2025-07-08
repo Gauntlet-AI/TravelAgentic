@@ -1,19 +1,19 @@
 # ✈️ TravelAgentic
 
-> **🚧 Planning Phase**: This repository contains comprehensive planning, architecture, and strategy documentation. Implementation has not yet begun.
+> **🚀 Active Development**: Working v0 prototype with Next.js + React components. Currently migrating to enhanced architecture.
 
-An AI-powered travel planning application that will automate the entire trip booking process from search to itinerary generation.
+An AI-powered travel planning application that automates the entire trip booking process from search to itinerary generation.
 
 ## 🚀 Overview
 
-TravelAgentic is a **planned** open-source AI-first travel planning platform that will:
+TravelAgentic is an **active** open-source AI-first travel planning platform that will:
 - Collect user preferences and constraints through intelligent intake
 - Search flights, hotels, and activities simultaneously using APIs and browser automation
 - Handle booking automation with comprehensive 5-layer fallback system
 - Generate personalized PDF itineraries with packing tips and local information
 - Provide browser automation and voice call fallbacks for maximum booking success
 
-**Current Status**: 📋 **Planning & Architecture Phase** - We're defining the structure, strategy, and technical specifications before development begins.
+**Current Status**: 🚀 **Working v0 Prototype** - Core UI components and App Router structure complete. Migrating to enhanced packages architecture.
 
 ## 📋 Quick Navigation
 
@@ -46,12 +46,21 @@ TravelAgentic/
 
 ## 🛠️ Tech Stack
 
+### **Current Working Stack**
+| Component | Technology |
+|-----------|------------|
+| **Frontend** | Next.js 15 + App Router + TypeScript |
+| **UI Components** | Shadcn/UI + Radix UI + Tailwind CSS |
+| **AI Integration** | OpenAI API + AI SDK |
+| **Forms** | React Hook Form + Zod validation |
+| **Styling** | Tailwind CSS + CSS Variables |
+| **Development** | ESLint + TypeScript |
+
+### **Planned Enhanced Stack**
 | Component | Technology |
 |-----------|------------|
 | **AI Orchestration** | Langflow |
-| **API Layer** | Next.js API Routes |
 | **Database** | Supabase Cloud |
-| **Frontend** | Next.js + TypeScript |
 | **Authentication** | Supabase Auth |
 | **PDF Generation** | React-PDF (@react-pdf/renderer) |
 | **Browser Automation** | Playwright + browser-use |
@@ -77,35 +86,62 @@ TravelAgentic follows a strategic 3-phase development approach that balances rap
 - **APIs**: Twilio Voice, ElevenLabs, Rome2Rio, FlightAware
 - **Goal**: Production-ready with 95% feature completeness
 
-## 🚀 Planned Development Setup
+## 🚀 Development Setup
 
-> **Note**: This is the planned development setup. The actual implementation is not yet complete.
+### **Current Setup (Working v0)**
 
-### Prerequisites (When Implementation Begins)
-
+#### Prerequisites
 - Node.js 18+
-- Docker & Docker Compose
-- Supabase CLI
 - Git
 
-### 1. Clone the Repository (Future)
-
+#### 1. Clone the Repository
 ```bash
 git clone https://github.com/yourusername/TravelAgentic.git
 cd TravelAgentic
 ```
 
-### 2. Set up Environment Variables (Planned)
-
+#### 2. Install Dependencies
 ```bash
-# Copy environment template (will be created)
-cp .env.example .env
+npm install
+```
 
-# Phase-based configuration (planned approach)
-# Phase 1: Essential APIs only
-USE_MOCK_APIS=true
+#### 3. Set up Environment Variables
+```bash
+# Create environment file
+cp .env.example .env.local
+
+# Required for current v0 app
 OPENAI_API_KEY=your_openai_key
-STRIPE_SECRET_KEY=your_stripe_key
+```
+
+#### 4. Start Development Server
+```bash
+npm run dev
+```
+
+#### 5. Access the Application
+- **Web App**: http://localhost:3000
+
+#### Available Scripts
+```bash
+npm run dev    # Start development server
+npm run build  # Build for production
+npm run start  # Start production server
+npm run lint   # Run ESLint
+```
+
+### **Planned Enhanced Setup**
+
+#### Future Prerequisites
+- Docker & Docker Compose
+- Supabase CLI
+
+#### Enhanced Environment Variables (Planned)
+```bash
+# Phase-based configuration (planned approach)
+USE_MOCK_APIS=true
+SUPABASE_URL=your_supabase_url
+LANGFLOW_API_KEY=your_langflow_key
 
 # Phase 2: Add travel APIs (optional)
 TEQUILA_API_KEY=your_tequila_key
@@ -115,28 +151,18 @@ VIATOR_API_KEY=your_viator_key
 # Phase 3: Advanced APIs (optional)
 TWILIO_ACCOUNT_SID=your_twilio_sid
 ELEVENLABS_API_KEY=your_elevenlabs_key
-
-# Browser Automation (Playwright + browser-use)
-BROWSER_USE_HEADLESS=true
-AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
 ```
 
-### 3. Start Development Environment
-
+#### Enhanced Development (Planned)
 ```bash
 # Start all services (Web App, Langflow, Redis, Local DB)
 docker-compose up -d
 
-# View running services
-docker-compose ps
+# Access services
+# - Langflow UI: http://localhost:7860  
+# - Local PostgreSQL: localhost:5432
+# - Redis: localhost:6379
 ```
-
-### 4. Access the Application
-
-- **Web App**: http://localhost:3000
-- **Langflow UI**: http://localhost:7860  
-- **Local PostgreSQL**: localhost:5432 (if using local DB)
-- **Redis**: localhost:6379
 
 ## 🛡️ Comprehensive Fallback System
 
@@ -181,10 +207,16 @@ Supabase database schema and migrations.
 - **Purpose**: Database structure, migrations, and seed data
 - **Key Features**: RLS policies, TypeScript types, performance optimization
 
-## 🧪 Planned Testing Strategy
+## 🧪 Testing Strategy
 
-### Run Tests with Mock APIs (Planned Approach)
+### **Current Testing State**
+- **Status**: Test suite in development
+- **Available**: Basic linting with `npm run lint`
+- **Planned**: Comprehensive testing with mock APIs
 
+### **Planned Testing Implementation**
+
+#### Run Tests with Mock APIs (Planned)
 ```bash
 # Enable mock mode for OSS-friendly development
 export USE_MOCK_APIS=true
@@ -201,8 +233,7 @@ npm run test:langflow
 npm run test:playwright
 ```
 
-### Run Tests with Real APIs (Future)
-
+#### Run Tests with Real APIs (Future)
 ```bash
 # Requires all API keys to be configured
 export USE_MOCK_APIS=false
@@ -339,21 +370,29 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ## 🎯 Roadmap
 
-### Phase 1: MVP Foundation (Days 1-2) 📋 *Planned*
-- [ ] Automated user intake flow with preference learning
-- [ ] Comprehensive mock API system for all travel services
-- [ ] Core automation flow (search → select → checkout)
-- [ ] Basic PDF itinerary generation
-- [ ] OpenAI integration for AI-powered decisions
+### ✅ **Current Status: Working v0 Prototype**
+- [x] Next.js 15 + App Router foundation
+- [x] Shadcn/UI component library integration
+- [x] OpenAI API integration
+- [x] Basic travel components (flight-card, hotel-card, activity-card)
+- [x] Authentication pages (login, signup)
+- [x] Chat interface and research API routes
 
-### Phase 2: Enhanced Features (Days 3-4) 📋 *Planned*
+### 🔄 **Phase 1: Architecture Migration (In Progress)**
+- [ ] Migrate to packages/web structure
+- [ ] Implement mock API system
+- [ ] Add comprehensive travel search flow
+- [ ] Integrate Langflow for AI orchestration
+- [ ] Add database integration (Supabase)
+
+### 📋 **Phase 2: Enhanced Features (Planned)**
 - [ ] Real API integration (Tequila, Booking.com, Viator)
 - [ ] Browser automation fallbacks (Playwright + browser-use)
 - [ ] Advanced activity filtering and personalization
 - [ ] Enhanced error handling and user feedback
 - [ ] Improved UI/UX with loading states
 
-### Phase 3: Production Ready (Days 5-6) 📋 *Planned*
+### 🚀 **Phase 3: Production Ready (Planned)**
 - [ ] Voice call fallback system (Twilio + ElevenLabs)
 - [ ] Comprehensive testing (85% coverage)
 - [ ] Performance optimization and caching
@@ -403,9 +442,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-**Ready to help plan the future of travel planning?** 🚀
+**Ready to help build the future of travel planning?** 🚀
 
-We're currently in the **planning and architecture phase**. Check out our comprehensive documentation:
+We have a **working v0 prototype** and are enhancing it with comprehensive architecture. Check out our documentation:
 
 ### **Core Documentation**
 - [📋 Complete PRD](_docs/PRD.md) - Full product requirements with user stories and enterprise features
@@ -420,4 +459,4 @@ We're currently in the **planning and architecture phase**. Check out our compre
 - [🔄 User Flow Design](_docs/notes/flow.md) - Detailed user stories and flow specifications
 - [🧠 Langflow Architecture](_docs/notes/langflow_architecture.md) - Comprehensive Langflow implementation with context management, shopping cart, and backtracking
 
-**Development will begin once planning is complete!** 
+**Development is active with working v0 prototype - contributions welcome!** 
