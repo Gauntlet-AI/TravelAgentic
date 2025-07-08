@@ -86,7 +86,7 @@ export const activityTypes: ActivityTypeCard[] = [
     title: "Indoor Activities",
     description: "Museums, galleries, shopping",
     icon: "🏛️",
-    image: "https://images.unsplash.com/photo-1460537913554-7b6c2c4fbdac?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1723974897013-4bf20b00731d?q=80&w=2488&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "indoor",
   },
   {
@@ -134,7 +134,7 @@ export const activityTypes: ActivityTypeCard[] = [
     title: "Adventure Sports",
     description: "Extreme sports, water activities",
     icon: "🏄",
-    image: "https://images.unsplash.com/photo-1527164179768-7b1f1a3b4a1b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1711066444236-c39552fea54e?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     category: "adventure",
   },
 ]
@@ -266,7 +266,7 @@ export const mockActivities: Activity[] = [
     price: 35,
     duration: "1.5 hours",
     rating: 4.4,
-    image: "https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1731596152971-26fb19c427bf?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
     location: "Dance Studio",
   },
   {
@@ -288,7 +288,7 @@ export const mockActivities: Activity[] = [
     price: 55,
     duration: "2.5 hours",
     rating: 4.5,
-    image: "https://images.unsplash.com/photo-1494691843326-aaf5b2217b4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1464207687429-7505649dae38?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     location: "Riverside Park",
   },
   {
@@ -321,7 +321,7 @@ export const mockActivities: Activity[] = [
     price: 95,
     duration: "3 hours",
     rating: 4.6,
-    image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     location: "Culinary School",
   },
   {
@@ -343,7 +343,7 @@ export const mockActivities: Activity[] = [
     price: 40,
     duration: "3 hours",
     rating: 4.5,
-    image: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1559752067-f30e5f277930?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     location: "Jazz District",
   },
   {
@@ -354,7 +354,7 @@ export const mockActivities: Activity[] = [
     price: 50,
     duration: "3 hours",
     rating: 4.3,
-    image: "https://images.unsplash.com/photo-1518646949400-ac8b9d8c45c1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
+    image: "https://images.unsplash.com/photo-1684284994249-935f478cc127?q=80&w=1740&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80",
     location: "City Center",
   },
 ]
