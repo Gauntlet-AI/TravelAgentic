@@ -34,12 +34,57 @@ jobs:
       - name: Lint Code
         run: npm run lint
 
-  deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: build-and-test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
+  # Commented out for development phase - enable when ready for automated deployment
+  # build-docker:
+  #   if: github.ref == 'refs/heads/main'
+  #   needs: build-and-test
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
 
-      - name: Deploy to Production (Vercel)
-        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }} 
+  #     - name: Set up Docker Buildx
+  #       uses: docker/setup-buildx-action@v3
+
+  #     - name: Log in to Container Registry
+  #       uses: docker/login-action@v3
+  #       with:
+  #         registry: ${{ secrets.REGISTRY_URL }}
+  #         username: ${{ secrets.REGISTRY_USERNAME }}
+  #         password: ${{ secrets.REGISTRY_PASSWORD }}
+
+  #     - name: Extract metadata
+  #       id: meta
+  #       uses: docker/metadata-action@v5
+  #       with:
+  #         images: ${{ secrets.REGISTRY_URL }}/travelagentic
+  #         tags: |
+  #           type=ref,event=branch
+  #           type=ref,event=pr
+  #           type=sha,prefix={{branch}}-
+  #           type=raw,value=latest,enable={{is_default_branch}}
+
+  #     - name: Build and push Docker image
+  #       uses: docker/build-push-action@v5
+  #       with:
+  #         context: .
+  #         push: true
+  #         tags: ${{ steps.meta.outputs.tags }}
+  #         labels: ${{ steps.meta.outputs.labels }}
+  #         cache-from: type=gha
+  #         cache-to: type=gha,mode=max
+
+  # deploy:
+  #   if: github.ref == 'refs/heads/main'
+  #   needs: build-docker
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Deploy to Production
+  #       run: |
+  #         echo "🚀 Deploy the new image to your container platform"
+  #         echo "Image: ${{ secrets.REGISTRY_URL }}/travelagentic:latest"
+  #         echo "This step depends on your chosen platform:"
+  #         echo "- AWS ECS: aws ecs update-service ..."
+  #         echo "- Google Cloud Run: gcloud run deploy ..."
+  #         echo "- DigitalOcean: doctl apps create-deployment ..."
+  #         echo "- Railway: railway up ..."
+  #         # Add your specific deployment commands here 

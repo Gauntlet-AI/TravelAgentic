@@ -1,0 +1,124 @@
+version: '3.8'
+
+services:
+  # Main Web Application (Production)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - USE_MOCK_APIS=${USE_MOCK_APIS:-false}
+      - DEVELOPMENT_PHASE=${DEVELOPMENT_PHASE:-3}
+      
+      # Supabase Cloud Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      
+      # AI Integration
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - LANGFLOW_URL=http://langflow:7860
+      
+      # Travel APIs
+      - TEQUILA_API_KEY=${TEQUILA_API_KEY}
+      - BOOKING_API_KEY=${BOOKING_API_KEY}
+      - VIATOR_API_KEY=${VIATOR_API_KEY}
+      - WEATHER_API_KEY=${WEATHER_API_KEY}
+      - CURRENCY_API_KEY=${CURRENCY_API_KEY}
+      
+      # Advanced APIs (Phase 3)
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
+      - ROME2RIO_API_KEY=${ROME2RIO_API_KEY}
+      - FLIGHTAWARE_API_KEY=${FLIGHTAWARE_API_KEY}
+      - FOURSQUARE_API_KEY=${FOURSQUARE_API_KEY}
+      
+      # Payments
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+      
+      # Infrastructure
+      - REDIS_URL=redis://redis:6379
+      
+      # Browser Automation
+      - BROWSER_USE_HEADLESS=true
+      - BROWSER_USE_TIMEOUT=30000
+      - AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
+      - AUTOMATION_DELAY_MS=2000
+      
+    depends_on:
+      - langflow
+      - redis
+    restart: unless-stopped
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+      restart_policy:
+        condition: on-failure
+
+  # Langflow (AI Workflows)
+  langflow:
+    image: langflowai/langflow:latest
+    environment:
+      # Use Supabase Cloud for Langflow storage
+      - LANGFLOW_DATABASE_URL=${SUPABASE_URL}
+      - LANGFLOW_SUPERUSER=${LANGFLOW_SUPERUSER:-admin}
+      - LANGFLOW_SUPERUSER_PASSWORD=${LANGFLOW_SUPERUSER_PASSWORD}
+      - LANGFLOW_SECRET_KEY=${LANGFLOW_SECRET_KEY}
+      - LANGFLOW_AUTO_LOGIN=false
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./packages/langflow/flows:/app/flows
+      - langflow-data:/app/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+        reservations:
+          memory: 1G
+
+  # Redis (Caching & Sessions)
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-defaultpassword}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  # Nginx (Load Balancer & SSL Termination)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web
+    restart: unless-stopped
+
+volumes:
+  langflow-data:
+  redis-data:
+
+networks:
+  default:
+    driver: bridge 

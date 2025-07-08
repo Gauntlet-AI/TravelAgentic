@@ -32,15 +32,16 @@ TravelAgentic is a **planned** open-source AI-first travel planning platform tha
 TravelAgentic/
 ├── packages/
 │   ├── langflow/       → AI workflow orchestration
-│   ├── edge-functions/ → API orchestration (Vercel/Supabase)
-│   ├── web/           → Next.js frontend
+│   ├── web/           → Next.js full-stack app (frontend + API routes)
 │   ├── database/      → Supabase schema & migrations
 │   ├── mocks/         → Mock API responses for testing
 │   ├── test_flows/    → Langflow test flows
 │   └── seed/          → Database seed data
 ├── .github/           → CI/CD workflows
 ├── _docs/             → Documentation
-└── docker-compose.yml → Local development environment
+├── Dockerfile         → Production container build
+├── docker-compose.yml → Development environment
+└── docker-compose.prod.yml → Production deployment
 ```
 
 ## 🛠️ Tech Stack
@@ -48,14 +49,14 @@ TravelAgentic/
 | Component | Technology |
 |-----------|------------|
 | **AI Orchestration** | Langflow |
-| **API Layer** | Vercel Edge Functions / Supabase Functions |
-| **Database** | Supabase (PostgreSQL) |
+| **API Layer** | Next.js API Routes |
+| **Database** | Supabase Cloud |
 | **Frontend** | Next.js + TypeScript |
 | **Authentication** | Supabase Auth |
 | **PDF Generation** | React-PDF (@react-pdf/renderer) |
 | **Browser Automation** | Playwright + browser-use |
 | **Voice Calls** | Twilio + ElevenLabs + OpenAI |
-| **Deployment** | Vercel + Supabase |
+| **Deployment** | Docker Containers |
 
 ## 🎯 Phase-Based Development Strategy
 
@@ -120,25 +121,22 @@ BROWSER_USE_HEADLESS=true
 AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
 ```
 
-### 3. Start Development Environment (Future)
+### 3. Start Development Environment
 
 ```bash
-# Start all services (Supabase, Langflow, Redis)
+# Start all services (Web App, Langflow, Redis, Local DB)
 docker-compose up -d
 
-# Install dependencies
-npm install
-
-# Start the web application
-cd packages/web
-npm run dev
+# View running services
+docker-compose ps
 ```
 
-### 4. Access the Application (When Built)
+### 4. Access the Application
 
 - **Web App**: http://localhost:3000
-- **Langflow UI**: http://localhost:7860
-- **Supabase Studio**: http://localhost:54323
+- **Langflow UI**: http://localhost:7860  
+- **Local PostgreSQL**: localhost:5432 (if using local DB)
+- **Redis**: localhost:6379
 
 ## 🛡️ Comprehensive Fallback System
 
@@ -291,29 +289,40 @@ npm run dev
 
 ## 🚢 Deployment
 
-### Preview Deployment
+### Development Deployment
 
-Every pull request automatically deploys to a preview environment via Vercel.
+```bash
+# Start local development environment
+docker-compose up -d
+
+# View application at http://localhost:3000
+```
 
 ### Production Deployment
 
 ```bash
-# Deploy to production
-vercel --prod
+# Build and deploy with production configuration
+docker-compose -f docker-compose.prod.yml up -d
 
-# Deploy database migrations
-supabase db push
-
-# Deploy Langflow workflows
-# (Manual deployment via Langflow UI)
+# Or build for deployment to container platforms
+docker build -t travelagentic:latest .
 ```
+
+### Container Platform Options
+
+- **AWS ECS/Fargate**: Managed containers with auto-scaling
+- **Google Cloud Run**: Serverless containers, pay-per-request
+- **DigitalOcean App Platform**: Simple container deployment
+- **Railway**: Developer-friendly container hosting
+- **Any VPS**: Simple docker-compose deployment
 
 ## 🏗️ CI/CD Pipeline
 
 - **Automated Testing**: All PRs run tests with mock APIs
 - **Code Quality**: ESLint, TypeScript checks, and formatting
-- **Preview Deployments**: Automatic Vercel previews for each PR
-- **Production Deployment**: Auto-deploy on merge to main
+- **Docker Build**: Automatic container builds on merge to main
+- **Container Registry**: Push to your chosen container registry
+- **Production Deployment**: Deploy to your container platform
 
 ## 🤝 Contributing
 
@@ -387,7 +396,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 - **Langflow**: For visual AI workflow orchestration
 - **Supabase**: For database and authentication infrastructure
-- **Vercel**: For deployment and edge computing
+- **Docker**: For containerized deployment
 - **OpenAI**: For AI capabilities and natural language processing
 - **Playwright + browser-use**: For reliable browser automation fallbacks
 - **Community**: For contributions and feedback
