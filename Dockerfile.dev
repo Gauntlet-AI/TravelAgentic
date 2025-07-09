@@ -1,0 +1,41 @@
+# TravelAgentic Development Dockerfile
+# Optimized for development with volume mounting and hot reload
+
+FROM node:18-alpine
+
+# Install dependencies needed for development
+RUN apk add --no-cache libc6-compat
+
+# Set working directory
+WORKDIR /app
+
+# Copy root package.json for workspace setup
+COPY package*.json ./
+
+# Install root dependencies
+RUN npm install
+
+# Set working directory to web package
+WORKDIR /app/packages/web
+
+# Copy web package.json
+COPY packages/web/package*.json ./
+
+# Install web package dependencies
+RUN npm install
+
+# Create user for security
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+
+# Change ownership of the working directory
+RUN chown -R nextjs:nodejs /app
+
+# Switch to nextjs user
+USER nextjs
+
+# Expose port
+EXPOSE 3000
+
+# Default command (can be overridden by docker-compose)
+CMD ["npm", "run", "dev"] 

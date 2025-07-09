@@ -1,21 +1,19 @@
-version: '3.8'
-
 services:
   # Main Web Application (Development)
   web:
     build:
-      context: ./packages/web
-      dockerfile: ../../Dockerfile
+      context: .
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     environment:
       - NODE_ENV=development
       - USE_MOCK_APIS=true
       - DEVELOPMENT_PHASE=1
-      # Supabase (use cloud or local)
-      - SUPABASE_URL=${SUPABASE_URL:-postgresql://postgres:password@supabase-db:5432/travelagentic}
-      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your-anon-key}
-      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-your-service-key}
+      # Supabase Cloud Configuration
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
       # AI Integration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - LANGFLOW_URL=http://langflow:7860
@@ -24,40 +22,22 @@ services:
     depends_on:
       - langflow
       - redis
-      - supabase-db
     volumes:
       - ./packages/web:/app/packages/web
       - /app/packages/web/node_modules
     restart: unless-stopped
     command: npm run dev
 
-  # Supabase Database (for local development)
-  supabase-db:
-    image: supabase/postgres:latest
-    environment:
-      POSTGRES_DB: travelagentic
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: password
-      POSTGRES_HOST_AUTH_METHOD: trust
-    ports:
-      - "5432:5432"
-    volumes:
-      - supabase-db:/var/lib/postgresql/data
-      - ./packages/seed:/docker-entrypoint-initdb.d
-    restart: unless-stopped
-
-  # Langflow (AI Workflows)
+  # Langflow (AI Workflows) - Using Supabase Cloud
   langflow:
     image: langflowai/langflow:latest
     environment:
-      - LANGFLOW_DATABASE_URL=${SUPABASE_URL:-postgresql://postgres:password@supabase-db:5432/travelagentic}
+      - LANGFLOW_DATABASE_URL=${SUPABASE_URL}
       - LANGFLOW_SUPERUSER=admin
       - LANGFLOW_SUPERUSER_PASSWORD=admin
       - LANGFLOW_SECRET_KEY=your-secret-key-here
     ports:
       - "7860:7860"
-    depends_on:
-      - supabase-db
     volumes:
       - ./packages/langflow/flows:/app/flows
       - ./packages/langflow/data:/app/data
@@ -73,5 +53,4 @@ services:
     restart: unless-stopped
 
 volumes:
-  supabase-db:
   redis-data: 
