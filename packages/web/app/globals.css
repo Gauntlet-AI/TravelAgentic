@@ -92,3 +92,86 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+/* Calendar cross-platform consistency improvements */
+@layer components {
+  /* Fix for react-day-picker v9 cross-platform layout issues */
+  
+  /* Target the actual react-day-picker elements directly */
+  [data-testid="calendar"],
+  .rdp,
+  [role="application"] {
+    /* Force consistent font metrics for the entire calendar */
+    font-variant-numeric: tabular-nums;
+    -webkit-font-feature-settings: "kern" 1, "tnum" 1;
+    font-feature-settings: "kern" 1, "tnum" 1;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Fix flexbox layout issues with calendar grid */
+  [role="grid"] {
+    display: table !important;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+  
+  /* Fix row layout */
+  [role="row"] {
+    display: table-row !important;
+  }
+  
+  /* Fix header row */
+  [role="columnheader"] {
+    display: table-cell !important;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    text-align: center;
+    vertical-align: middle;
+    box-sizing: border-box;
+  }
+  
+  /* Fix day cells */
+  [role="gridcell"] {
+    display: table-cell !important;
+    width: 36px;
+    min-width: 36px;
+    max-width: 36px;
+    height: 36px;
+    text-align: center;
+    vertical-align: middle;
+    box-sizing: border-box;
+    position: relative;
+  }
+  
+  /* Ensure buttons inside grid cells don't break layout */
+  [role="gridcell"] button {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px auto;
+    box-sizing: border-box;
+  }
+  
+  /* Alternative approach: Force CSS Grid layout for better consistency */
+  .calendar-grid-fix {
+    display: grid !important;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 0;
+    width: 100%;
+  }
+  
+  .calendar-grid-fix > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    box-sizing: border-box;
+  }
+}

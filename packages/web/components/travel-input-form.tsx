@@ -15,6 +15,7 @@ import { Inter } from 'next/font/google';
 import { useRouter } from 'next/navigation';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import type { DateRange } from 'react-day-picker';
 
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
@@ -379,8 +380,9 @@ interface TravelInputFormProps {
 export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [departureLocation, setDepartureLocation] = useState('');
   const [destination, setDestination] = useState('');
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [firstDate, setFirstDate] = useState<Date | undefined>();
+  const [secondDate, setSecondDate] = useState<Date | undefined>();
+  const [hoveredDate, setHoveredDate] = useState<Date | undefined>();
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
@@ -503,9 +505,68 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     return parts.join(' • ');
   };
 
+  const handleDateSelect = (selectedDate: Date | undefined) => {
+    if (!selectedDate) return;
+
+    console.log('Date selected:', selectedDate);
+    console.log('Current state - firstDate:', firstDate, 'secondDate:', secondDate);
+
+    if (!firstDate) {
+      // First click: select first date
+      console.log('Setting first date');
+      setFirstDate(selectedDate);
+      setSecondDate(undefined);
+      setHoveredDate(undefined);
+    } else if (!secondDate) {
+      // Second click: select second date and close picker
+      console.log('Setting second date');
+      setSecondDate(selectedDate);
+      setHoveredDate(undefined);
+      setIsStartDateOpen(false);
+    } else {
+      // Third click: reset to new first date, clear second date
+      console.log('Resetting to new first date');
+      setFirstDate(selectedDate);
+      setSecondDate(undefined);
+      setHoveredDate(undefined);
+      // Keep picker open for selecting second date
+    }
+  };
+
+  const getDisplayRange = () => {
+    if (!firstDate) return undefined;
+    
+    if (secondDate) {
+      // Both dates selected - show actual range
+      const range = {
+        from: firstDate < secondDate ? firstDate : secondDate,
+        to: firstDate < secondDate ? secondDate : firstDate,
+      };
+      console.log('Display range (both dates):', range);
+      return range;
+    }
+    
+    if (hoveredDate && firstDate) {
+      // Show hover preview between first date and hovered date
+      const range = {
+        from: firstDate < hoveredDate ? firstDate : hoveredDate,
+        to: firstDate < hoveredDate ? hoveredDate : firstDate,
+      };
+      console.log('Display range (hover):', range);
+      return range;
+    }
+    
+    console.log('Display range (single date):', { from: firstDate, to: undefined });
+    return { from: firstDate, to: undefined }; // Only first date selected
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (departureLocation && destination && startDate && endDate) {
+    if (departureLocation && destination && firstDate && secondDate) {
+      // Determine start and end dates based on chronological order
+      const startDate = firstDate < secondDate ? firstDate : secondDate;
+      const endDate = firstDate < secondDate ? secondDate : firstDate;
+      
       onSubmit({
         departureLocation,
         destination,
@@ -519,7 +580,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     }
   };
 
-  const isFormValid = departureLocation && destination && startDate && endDate;
+  const isFormValid = departureLocation && destination && firstDate && secondDate;
 
   if (isMobile) {
     return (
@@ -701,32 +762,70 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                       className="w-full justify-start border border-gray-400 bg-transparent text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate && endDate
-                        ? `${format(startDate, 'PPP')} - ${format(endDate, 'PPP')}`
-                        : startDate
-                          ? `${format(startDate, 'PPP')} - Select end date`
-                          : 'Select travel dates'}
+                      {firstDate
+                        ? secondDate
+                          ? `${format(firstDate < secondDate ? firstDate : secondDate, 'PPP')} - ${format(
+                              firstDate < secondDate ? secondDate : firstDate,
+                              'PPP'
+                            )}`
+                          : `${format(firstDate, 'PPP')} - Select end date`
+                        : 'Select travel dates'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                      mode="range"
-                      selected={{
-                        from: startDate || undefined,
-                        to: endDate || undefined,
+                      mode="single"
+                      selected={firstDate}
+                      onSelect={(selectedDate) => {
+                        handleDateSelect(selectedDate);
                       }}
-                      onSelect={(range) => {
-                        if (range?.from) {
-                          setStartDate(range.from);
-                        }
-                        if (range?.to) {
-                          setEndDate(range.to);
-                          setIsStartDateOpen(false);
+                      onDayMouseEnter={(day) => {
+                        if (firstDate && !secondDate) {
+                          setHoveredDate(day);
                         }
                       }}
-                      disabled={(date) => date < new Date()}
+                      onDayMouseLeave={() => {
+                        if (firstDate && !secondDate) {
+                          setHoveredDate(undefined);
+                        }
+                      }}
+                      disabled={(d) => d < new Date()}
                       numberOfMonths={1}
                       initialFocus
+                      modifiers={{
+                        range_start: firstDate ? [firstDate] : [],
+                        range_end: secondDate ? [secondDate] : [],
+                        range_middle: (() => {
+                          const range = getDisplayRange();
+                          console.log('Calculating range_middle for:', range);
+                          
+                          if (!range?.from || !range?.to) return [];
+                          
+                          const days = [];
+                          const start = new Date(range.from);
+                          const end = new Date(range.to);
+                          
+                          // Make sure we're comparing dates correctly
+                          start.setHours(0, 0, 0, 0);
+                          end.setHours(0, 0, 0, 0);
+                          
+                          const current = new Date(start);
+                          current.setDate(current.getDate() + 1); // Start from day after start
+                          
+                          while (current < end) {
+                            days.push(new Date(current));
+                            current.setDate(current.getDate() + 1);
+                          }
+                          
+                          console.log('Range middle days:', days);
+                          return days;
+                        })(),
+                      }}
+                      modifiersClassNames={{
+                        range_start: 'bg-primary text-primary-foreground',
+                        range_end: 'bg-primary text-primary-foreground',
+                        range_middle: 'bg-accent text-accent-foreground',
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
@@ -1072,32 +1171,70 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                       className="h-12 w-full justify-start border border-gray-400 bg-transparent text-left font-normal"
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate && endDate
-                        ? `${format(startDate, 'MMM d')} - ${format(endDate, 'MMM d')}`
-                        : startDate
-                          ? `${format(startDate, 'MMM d')} - Select end date`
-                          : 'Select travel dates'}
+                      {firstDate
+                        ? secondDate
+                          ? `${format(firstDate < secondDate ? firstDate : secondDate, 'MMM d')} - ${format(
+                              firstDate < secondDate ? secondDate : firstDate,
+                              'MMM d'
+                            )}`
+                          : `${format(firstDate, 'MMM d')} - Select end date`
+                        : 'Select travel dates'}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="z-50 w-auto p-0" align="start">
                     <Calendar
-                      mode="range"
-                      selected={{
-                        from: startDate || undefined,
-                        to: endDate || undefined,
+                      mode="single"
+                      selected={firstDate}
+                      onSelect={(selectedDate) => {
+                        handleDateSelect(selectedDate);
                       }}
-                      onSelect={(range) => {
-                        if (range?.from) {
-                          setStartDate(range.from);
-                        }
-                        if (range?.to) {
-                          setEndDate(range.to);
-                          setIsStartDateOpen(false);
+                      onDayMouseEnter={(day) => {
+                        if (firstDate && !secondDate) {
+                          setHoveredDate(day);
                         }
                       }}
-                      disabled={(date) => date < new Date()}
+                      onDayMouseLeave={() => {
+                        if (firstDate && !secondDate) {
+                          setHoveredDate(undefined);
+                        }
+                      }}
+                      disabled={(d) => d < new Date()}
                       numberOfMonths={2}
                       initialFocus
+                      modifiers={{
+                        range_start: firstDate ? [firstDate] : [],
+                        range_end: secondDate ? [secondDate] : [],
+                        range_middle: (() => {
+                          const range = getDisplayRange();
+                          console.log('Calculating range_middle for desktop:', range);
+                          
+                          if (!range?.from || !range?.to) return [];
+                          
+                          const days = [];
+                          const start = new Date(range.from);
+                          const end = new Date(range.to);
+                          
+                          // Make sure we're comparing dates correctly
+                          start.setHours(0, 0, 0, 0);
+                          end.setHours(0, 0, 0, 0);
+                          
+                          const current = new Date(start);
+                          current.setDate(current.getDate() + 1); // Start from day after start
+                          
+                          while (current < end) {
+                            days.push(new Date(current));
+                            current.setDate(current.getDate() + 1);
+                          }
+                          
+                          console.log('Range middle days (desktop):', days);
+                          return days;
+                        })(),
+                      }}
+                      modifiersClassNames={{
+                        range_start: 'bg-primary text-primary-foreground',
+                        range_end: 'bg-primary text-primary-foreground',
+                        range_middle: 'bg-accent text-accent-foreground',
+                      }}
                     />
                   </PopoverContent>
                 </Popover>
