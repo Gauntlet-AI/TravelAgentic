@@ -1,0 +1,129 @@
+{
+  "description": "TravelAgentic User Intake Flow - Generates dynamic preference questions based on destination and travel details",
+  "name": "user_intake_flow",
+  "id": "user_intake_flow",
+  "flow": {
+    "nodes": [
+      {
+        "id": "input_node",
+        "type": "ChatInput",
+        "position": { "x": 100, "y": 100 },
+        "data": {
+          "type": "ChatInput",
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "required": true,
+                "placeholder": "Travel details JSON",
+                "description": "JSON with destination, start_date, end_date, travelers, budget"
+              },
+              "sender": {
+                "type": "str",
+                "value": "User"
+              },
+              "sender_name": {
+                "type": "str",
+                "value": "User"
+              },
+              "session_id": {
+                "type": "str",
+                "value": ""
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "openai_node",
+        "type": "OpenAIModel",
+        "position": { "x": 400, "y": 100 },
+        "data": {
+          "type": "OpenAIModel",
+          "node": {
+            "template": {
+              "model_name": {
+                "type": "str",
+                "value": "gpt-4-turbo",
+                "options": ["gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+              },
+              "temperature": {
+                "type": "float",
+                "value": 0.7
+              },
+              "max_tokens": {
+                "type": "int",
+                "value": 1000
+              },
+              "system_message": {
+                "type": "str",
+                "value": "You are TravelAgentic's intelligent preference collection agent. Based on the provided travel details, generate 3-5 contextually relevant multiple choice questions to understand the user's travel preferences better.\n\nFocus on:\n1. Travel style (adventure, relaxation, cultural, business, mixed)\n2. Accommodation preferences (hotel, Airbnb, hostel, resort, boutique)\n3. Activity interests based on destination (outdoor, museums, nightlife, food, shopping, culture)\n4. Budget allocation priorities (luxury accommodations, unique experiences, fine dining, balanced)\n5. Special requirements (dietary, accessibility, pets, group dynamics)\n\nFor specific destinations, add contextually relevant questions:\n- Tokyo/Japan: Traditional culture, modern technology, cuisine, pop culture, nature\n- Paris/France: Art and museums, fashion, cuisine, history, romance\n- London/UK: History, theater, pubs, royal sites, modern attractions\n- New York: Broadway, museums, food scene, nightlife, shopping\n- Bali: Beaches, temples, wellness, adventure, local culture\n\nReturn ONLY a JSON object in this exact format:\n{\n  \"questions\": [\n    {\n      \"id\": \"travel_style\",\n      \"question\": \"What's your primary travel style?\",\n      \"options\": [\"Adventure\", \"Relaxation\", \"Cultural\", \"Business\", \"Mixed\"],\n      \"required\": true,\n      \"category\": \"general\",\n      \"help_text\": \"This helps us tailor activity recommendations\"\n    }\n  ]\n}\n\nEnsure questions are:\n- Specific to the destination and season\n- Appropriate for the number of travelers\n- Considerate of the stated budget range\n- Clear and easy to understand\n- Focused on actionable preferences that affect booking decisions"
+              },
+              "api_key": {
+                "type": "str",
+                "required": true,
+                "password": true
+              }
+            }
+          }
+        }
+      },
+      {
+        "id": "output_node",
+        "type": "ChatOutput",
+        "position": { "x": 700, "y": 100 },
+        "data": {
+          "type": "ChatOutput",
+          "node": {
+            "template": {
+              "input_value": {
+                "type": "str",
+                "required": true
+              },
+              "sender": {
+                "type": "str",
+                "value": "AI"
+              },
+              "sender_name": {
+                "type": "str",
+                "value": "TravelAgentic"
+              },
+              "session_id": {
+                "type": "str",
+                "value": ""
+              }
+            }
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "input_to_openai",
+        "source": "input_node",
+        "target": "openai_node",
+        "sourceHandle": "text",
+        "targetHandle": "input"
+      },
+      {
+        "id": "openai_to_output",
+        "source": "openai_node",
+        "target": "output_node",
+        "sourceHandle": "text",
+        "targetHandle": "input_value"
+      }
+    ]
+  },
+  "metadata": {
+    "version": "1.0",
+    "created_by": "TravelAgentic",
+    "description": "Generates contextual preference questions based on travel destination and details",
+    "tags": ["travel", "preferences", "onboarding", "ai"],
+    "use_cases": [
+      "Dynamic preference collection",
+      "Destination-specific questioning",
+      "Travel style assessment",
+      "Budget allocation preferences"
+    ]
+  }
+} 
