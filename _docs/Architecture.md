@@ -9,13 +9,13 @@ This document defines the complete technical architecture, repository structure,
 | Component         | Technology |
 |------------------|------------|
 | AI Reasoning & Planning | Langflow |
-| API Orchestration | Supabase/Vercel Edge Functions (Deno/TypeScript) |
-| Database & Auth  | Supabase |
-| Frontend         | Next.js (Vercel) |
+| API Orchestration | Next.js API Routes (TypeScript) |
+| Database & Auth  | Supabase Cloud |
+| Frontend         | Next.js + TypeScript |
 | PDF Generation   | React-PDF (@react-pdf/renderer) |
 | Browser Automation Fallbacks | Playwright + browser-use |
 | AI Voice Calling | Twilio Voice + ElevenLabs + OpenAI GPT |
-| Deployment       | Vercel (for web, serverless functions, and previews) |
+| Deployment       | Docker Containers (any container platform) |
 
 ---
 
@@ -45,16 +45,13 @@ TravelAgentic/
 │   │   ├── prompts/        → Prompt templates (for agent tasks).
 │   │   └── README.md       → Docs for Langflow setup.
 │   │
-│   ├── edge-functions/     → Supabase/Vercel Edge Functions.
-│   │   ├── api/            → API functions (Flights, Hotels, Activities, PDF).
-│   │   ├── utils/          → API clients & shared code.
-│   │   ├── supabase.ts     → DB helpers.
-│   │   └── README.md       → Setup & deployment guide.
-│   │
-│   ├── web/                → Next.js frontend.
-│   │   ├── pages/          → User pages.
+│   ├── web/                → Next.js full-stack application.
+│   │   ├── pages/          → User pages and API routes.
+│   │   │   ├── api/        → API routes (Flights, Hotels, Activities, PDF).
+│   │   │   └── ...         → User interface pages.
 │   │   ├── components/     → UI components (e.g., activity cards).
-│   │   └── README.md       → Frontend notes.
+│   │   ├── lib/            → API clients, utilities & shared code.
+│   │   └── README.md       → Frontend & API notes.
 │   │
 │   ├── database/           → Supabase migrations and schemas.
 │   │   └── README.md       → DB structure & usage guide.
@@ -66,8 +63,9 @@ TravelAgentic/
 │   └── seed/               → DB seeds for Supabase testing.
 │
 ├── .env.example            → Example environment variables.
-│
-└── docker-compose.yml      → (Optional) Dev environment for Langflow & DB.
+├── Dockerfile              → Production container build.
+├── docker-compose.yml      → Development environment.
+└── docker-compose.prod.yml → Production deployment.
 ```
 
 ### ✅ Implementation Status
@@ -80,7 +78,7 @@ The repository structure above represents the target architecture. Current imple
 | CI/CD Pipeline | ✅ Complete | GitHub Actions workflow matches specification |
 | Environment Config | ✅ Complete | `.env.example` contains all required variables |
 | Documentation | ✅ Enhanced | Added `_docs/` directory for better organization |
-| Missing Files | ⚠️ Needs Creation | `packages/edge-functions/supabase.ts` - DB helpers |
+| Missing Files | ⚠️ Needs Creation | `Dockerfile` - Production container build |
 
 ---
 
@@ -284,8 +282,22 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Deploy to Production (Vercel)
-        run: npx vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build Docker Image
+        run: |
+          docker build -t travelagentic:latest .
+          docker tag travelagentic:latest ${{ secrets.REGISTRY_URL }}/travelagentic:${{ github.sha }}
+          docker tag travelagentic:latest ${{ secrets.REGISTRY_URL }}/travelagentic:latest
+
+      - name: Push to Container Registry
+        run: |
+          echo ${{ secrets.REGISTRY_PASSWORD }} | docker login -u ${{ secrets.REGISTRY_USERNAME }} --password-stdin ${{ secrets.REGISTRY_URL }}
+          docker push ${{ secrets.REGISTRY_URL }}/travelagentic:${{ github.sha }}
+          docker push ${{ secrets.REGISTRY_URL }}/travelagentic:latest
+
+      - name: Deploy to Production
+        run: |
+          # Deploy to your container platform (AWS ECS, Cloud Run, etc.)
+          # This step depends on your chosen platform
 ```
 
 ---
@@ -534,14 +546,15 @@ NODE_ENV=development
 ## ✅ Deployment Strategy
 
 ### ✅ Production Deployment
-- **Frontend & API:** Vercel (Next.js app with Edge Functions)
-- **Database:** Supabase (managed PostgreSQL)
-- **AI Workflows:** Langflow (self-hosted or cloud)
+- **Frontend & API:** Docker Containers (Next.js full-stack app)
+- **Database:** Supabase Cloud (managed PostgreSQL)
+- **AI Workflows:** Langflow (containerized with the application)
 - **File Storage:** Supabase Storage (for PDFs, user uploads)
+- **Container Platforms:** AWS ECS, Google Cloud Run, DigitalOcean, Railway, or any VPS
 
 ### ✅ Development Environment
-- **Local Development:** Docker Compose setup for Langflow + Supabase
-- **Preview Deployments:** Automatic Vercel previews per PR
+- **Local Development:** Docker Compose setup (Web + Langflow + Redis)
+- **Preview Deployments:** Container-based staging deployments
 - **Testing:** Jest + React Testing Library + Playwright
 - **Browser Automation:** Playwright + browser-use for fallback testing
 

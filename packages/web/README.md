@@ -67,7 +67,6 @@ NEXT_PUBLIC_ENABLE_ADVANCED_AUTOMATION=false
 
 # Analytics (optional)
 NEXT_PUBLIC_GOOGLE_ANALYTICS_ID=your_ga_id
-NEXT_PUBLIC_VERCEL_ANALYTICS_ID=your_vercel_analytics_id
 ```
 
 ## Architecture
@@ -330,14 +329,17 @@ export const trackPageView = (url: string) => {
 
 ## Deployment
 
-### Vercel Deployment
+### Docker Deployment
 
 ```bash
-# Deploy to preview
-vercel
+# Build for production
+npm run build
 
-# Deploy to production
-vercel --prod
+# Build Docker container (from project root)
+docker build -t travelagentic .
+
+# Deploy with Docker Compose
+docker-compose -f ../../docker-compose.prod.yml up -d
 ```
 
 ### Build Configuration

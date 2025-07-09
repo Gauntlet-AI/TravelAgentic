@@ -6,12 +6,13 @@ You are an expert in building AI-first, modular applications using Next.js, Type
 
 ### Core Technologies
 - **Frontend**: Next.js 14+ with App Router, TypeScript, TailwindCSS
-- **Backend**: Supabase (Auth, Database, Storage, Edge Functions)
-- **AI Integration**: Langflow workflows, OpenAI GPT, Anthropic Claude
-- **Deployment**: Vercel with preview deployments
+- **Backend**: Next.js API Routes + Supabase Cloud (Database, Auth, Storage)
+- **AI Integration**: Langflow workflows (containerized), OpenAI GPT, Anthropic Claude
+- **Deployment**: Docker Containers (any container platform)
 - **PDF Generation**: React-PDF (@react-pdf/renderer)
 - **Browser Automation**: Playwright + browser-use (for API fallbacks)
 - **Voice**: Twilio Voice + ElevenLabs (Phase 3 implementation)
+- **Caching**: Redis (containerized)
 
 ### Phase-Based API Strategy
 - **Phase 1 (Days 1-2)**: OpenAI (AI), Stripe (payments), comprehensive mocks
@@ -89,13 +90,25 @@ components/
 └── providers/    # Context providers
 ```
 
-### Page Organization
+### Project Structure
 ```
-app/
-├── (dashboard)/  # Protected dashboard routes
-├── (auth)/       # Authentication pages
-├── api/          # API routes and webhooks
-└── globals.css   # Global styles
+TravelAgentic/
+├── packages/
+│   ├── web/                  # Next.js full-stack application
+│   │   ├── pages/           # Next.js pages and API routes
+│   │   │   ├── api/         # API routes (flights, hotels, activities)
+│   │   │   └── ...          # User interface pages
+│   │   ├── components/      # React components
+│   │   ├── lib/             # Utilities and API clients
+│   │   └── styles/          # CSS and styling
+│   ├── langflow/            # Langflow AI workflows
+│   ├── database/            # Supabase schema & migrations
+│   ├── mocks/               # Mock API responses
+│   └── seed/                # Database seed data
+├── Dockerfile               # Production container build
+├── docker-compose.yml       # Development environment
+├── docker-compose.prod.yml  # Production deployment
+└── .github/                 # CI/CD workflows
 ```
 
 ## Development Patterns
@@ -137,19 +150,21 @@ if (!user) {
 
 ### API Integration with Fallback System
 ```typescript
-// API Factory pattern for seamless mock-to-real transition
-import { apiFactory } from '@/lib/api-factory';
+// Next.js API Routes pattern for travel services
+// Frontend calls API routes, API routes handle external integrations
 
-// Always handle loading and error states
-const [data, setData] = useState(null);
-const [isLoading, setIsLoading] = useState(false);
-const [error, setError] = useState(null);
-
-// Use fallback orchestrator for robust API calls
+// Frontend API calls
 const searchFlights = async (params) => {
   setIsLoading(true);
   try {
-    const flights = await fallbackOrchestrator.searchFlights(params);
+    const response = await fetch('/api/flights/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(params)
+    });
+    
+    if (!response.ok) throw new Error('Flight search failed');
+    const flights = await response.json();
     setData(flights);
   } catch (error) {
     setError(error.message);
@@ -157,6 +172,24 @@ const searchFlights = async (params) => {
     setIsLoading(false);
   }
 };
+
+// API Route implementation (pages/api/flights/search.ts)
+import { NextApiRequest, NextApiResponse } from 'next';
+import { createClient } from '@supabase/supabase-js';
+
+export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    // Use fallback orchestrator for robust API calls
+    const flights = await fallbackOrchestrator.searchFlights(req.body);
+    res.status(200).json({ success: true, data: flights });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
 ```
 
 ## Supabase Integration
@@ -347,11 +380,17 @@ const HeavyComponent = dynamic(() => import('./HeavyComponent'), {
 
 ### Environment Variables
 ```typescript
+// Database & Authentication (Supabase Cloud)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_KEY=your_supabase_service_key
+
 // Phase-based environment configuration
 // Phase 1: Essential APIs only
 OPENAI_API_KEY=your_openai_key
 STRIPE_SECRET_KEY=your_stripe_key
 USE_MOCK_APIS=true
+DEVELOPMENT_PHASE=1
 
 // Phase 2: Enhanced APIs
 TEQUILA_API_KEY=your_tequila_key
@@ -363,9 +402,16 @@ WEATHER_API_KEY=your_weather_key
 TWILIO_ACCOUNT_SID=your_twilio_sid
 ELEVENLABS_API_KEY=your_elevenlabs_key
 
+// Container Infrastructure
+LANGFLOW_URL=http://langflow:7860
+REDIS_URL=redis://redis:6379
+
 // Browser Automation
 BROWSER_USE_HEADLESS=true
 AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
+
+// Development vs Production
+NODE_ENV=development  # or production
 ```
 
 - Use NEXT_PUBLIC_ prefix only for client-side variables
@@ -496,4 +542,49 @@ const getPhaseConfig = (phase: number) => {
 };
 ```
 
-Remember: We're building for rapid iteration with v0 while maintaining production-quality code. Focus on clean, readable components that can be easily modified and extended. Always implement fallback mechanisms and respect the phase-based development approach. 
+## Development Workflow
+
+### Local Development Setup
+```bash
+# Start full development environment
+docker-compose up -d
+
+# View running services
+docker-compose ps
+
+# Access services
+# Web App: http://localhost:3000
+# Langflow: http://localhost:7860
+# Database: localhost:5432
+# Redis: localhost:6379
+```
+
+### Development Environment
+- **Frontend + API**: Single Next.js application in development mode
+- **Database**: Local PostgreSQL or Supabase Cloud
+- **AI Workflows**: Local Langflow container
+- **Caching**: Local Redis container
+
+### Production Deployment Options
+```bash
+# Build production container
+docker build -t travelagentic .
+
+# Deploy with production compose
+docker-compose -f docker-compose.prod.yml up -d
+
+# Deploy to container platforms
+# - AWS ECS/Fargate
+# - Google Cloud Run  
+# - DigitalOcean App Platform
+# - Railway
+# - Any VPS with Docker
+```
+
+### Testing Strategy
+- **CI/CD**: GitHub Actions with automated testing
+- **Mock APIs**: `USE_MOCK_APIS=true` for development without API keys
+- **Container Testing**: Test Docker builds in CI pipeline
+- **Platform Testing**: Deploy to staging environments
+
+Remember: We're building for rapid iteration with v0 while maintaining production-quality code. Focus on clean, readable components that can be easily modified and extended. Always implement fallback mechanisms and respect the phase-based development approach. Use Docker containers for consistent development and deployment across all environments. 

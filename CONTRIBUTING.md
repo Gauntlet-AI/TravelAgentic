@@ -6,10 +6,10 @@ We're excited that you're interested in contributing to TravelAgentic! This guid
 
 ### Prerequisites
 
-- Node.js 18+
 - Docker & Docker Compose
 - Git
-- Supabase CLI (optional, for database work)
+- Node.js 18+ (for local development without Docker)
+- Supabase account (for cloud database) or local PostgreSQL
 
 ### 1. Fork and Clone
 
@@ -27,29 +27,31 @@ cp .env.example .env
 
 # For development without API keys, use mock mode
 echo "USE_MOCK_APIS=true" >> .env
+echo "OPENAI_API_KEY=your_openai_key" >> .env
 
-# Start all services
+# Start all services (Web App, Langflow, Redis, Local DB)
 docker-compose up -d
 
-# Install dependencies
-npm install
+# View running services
+docker-compose ps
 ```
 
 ### 3. Verify Setup
 
 ```bash
-# Run tests to ensure everything is working
-npm run test
+# Check that all services are running
+curl http://localhost:3000/api/health
+curl http://localhost:7860/health
 
-# Start the web application
-cd packages/web
-npm run dev
+# Run tests (if implemented)
+npm run test
 ```
 
 Access the application at:
 - **Web App**: http://localhost:3000
 - **Langflow UI**: http://localhost:7860
-- **Supabase Studio**: http://localhost:54323
+- **Local PostgreSQL**: localhost:5432 (for database access)
+- **Redis**: localhost:6379 (for cache debugging)
 
 ## 📋 Development Workflow (Trunk-Based Development)
 
@@ -69,7 +71,7 @@ We use a fast, CI/CD-driven **trunk-based development model**:
   - Linting
 
 ### ✅ Preview Deployments
-- Each PR automatically deploys to a **Vercel Preview URL**.
+- Each PR automatically builds a Docker container for testing.
 
 ### ✅ Merging
 - Merge only after PR approval and CI passing.
@@ -80,7 +82,7 @@ We use a fast, CI/CD-driven **trunk-based development model**:
 - You may merge partially complete features safely by configuring appropriate phases.
 
 ### ✅ Deployment
-- Merging to `main` triggers auto-deployment to production.
+- Merging to `main` triggers Docker image build and push to container registry.
 
 ### ✅ Key Rules
 - **No dev branch**; all work happens via PRs to `main`.

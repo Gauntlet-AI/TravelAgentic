@@ -157,16 +157,17 @@ docker-compose logs supabase-db
 
 ```
 TravelAgentic/
-├── packages/web/              # Next.js app (main development)
+├── packages/web/              # Next.js full-stack app (frontend + API routes)
 │   ├── components/           # React components
-│   ├── pages/               # Next.js pages
-│   ├── lib/                 # Utilities, AI integration
+│   ├── pages/               # Next.js pages and API routes
+│   │   ├── api/             # API routes (flights, hotels, activities)
+│   │   └── ...              # Frontend pages
+│   ├── lib/                 # Utilities, API integration
 │   └── styles/              # CSS and styling
 ├── packages/database/        # Database documentation
-├── packages/edge-functions/  # Edge functions (empty, ready for implementation)
 ├── packages/langflow/        # Langflow AI workflows
 ├── packages/mocks/          # Mock API services (empty, ready for implementation)
-├── packages/seed/           # Database seed data (empty, ready for implementation)
+├── packages/seed/           # Database seed data (ready for implementation)
 ├── docker-compose.yml       # PostgreSQL + Langflow + Redis
 └── _docs/                   # Documentation
 ```
@@ -178,20 +179,20 @@ TravelAgentic/
 Based on the current project structure, here's what needs to be implemented:
 
 ### 🔄 **Immediate TODOs**
-1. **Mock Flight API** - Implement in `packages/edge-functions/api/flights/`
-2. **Mock Hotel API** - Implement in `packages/edge-functions/api/hotels/`
-3. **Mock Activity API** - Implement in `packages/edge-functions/api/activities/`
+1. **Mock Flight API Routes** - Implement in `packages/web/pages/api/flights/`
+2. **Mock Hotel API Routes** - Implement in `packages/web/pages/api/hotels/`
+3. **Mock Activity API Routes** - Implement in `packages/web/pages/api/activities/`
 4. **Basic Frontend Components** - Create search forms and result displays
 5. **Database Integration** - Connect frontend to Supabase
 
 ### 📋 **Complete TODO List**
-- [ ] Setup mock flight search edge function
-- [ ] Setup mock hotel search edge function  
-- [ ] Setup mock activity search edge function
-- [ ] Setup user preferences API
-- [ ] Setup booking cart API
-- [ ] Setup mock checkout API
-- [ ] Setup PDF generation API
+- [ ] Setup mock flight search API route
+- [ ] Setup mock hotel search API route
+- [ ] Setup mock activity search API route
+- [ ] Setup user preferences API route
+- [ ] Setup booking cart API route
+- [ ] Setup mock checkout API route
+- [ ] Setup PDF generation API route
 - [ ] Setup Langflow integration
 
 ---
