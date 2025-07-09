@@ -22,12 +22,15 @@ cd TravelAgentic
 ### 2. Set up Development Environment
 
 ```bash
+# Install all workspace dependencies
+npm run install:all
+
 # Copy environment template
-cp .env.example .env
+cp .env.example .env.local
 
 # For development without API keys, use mock mode
-echo "USE_MOCK_APIS=true" >> .env
-echo "OPENAI_API_KEY=your_openai_key" >> .env
+echo "USE_MOCK_APIS=true" >> .env.local
+echo "OPENAI_API_KEY=your_openai_key" >> .env.local
 
 # Start all services (Web App, Langflow, Redis, Local DB)
 docker-compose up -d
@@ -43,11 +46,15 @@ docker-compose ps
 curl http://localhost:3000/api/health
 curl http://localhost:7860/health
 
+# Validate code quality
+npm run validate
+
 # Run tests (if implemented)
 npm run test
 ```
 
 Access the application at:
+
 - **Web App**: http://localhost:3000
 - **Langflow UI**: http://localhost:7860
 - **Local PostgreSQL**: localhost:5432 (for database access)
@@ -58,12 +65,14 @@ Access the application at:
 We use a fast, CI/CD-driven **trunk-based development model**:
 
 ### ✅ Branching Strategy
+
 - All new features and fixes should be developed on **feature branches** from `main`:
   ```bash
   git checkout -b feature/your-feature-name main
   ```
 
 ### ✅ Pull Request (PR) Process
+
 - Open PRs **directly against `main`**.
 - Every PR must pass:
   - Tests (using mock APIs)
@@ -71,20 +80,25 @@ We use a fast, CI/CD-driven **trunk-based development model**:
   - Linting
 
 ### ✅ Preview Deployments
+
 - Each PR automatically builds a Docker container for testing.
 
 ### ✅ Merging
+
 - Merge only after PR approval and CI passing.
 - Keep PRs small and focused.
 
 ### ✅ Phase-Based Development
+
 - Use phase-based configuration to manage feature rollout.
 - You may merge partially complete features safely by configuring appropriate phases.
 
 ### ✅ Deployment
+
 - Merging to `main` triggers Docker image build and push to container registry.
 
 ### ✅ Key Rules
+
 - **No dev branch**; all work happens via PRs to `main`.
 - Keep your PRs small, frequent, and tested.
 
@@ -97,6 +111,12 @@ For contributor-friendly development without API keys:
 ```bash
 # Enable mock APIs
 export USE_MOCK_APIS=true
+
+# Validate code quality (TypeScript + ESLint + Prettier)
+npm run validate
+
+# Auto-fix formatting and linting issues
+npm run fix
 
 # Run all tests
 npm run test
@@ -117,17 +137,31 @@ export USE_MOCK_APIS=false
 npm run test
 ```
 
-## 📦 Package Structure
+## 📦 Workspace Structure
 
-Each package is self-contained with its own README:
+TravelAgentic uses npm workspaces for a monorepo setup:
 
-- **`packages/langflow/`** - AI workflow orchestration
-- **`packages/edge-functions/`** - API orchestration
-- **`packages/web/`** - Next.js frontend
-- **`packages/database/`** - Supabase schema & migrations
-- **`packages/mocks/`** - Mock API responses
-- **`packages/test_flows/`** - Langflow test flows
-- **`packages/seed/`** - Database seed data
+```
+TravelAgentic/
+├── node_modules/           # Hoisted dependencies (shared)
+├── packages/
+│   ├── web/               # Next.js 15 App Router application
+│   ├── langflow/          # AI workflow orchestration
+│   ├── database/          # Supabase schema & migrations
+│   ├── mocks/             # Mock API responses
+│   ├── test_flows/        # Langflow test flows
+│   └── seed/              # Database seed data
+├── package.json           # Root workspace configuration
+├── .gitignore             # Single gitignore for entire project
+└── .env.example           # Environment variable template
+```
+
+**Key Points:**
+
+- Dependencies are **hoisted** to the root `node_modules` for efficiency
+- **Single `.gitignore`** covers all packages (no multiple .gitignore files)
+- Root scripts delegate to workspace packages: `npm run dev` → `packages/web/npm run dev`
+- All packages are self-contained with their own README
 
 ## 🔧 Development Guidelines
 
@@ -162,11 +196,11 @@ packages/web/components/
 // ✅ Good: Proper TypeScript, JSDoc, clear naming
 interface FlightSearchProps {
   /** User's departure city */
-  departure: string
+  departure: string;
   /** User's destination city */
-  destination: string
+  destination: string;
   /** Search callback function */
-  onSearch: (results: FlightResult[]) => void
+  onSearch: (results: FlightResult[]) => void;
 }
 
 /**
@@ -175,15 +209,15 @@ interface FlightSearchProps {
 export const FlightSearch: React.FC<FlightSearchProps> = ({
   departure,
   destination,
-  onSearch
+  onSearch,
 }) => {
   // Component implementation
-}
+};
 
 // ❌ Bad: No types, unclear purpose
 export const FlightSearch = (props: any) => {
   // Component implementation
-}
+};
 ```
 
 ### API Integration
@@ -192,35 +226,35 @@ export const FlightSearch = (props: any) => {
 // ✅ Good: Error handling, mock support
 export const searchFlights = async (params: FlightSearchParams) => {
   try {
-    if (process.env.USE_MOCK_APIS === 'true') {
-      return await mockFlightSearch(params)
+    if (process.env.USE_MOCK_APIS === "true") {
+      return await mockFlightSearch(params);
     }
-    
-    const response = await fetch('/api/flights/search', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(params)
-    })
-    
+
+    const response = await fetch("/api/flights/search", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(params),
+    });
+
     if (!response.ok) {
-      throw new Error(`Flight search failed: ${response.statusText}`)
+      throw new Error(`Flight search failed: ${response.statusText}`);
     }
-    
-    return await response.json()
+
+    return await response.json();
   } catch (error) {
-    console.error('Flight search error:', error)
-    throw error
+    console.error("Flight search error:", error);
+    throw error;
   }
-}
+};
 
 // ❌ Bad: No error handling, no mock support
 export const searchFlights = async (params: any) => {
-  const response = await fetch('/api/flights/search', {
-    method: 'POST',
-    body: JSON.stringify(params)
-  })
-  return response.json()
-}
+  const response = await fetch("/api/flights/search", {
+    method: "POST",
+    body: JSON.stringify(params),
+  });
+  return response.json();
+};
 ```
 
 ## 🎯 Contributing to Specific Packages
@@ -295,6 +329,12 @@ git checkout -b feature/your-feature-name main
 ### 3. Test Your Changes
 
 ```bash
+# Validate all code quality checks
+npm run validate
+
+# Auto-fix any formatting/linting issues
+npm run fix
+
 # Run all tests
 npm run test
 
@@ -302,11 +342,12 @@ npm run test
 npm run test:web
 npm run test:edge-functions
 
-# Lint code
-npm run lint
-
-# Type check
-npm run type-check
+# Individual quality checks (if needed):
+npm run lint           # ESLint checking
+npm run lint:fix       # ESLint with auto-fix
+npm run format         # Format with Prettier
+npm run format:check   # Check formatting
+npm run type-check     # TypeScript checking
 ```
 
 ### 4. Commit Your Changes
@@ -378,7 +419,7 @@ import { getPhaseConfig } from '../lib/phase-config'
 
 export const SearchPage = () => {
   const config = getPhaseConfig(process.env.DEVELOPMENT_PHASE);
-  
+
   return (
     <div>
       {config.browserFallback && <BrowserFallbackIndicator />}
@@ -453,6 +494,7 @@ We are committed to providing a welcoming and inclusive environment. Please read
 ## 🙏 Recognition
 
 Contributors are recognized in:
+
 - **README contributors section**
 - **Release notes** for significant contributions
 - **Hall of Fame** for outstanding contributors
@@ -461,4 +503,4 @@ Contributors are recognized in:
 
 **Thank you for contributing to TravelAgentic!** 🚀
 
-Your contributions help make AI-powered travel planning accessible to everyone. 
+Your contributions help make AI-powered travel planning accessible to everyone.

@@ -7,7 +7,9 @@ Rather than maintaining a rigid list of predefined preferences, TravelAgentic us
 ## Collection Approaches
 
 ### User Story 1: Structured Onboarding Flow
+
 **Process:**
+
 1. **User** → Fills out initial form with required fields:
    - Starting location
    - Destination (can select "unsure")
@@ -23,7 +25,9 @@ Rather than maintaining a rigid list of predefined preferences, TravelAgentic us
 10. **LLM** → Books all relevant types through API/browser/voice, and returns a printable itinerary of their vacation that includes todos
 
 ### User Story 2: Conversational Discovery Flow
+
 **Process:**
+
 1. **LLM** → Greets user and asks for date, price range, location
 2. **User** → Provides information and suggestions
 3. **LLM** → Iterates with the user for remaining preferences
@@ -34,6 +38,7 @@ Rather than maintaining a rigid list of predefined preferences, TravelAgentic us
 ## Context Storage Structure
 
 ### Preference Context Object
+
 ```json
 {
   "collection_method": "structured|conversational",
@@ -123,9 +128,11 @@ Rather than maintaining a rigid list of predefined preferences, TravelAgentic us
 ```
 
 ### Dynamic Field Discovery
+
 Instead of predefined categories, let the LLM discover what's important:
 
 **LLM-Identified Context Areas:**
+
 - **Destination Insights**: What matters for this specific location
 - **Seasonal Considerations**: Weather, events, crowds for travel time
 - **Cultural Factors**: Language, customs, social norms relevant to user
@@ -137,6 +144,7 @@ Instead of predefined categories, let the LLM discover what's important:
 ## Implementation Strategy
 
 ### Context-Aware Question Generation
+
 ```javascript
 // LLM prompt for generating relevant questions
 const generateContextQuestions = (initialInput) => {
@@ -153,12 +161,13 @@ const generateContextQuestions = (initialInput) => {
     Include an open-ended "What else should I know?" option.
     Each question should have 3-5 options plus "unsure".
   `;
-  
+
   return llm.generateQuestions(prompt);
 };
 ```
 
 ### Conversational Context Extraction
+
 ```javascript
 // Extract structured context from conversation
 const extractTravelContext = (conversationHistory) => {
@@ -172,7 +181,7 @@ const extractTravelContext = (conversationHistory) => {
     
     Return structured context that can guide travel recommendations.
   `;
-  
+
   return llm.extractContext(prompt);
 };
 ```
@@ -180,6 +189,7 @@ const extractTravelContext = (conversationHistory) => {
 ## Context Refinement
 
 ### Real-Time Corrections
+
 - **Preference Clarification**: Allow users to correct misunderstood preferences during current session
 - **Context Expansion**: Add new context as conversation continues within current trip planning
 - **Confidence Adjustment**: Increase confidence in confirmed preferences for current trip
@@ -187,12 +197,14 @@ const extractTravelContext = (conversationHistory) => {
 ## Benefits of Context-Based Approach
 
 ### For Users
+
 - **Natural Expression**: Describe preferences in their own terms
 - **Relevant Questions**: Only asked about pertinent information
 - **Flexible Input**: Multiple choice, conversation, or mixed modes
 - **Dynamic Understanding**: System adapts to user input in real-time
 
 ### For System
+
 - **Adaptive Collection**: Questions adapt to destination/trip type
 - **Rich Context**: Captures nuanced preferences beyond categories
 - **Improved Recommendations**: Better understanding leads to better suggestions
@@ -205,4 +217,4 @@ const extractTravelContext = (conversationHistory) => {
 - Support both structured and unstructured input methods
 - Enable context editing and refinement during current session
 - Use confidence levels to handle uncertain preferences
-- Support context sharing between users for group trips 
+- Support context sharing between users for group trips

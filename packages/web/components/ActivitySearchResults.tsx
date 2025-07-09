@@ -1,44 +1,48 @@
-import { ActivityCard } from './activity-card'
+import { ActivityCard } from './activity-card';
 
 /**
  * Activity result interface for server component data
  */
 interface ActivityResult {
-  id: string
-  name: string
-  location: string
-  category: string
-  duration: string
-  rating: number
-  reviewCount: number
-  price: number
-  currency: string
-  imageUrl: string
-  source: 'api' | 'browser' | 'voice' | 'manual'
+  id: string;
+  name: string;
+  location: string;
+  category: string;
+  duration: string;
+  rating: number;
+  reviewCount: number;
+  price: number;
+  currency: string;
+  imageUrl: string;
+  source: 'api' | 'browser' | 'voice' | 'manual';
 }
 
 /**
  * Props for ActivitySearchResults component
  */
 interface ActivitySearchResultsProps {
-  activities: ActivityResult[]
+  activities: ActivityResult[];
 }
 
 /**
  * ActivitySearchResults component
  * Displays a list of activity search results
  */
-export function ActivitySearchResults({ activities }: ActivitySearchResultsProps) {
+export function ActivitySearchResults({
+  activities,
+}: ActivitySearchResultsProps) {
   if (activities.length === 0) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 text-center">
-        <div className="text-4xl mb-2">🎯</div>
-        <h3 className="text-lg font-medium text-gray-900 mb-2">No Activities Found</h3>
-        <p className="text-gray-600 text-sm">
+      <div className="rounded-lg bg-white p-6 text-center shadow">
+        <div className="mb-2 text-4xl">🎯</div>
+        <h3 className="mb-2 text-lg font-medium text-gray-900">
+          No Activities Found
+        </h3>
+        <p className="text-sm text-gray-600">
           Try exploring different categories or locations.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -55,21 +59,24 @@ export function ActivitySearchResults({ activities }: ActivitySearchResultsProps
             duration: activity.duration,
             rating: activity.rating,
             image: activity.imageUrl,
-            location: activity.location
+            location: activity.location,
           }}
         />
       ))}
-      
+
       {/* Fallback indicator */}
       {activities.length > 0 && activities[0]?.source !== 'api' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
           <div className="flex items-center">
-            <span className="text-yellow-600 text-sm">
-              ⚠️ Results from {activities[0]?.source === 'manual' ? 'manual search' : 'fallback system'}
+            <span className="text-sm text-yellow-600">
+              ⚠️ Results from{' '}
+              {activities[0]?.source === 'manual'
+                ? 'manual search'
+                : 'fallback system'}
             </span>
           </div>
         </div>
       )}
     </div>
-  )
-} 
+  );
+}

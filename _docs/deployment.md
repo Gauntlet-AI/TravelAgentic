@@ -5,6 +5,7 @@ This guide covers deploying TravelAgentic containers to various platforms while 
 ## 🏗️ Architecture Overview
 
 **Deployment Stack:**
+
 - **Frontend + API**: Docker container (Next.js full-stack app)
 - **Database**: Supabase Cloud (managed PostgreSQL)
 - **AI Workflows**: Langflow (containerized)
@@ -14,11 +15,13 @@ This guide covers deploying TravelAgentic containers to various platforms while 
 ## ⚙️ Prerequisites
 
 ### Required Accounts
+
 - **Supabase**: Create project at [supabase.com](https://supabase.com)
 - **Container Registry**: DockerHub, AWS ECR, or Google Container Registry
 - **Deployment Platform**: Choose from options below
 
 ### Required Environment Variables
+
 ```bash
 # Supabase Cloud (Required)
 SUPABASE_URL=https://your-project.supabase.co
@@ -54,6 +57,7 @@ LANGFLOW_URL=http://langflow:7860
 **Best for**: Production workloads, auto-scaling, enterprise deployments
 
 #### Setup AWS ECS
+
 ```bash
 # Install AWS CLI
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -67,6 +71,7 @@ aws ecs create-cluster --cluster-name travelagentic-cluster
 ```
 
 #### Build and Push to ECR
+
 ```bash
 # Create ECR repository
 aws ecr create-repository --repository-name travelagentic
@@ -81,6 +86,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/travelagentic:latest
 ```
 
 #### ECS Task Definition
+
 ```json
 {
   "family": "travelagentic",
@@ -93,11 +99,11 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/travelagentic:latest
     {
       "name": "web",
       "image": "<account-id>.dkr.ecr.us-east-1.amazonaws.com/travelagentic:latest",
-      "portMappings": [{"containerPort": 3000}],
+      "portMappings": [{ "containerPort": 3000 }],
       "environment": [
-        {"name": "NODE_ENV", "value": "production"},
-        {"name": "SUPABASE_URL", "value": "https://your-project.supabase.co"},
-        {"name": "OPENAI_API_KEY", "value": "your_key"}
+        { "name": "NODE_ENV", "value": "production" },
+        { "name": "SUPABASE_URL", "value": "https://your-project.supabase.co" },
+        { "name": "OPENAI_API_KEY", "value": "your_key" }
       ],
       "logConfiguration": {
         "logDriver": "awslogs",
@@ -113,6 +119,7 @@ docker push <account-id>.dkr.ecr.us-east-1.amazonaws.com/travelagentic:latest
 ```
 
 #### Deploy to ECS
+
 ```bash
 # Register task definition
 aws ecs register-task-definition --cli-input-json file://task-definition.json
@@ -134,6 +141,7 @@ aws ecs create-service \
 **Best for**: Serverless deployment, pay-per-request, auto-scaling to zero
 
 #### Setup Google Cloud
+
 ```bash
 # Install gcloud CLI
 curl https://sdk.cloud.google.com | bash
@@ -146,6 +154,7 @@ gcloud services enable run.googleapis.com containerregistry.googleapis.com
 ```
 
 #### Build and Deploy
+
 ```bash
 # Build and push to GCR
 docker build -t gcr.io/your-project-id/travelagentic .
@@ -164,6 +173,7 @@ gcloud run deploy travelagentic \
 ```
 
 #### Cloud Run YAML (Alternative)
+
 ```yaml
 apiVersion: serving.knative.dev/v1
 kind: Service
@@ -181,20 +191,20 @@ spec:
     spec:
       containerConcurrency: 80
       containers:
-      - image: gcr.io/your-project-id/travelagentic
-        ports:
-        - containerPort: 3000
-        env:
-        - name: NODE_ENV
-          value: production
-        - name: SUPABASE_URL
-          value: https://your-project.supabase.co
-        - name: OPENAI_API_KEY
-          value: your_key
-        resources:
-          limits:
-            cpu: "2"
-            memory: "2Gi"
+        - image: gcr.io/your-project-id/travelagentic
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: SUPABASE_URL
+              value: https://your-project.supabase.co
+            - name: OPENAI_API_KEY
+              value: your_key
+          resources:
+            limits:
+              cpu: "2"
+              memory: "2Gi"
 ```
 
 ---
@@ -204,33 +214,35 @@ spec:
 **Best for**: Simple deployment, managed infrastructure, developer-friendly
 
 #### App Spec (`.do/app.yaml`)
+
 ```yaml
 name: travelagentic
 services:
-- name: web
-  source_dir: /
-  github:
-    repo: your-username/travelagentic
-    branch: main
-  run_command: npm start
-  build_command: docker build -t travelagentic .
-  dockerfile_path: Dockerfile
-  instance_count: 2
-  instance_size_slug: professional-xs
-  http_port: 3000
-  env:
-  - key: NODE_ENV
-    value: production
-  - key: SUPABASE_URL
-    value: https://your-project.supabase.co
-    type: SECRET
-  - key: OPENAI_API_KEY
-    type: SECRET
-  health_check:
-    http_path: /api/health
+  - name: web
+    source_dir: /
+    github:
+      repo: your-username/travelagentic
+      branch: main
+    run_command: npm start
+    build_command: docker build -t travelagentic .
+    dockerfile_path: Dockerfile
+    instance_count: 2
+    instance_size_slug: professional-xs
+    http_port: 3000
+    env:
+      - key: NODE_ENV
+        value: production
+      - key: SUPABASE_URL
+        value: https://your-project.supabase.co
+        type: SECRET
+      - key: OPENAI_API_KEY
+        type: SECRET
+    health_check:
+      http_path: /api/health
 ```
 
 #### Deploy with doctl
+
 ```bash
 # Install doctl
 curl -sL https://github.com/digitalocean/doctl/releases/download/v1.94.0/doctl-1.94.0-linux-amd64.tar.gz | tar -xzv
@@ -250,6 +262,7 @@ doctl apps create --spec .do/app.yaml
 **Best for**: Rapid deployment, Git-based deployment, generous free tier
 
 #### Railway Setup
+
 ```bash
 # Install Railway CLI
 curl -fsSL https://railway.app/install.sh | sh
@@ -268,6 +281,7 @@ railway up
 ```
 
 #### railway.json
+
 ```json
 {
   "$schema": "https://railway.app/railway.schema.json",
@@ -290,6 +304,7 @@ railway up
 **Best for**: Cost-effective, full control, learning purposes
 
 #### Server Setup (Ubuntu 22.04)
+
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -308,6 +323,7 @@ sudo apt install nginx certbot python3-certbot-nginx -y
 ```
 
 #### Production Environment
+
 ```bash
 # Clone repository
 git clone https://github.com/your-username/travelagentic.git
@@ -322,6 +338,7 @@ docker-compose -f docker-compose.prod.yml --env-file .env.production up -d
 ```
 
 #### Nginx Configuration
+
 ```nginx
 # /etc/nginx/sites-available/travelagentic
 server {
@@ -343,6 +360,7 @@ server {
 ```
 
 #### SSL Setup
+
 ```bash
 # Enable site
 sudo ln -s /etc/nginx/sites-available/travelagentic /etc/nginx/sites-enabled/
@@ -359,34 +377,41 @@ sudo certbot --nginx -d your-domain.com
 ### Environment Variables by Platform
 
 #### AWS ECS
+
 - Use AWS Systems Manager Parameter Store or Secrets Manager
 - Reference in task definition as `valueFrom`
 
 #### Google Cloud Run
+
 - Use Google Secret Manager
 - Set with `gcloud run services update --set-secrets`
 
 #### DigitalOcean
+
 - Use App Platform environment variables
 - Mark sensitive values as `SECRET`
 
 #### Railway
+
 - Use Railway's built-in environment variables
 - Automatically encrypted and injected
 
 #### VPS
+
 - Use `.env.production` file
 - Consider using Docker secrets for sensitive data
 
 ### Monitoring Setup
 
 #### Health Checks
+
 All platforms should monitor:
+
 ```bash
 # Application health
 GET /api/health
 
-# Database connectivity  
+# Database connectivity
 GET /api/health/db
 
 # External APIs
@@ -394,6 +419,7 @@ GET /api/health/apis
 ```
 
 #### Logging
+
 ```bash
 # View logs by platform
 aws logs tail /ecs/travelagentic              # AWS ECS
@@ -404,6 +430,7 @@ docker-compose logs web                       # VPS
 ```
 
 #### Metrics
+
 - **AWS**: CloudWatch metrics and alarms
 - **GCP**: Cloud Monitoring and alerting
 - **DigitalOcean**: Built-in app metrics
@@ -417,12 +444,14 @@ docker-compose logs web                       # VPS
 ### Deployment Updates
 
 #### CI/CD Pipeline (GitHub Actions)
+
 ```yaml
 # Already configured in .github/workflows/ci-cd-pipeline.yml
 # Automatically builds and pushes on main branch
 ```
 
 #### Manual Updates
+
 ```bash
 # AWS ECS
 aws ecs update-service --cluster travelagentic-cluster --service travelagentic-service --force-new-deployment
@@ -441,6 +470,7 @@ cd travelagentic && git pull && docker-compose -f docker-compose.prod.yml up -d 
 ```
 
 ### Rollback Strategies
+
 - **AWS ECS**: Update service to previous task definition revision
 - **Cloud Run**: Deploy previous image tag
 - **DigitalOcean**: Rollback via control panel or CLI
@@ -452,6 +482,7 @@ cd travelagentic && git pull && docker-compose -f docker-compose.prod.yml up -d 
 ## 💰 Cost Estimates (Monthly)
 
 ### Small Scale (~10k requests/month)
+
 - **AWS ECS**: $15-25
 - **Google Cloud Run**: $0-5 (free tier)
 - **DigitalOcean**: $12
@@ -459,6 +490,7 @@ cd travelagentic && git pull && docker-compose -f docker-compose.prod.yml up -d 
 - **VPS**: $5-10
 
 ### Medium Scale (~100k requests/month)
+
 - **AWS ECS**: $50-80
 - **Google Cloud Run**: $15-30
 - **DigitalOcean**: $25-40
@@ -466,13 +498,14 @@ cd travelagentic && git pull && docker-compose -f docker-compose.prod.yml up -d 
 - **VPS**: $10-20
 
 ### Large Scale (~1M requests/month)
+
 - **AWS ECS**: $200-400
 - **Google Cloud Run**: $80-150
 - **DigitalOcean**: $100-200
 - **Railway**: $100-200
 - **VPS**: $50-100
 
-*Note: Costs exclude Supabase Cloud (free tier up to 500MB, then $25/month)*
+_Note: Costs exclude Supabase Cloud (free tier up to 500MB, then $25/month)_
 
 ---
 
@@ -481,6 +514,7 @@ cd travelagentic && git pull && docker-compose -f docker-compose.prod.yml up -d 
 ### Common Issues
 
 #### Container Won't Start
+
 ```bash
 # Check logs
 docker logs container-name
@@ -493,6 +527,7 @@ docker logs container-name
 ```
 
 #### Database Connection Issues
+
 ```bash
 # Verify Supabase connectivity
 curl -H "apikey: your-anon-key" "https://your-project.supabase.co/rest/v1/"
@@ -503,18 +538,21 @@ echo $SUPABASE_ANON_KEY
 ```
 
 #### Performance Issues
+
 - Monitor memory usage (increase to 2GB minimum)
 - Check CPU allocation
 - Verify Redis connectivity
 - Monitor Supabase database performance
 
 #### SSL/HTTPS Issues
+
 - Verify domain DNS settings
 - Check certificate renewal
 - Ensure HTTPS redirects are configured
 - Verify load balancer SSL termination
 
 ### Support Resources
+
 - **AWS**: [ECS Documentation](https://docs.aws.amazon.com/ecs/)
 - **GCP**: [Cloud Run Documentation](https://cloud.google.com/run/docs)
 - **DigitalOcean**: [App Platform Docs](https://docs.digitalocean.com/products/app-platform/)
@@ -526,6 +564,7 @@ echo $SUPABASE_ANON_KEY
 ## 🎯 Production Checklist
 
 ### Before Deployment
+
 - [ ] Set up Supabase Cloud project
 - [ ] Configure all required environment variables
 - [ ] Test with `USE_MOCK_APIS=false` locally
@@ -534,6 +573,7 @@ echo $SUPABASE_ANON_KEY
 - [ ] Set up monitoring and alerting
 
 ### After Deployment
+
 - [ ] Verify health endpoints respond
 - [ ] Test user registration and login
 - [ ] Verify API integrations work
@@ -543,9 +583,10 @@ echo $SUPABASE_ANON_KEY
 - [ ] Configure log retention policies
 
 ### Ongoing Maintenance
+
 - [ ] Monitor application metrics
 - [ ] Update dependencies regularly
 - [ ] Scale resources based on usage
 - [ ] Backup Langflow flows and data
 - [ ] Monitor Supabase usage and costs
-- [ ] Keep SSL certificates updated 
+- [ ] Keep SSL certificates updated

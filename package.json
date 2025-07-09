@@ -8,23 +8,23 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace=packages/web",
-    "dev:web": "npm run dev --workspace=packages/web",
     "build": "npm run build --workspace=packages/web",
-    "build:web": "npm run build --workspace=packages/web",
     "start": "npm run start --workspace=packages/web",
-    "start:web": "npm run start --workspace=packages/web",
     "lint": "npm run lint --workspace=packages/web",
-    "lint:web": "npm run lint --workspace=packages/web",
+    "lint:fix": "npm run lint:fix --workspace=packages/web",
+    "format": "npm run format --workspace=packages/web",
+    "format:check": "npm run format:check --workspace=packages/web",
     "type-check": "npm run type-check --workspace=packages/web",
+    "validate": "npm run validate --workspace=packages/web",
+    "fix": "npm run fix --workspace=packages/web",
     "clean": "rm -rf packages/*/node_modules packages/*/.next packages/*/out",
     "install:all": "npm install && npm install --workspace=packages/web",
+    "add": "npm install --workspace=packages/web",
+    "add:dev": "npm install -D --workspace=packages/web",
+    "remove": "npm uninstall --workspace=packages/web",
     "docker:dev": "docker-compose up",
     "docker:prod": "docker-compose -f docker-compose.prod.yml up",
     "docker:build": "docker build -t travelagentic ."
-  },
-  "devDependencies": {
-    "@types/node": "^20",
-    "typescript": "^5"
   },
   "engines": {
     "node": ">=18.0.0",

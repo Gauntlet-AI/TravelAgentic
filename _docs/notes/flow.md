@@ -11,6 +11,7 @@ The entire user process should be capturable in JSON format to enable:
 - **Proxy Trip Creation** - Allow users to plan trips on behalf of others (e.g., "Nancy's trip")
 
 ### Trip JSON Structure
+
 ```json
 {
   "trip_id": "uuid",
@@ -33,12 +34,14 @@ The entire user process should be capturable in JSON format to enable:
 ## Automation Control
 
 ### Automation Slider (0-10 Scale)
+
 - **0-2**: Manual approval required for every selection
 - **3-5**: Auto-select obvious choices, ask for approval on complex decisions
 - **6-8**: Auto-select most options, only ask for approval on high-impact decisions
 - **9-10**: Full automation, only interrupt for critical failures
 
 ### Fallback Warning System
+
 When automation reaches its limits, warn user that manual intervention is required and present the specific action needed.
 
 ## User Stories
@@ -46,6 +49,7 @@ When automation reaches its limits, warn user that manual intervention is requir
 ### User Story 1: Structured Onboarding Flow
 
 **Process:**
+
 1. **User** → Fills out onboarding preferences via multiple choice form
 2. **LLM Orchestrator** → Splits tasks (flight, hotel, activities) into specialized agents
 3. **LLM** → Returns flight recommendations
@@ -58,6 +62,7 @@ When automation reaches its limits, warn user that manual intervention is requir
 10. **LLM** → Returns printable itinerary with todos
 
 **Key Features:**
+
 - Structured preference collection upfront
 - Sequential recommendation tiers
 - Interactive chat refinement capability
@@ -67,6 +72,7 @@ When automation reaches its limits, warn user that manual intervention is requir
 ### User Story 2: Conversational Discovery Flow
 
 **Process:**
+
 1. **LLM** → Greets user and asks for basic parameters (date, price range, location)
 2. **User** → Provides information and suggestions
 3. **LLM** → Iterates conversationally to gather remaining preferences
@@ -77,6 +83,7 @@ When automation reaches its limits, warn user that manual intervention is requir
 8. **LLM** → Books vacation components, warning when manual intervention required
 
 **Key Features:**
+
 - Natural conversation preference discovery
 - Intelligent auto-selection based on learned preferences
 - Streamlined approval process
@@ -86,25 +93,29 @@ When automation reaches its limits, warn user that manual intervention is requir
 ## Implementation Notes
 
 ### State Management
+
 - Each step should be recoverable and resumable
 - Trip state should be persistable at any point
 - User can switch between automation levels mid-flow
 - Support for multiple concurrent trip planning sessions
 
 ### Agent Orchestration
+
 - Flight Agent: Search, filter, rank flight options
 - Hotel Agent: Search accommodations with contextual location awareness
 - Activity Agent: Curate experiences based on destination and preferences
 - Booking Agent: Execute purchases across all channels with fallback support
 
 ### Fallback Integration
+
 - Each agent should respect user's automation level setting
 - Escalate to higher fallback tiers when automation limits reached
 - Provide clear progress indicators during fallback attempts
 - Log all fallback usage for system improvement
 
 ### User Experience
+
 - Progressive disclosure of complexity based on user expertise
 - Context-aware recommendations (e.g., hotel location relative to selected flight)
 - Seamless switching between structured and conversational modes
-- Trip comparison capabilities for saved templates 
+- Trip comparison capabilities for saved templates

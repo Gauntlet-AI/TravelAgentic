@@ -100,3 +100,69 @@ Desktop.ini
 *.bak
 *.backup
 *.old
+
+# ============================================
+# ADDITIONAL MODERN DEVELOPMENT PATTERNS
+# ============================================
+
+# ESLint cache
+.eslintcache
+
+# Modern Next.js cache directories
+.next/cache/
+.next/standalone/
+.next/server/
+.next/static/chunks/
+.next/types/
+
+# Modern build tools
+.swc/
+.turbo/
+.nx/
+*.turbo
+
+# Package managers
+.pnpm-store/
+.yarn/
+.yarnrc.yml
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Development tools
+.cursor/
+.copilot/
+.github/copilot/
+.vscode/settings.json
+.vscode/launch.json
+.idea/workspace.xml
+.idea/tasks.xml
+
+# AI/ML related
+*.model
+*.weights
+*.pt
+*.onnx
+model_cache/
+.transformers_cache/
+
+# Security & certificates
+*.cert
+*.crt
+*.csr
+*.p8
+id_rsa
+id_rsa.pub
+*.ppk
+
+# Browser automation
+browser_data/
+screenshots/
+videos/
+downloads/
+
+# Monitoring and analytics
+.sentry/
+.analytics/
+monitoring/

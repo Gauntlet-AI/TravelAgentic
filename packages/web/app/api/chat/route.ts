@@ -1,9 +1,14 @@
-import { openai } from "@ai-sdk/openai"
-import { streamText, tool } from "ai"
-import { searchFlights, searchHotels, searchActivities } from "@/lib/travel-tools"
-import { z } from "zod"
+import { openai } from '@ai-sdk/openai';
+import { streamText, tool } from 'ai';
+import { z } from 'zod';
 
-export const maxDuration = 30
+import {
+  searchActivities,
+  searchFlights,
+  searchHotels,
+} from '@/lib/travel-tools';
+
+export const maxDuration = 30;
 
 /**
  * AI Chat API Route for TravelAgentic
@@ -12,7 +17,7 @@ export const maxDuration = 30
  */
 export async function POST(req: Request) {
   try {
-    const { messages } = await req.json()
+    const { messages } = await req.json();
 
     // Enhanced travel-specific system prompt for agentic behavior
     const travelSystemPrompt = `You are TravelAgentic's AI Travel Agent, an autonomous travel planning assistant that can take real actions to help users book their perfect vacation.
@@ -51,90 +56,137 @@ ALWAYS:
 - Offer to search for additional options
 - Be helpful and proactive in taking actions to assist with travel planning
 
-Remember: You're not just giving advice - you're actively helping users find and compare real travel options!`
+Remember: You're not just giving advice - you're actively helping users find and compare real travel options!`;
 
     const result = streamText({
-      model: openai("gpt-4-turbo"),
+      model: openai('gpt-4-turbo'),
       messages,
       system: travelSystemPrompt,
       temperature: 0.7,
       maxTokens: 1500,
       tools: {
         searchFlights: tool({
-          description: "Search for flight options between two cities",
+          description: 'Search for flight options between two cities',
           parameters: z.object({
-            origin: z.string().describe("Departure city or airport code"),
-            destination: z.string().describe("Arrival city or airport code"),
-            departureDate: z.string().describe("Departure date in YYYY-MM-DD format"),
-            returnDate: z.string().optional().describe("Return date in YYYY-MM-DD format (optional for one-way)"),
-            passengers: z.number().default(1).describe("Number of passengers"),
-            cabin: z.enum(["economy", "premium", "business", "first"]).default("economy").describe("Cabin class preference")
+            origin: z.string().describe('Departure city or airport code'),
+            destination: z.string().describe('Arrival city or airport code'),
+            departureDate: z
+              .string()
+              .describe('Departure date in YYYY-MM-DD format'),
+            returnDate: z
+              .string()
+              .optional()
+              .describe(
+                'Return date in YYYY-MM-DD format (optional for one-way)'
+              ),
+            passengers: z.number().default(1).describe('Number of passengers'),
+            cabin: z
+              .enum(['economy', 'premium', 'business', 'first'])
+              .default('economy')
+              .describe('Cabin class preference'),
           }),
-          execute: async ({ origin, destination, departureDate, returnDate, passengers, cabin }) => {
-            console.log(`🤖 AI is searching flights: ${origin} → ${destination}`)
+          execute: async ({
+            origin,
+            destination,
+            departureDate,
+            returnDate,
+            passengers,
+            cabin,
+          }) => {
+            console.log(
+              `🤖 AI is searching flights: ${origin} → ${destination}`
+            );
             return await searchFlights({
               origin,
               destination,
               departureDate,
               returnDate,
               passengers,
-              cabin
-            })
-          }
+              cabin,
+            });
+          },
         }),
-        
+
         searchHotels: tool({
-          description: "Search for hotel accommodations in a destination",
+          description: 'Search for hotel accommodations in a destination',
           parameters: z.object({
-            destination: z.string().describe("City or location to search for hotels"),
-            checkIn: z.string().describe("Check-in date in YYYY-MM-DD format"),
-            checkOut: z.string().describe("Check-out date in YYYY-MM-DD format"),
-            guests: z.number().default(1).describe("Number of guests"),
-            priceRange: z.enum(["budget", "mid-range", "luxury", "any"]).default("any").describe("Price range preference")
+            destination: z
+              .string()
+              .describe('City or location to search for hotels'),
+            checkIn: z.string().describe('Check-in date in YYYY-MM-DD format'),
+            checkOut: z
+              .string()
+              .describe('Check-out date in YYYY-MM-DD format'),
+            guests: z.number().default(1).describe('Number of guests'),
+            priceRange: z
+              .enum(['budget', 'mid-range', 'luxury', 'any'])
+              .default('any')
+              .describe('Price range preference'),
           }),
-          execute: async ({ destination, checkIn, checkOut, guests, priceRange }) => {
-            console.log(`🤖 AI is searching hotels in: ${destination}`)
+          execute: async ({
+            destination,
+            checkIn,
+            checkOut,
+            guests,
+            priceRange,
+          }) => {
+            console.log(`🤖 AI is searching hotels in: ${destination}`);
             return await searchHotels({
               destination,
               checkIn,
               checkOut,
               guests,
-              priceRange
-            })
-          }
+              priceRange,
+            });
+          },
         }),
-        
+
         searchActivities: tool({
-          description: "Search for activities and attractions in a destination",
+          description: 'Search for activities and attractions in a destination',
           parameters: z.object({
-            destination: z.string().describe("City or location to search for activities"),
-            dates: z.array(z.string()).optional().describe("Array of dates in YYYY-MM-DD format for activity availability"),
-            interests: z.array(z.string()).optional().describe("Types of activities of interest (e.g., 'outdoor', 'culture', 'food', 'adventure')"),
-            duration: z.enum(["half-day", "full-day", "multi-day", "any"]).default("any").describe("Preferred activity duration")
+            destination: z
+              .string()
+              .describe('City or location to search for activities'),
+            dates: z
+              .array(z.string())
+              .optional()
+              .describe(
+                'Array of dates in YYYY-MM-DD format for activity availability'
+              ),
+            interests: z
+              .array(z.string())
+              .optional()
+              .describe(
+                "Types of activities of interest (e.g., 'outdoor', 'culture', 'food', 'adventure')"
+              ),
+            duration: z
+              .enum(['half-day', 'full-day', 'multi-day', 'any'])
+              .default('any')
+              .describe('Preferred activity duration'),
           }),
           execute: async ({ destination, dates, interests, duration }) => {
-            console.log(`🤖 AI is searching activities in: ${destination}`)
+            console.log(`🤖 AI is searching activities in: ${destination}`);
             return await searchActivities({
               destination,
               dates,
               interests,
-              duration
-            })
-          }
-        })
+              duration,
+            });
+          },
+        }),
       },
-      toolChoice: "auto"
-    })
+      toolChoice: 'auto',
+    });
 
-    return result.toDataStreamResponse()
+    return result.toDataStreamResponse();
   } catch (error) {
-    console.error("Chat API Error:", error)
+    console.error('Chat API Error:', error);
     return new Response(
-      JSON.stringify({ error: "Failed to process chat request" }),
-      { 
+      JSON.stringify({ error: 'Failed to process chat request' }),
+      {
         status: 500,
-        headers: { "Content-Type": "application/json" }
+        headers: { 'Content-Type': 'application/json' },
       }
-    )
+    );
   }
 }

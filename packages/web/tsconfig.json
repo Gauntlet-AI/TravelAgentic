@@ -27,24 +27,9 @@
       "@/types/*": ["./types/*"],
       "@/utils/*": ["./utils/*"]
     },
-    // App Router specific options
     "target": "es2015",
-    "forceConsistentCasingInFileNames": true,
-    // Standard type checking (enhanced options can be enabled later)
-    // "exactOptionalPropertyTypes": true,
-    // "noImplicitReturns": true,
-    // "noFallthroughCasesInSwitch": true,
-    // "noUncheckedIndexedAccess": true
+    "forceConsistentCasingInFileNames": true
   },
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    ".next",
-    "out"
-  ]
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules", ".next", "out"]
 }

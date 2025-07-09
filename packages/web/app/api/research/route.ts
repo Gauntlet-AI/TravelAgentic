@@ -1,14 +1,14 @@
-import { openai } from "@ai-sdk/openai"
-import { generateText } from "ai"
+import { openai } from '@ai-sdk/openai';
+import { generateText } from 'ai';
 
-export const maxDuration = 60
+export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { destination, startDate, endDate, travelers } = await req.json()
+  const { destination, startDate, endDate, travelers } = await req.json();
 
   try {
     const result = await generateText({
-      model: openai("gpt-4-turbo"),
+      model: openai('gpt-4-turbo'),
       prompt: `Research and provide detailed activity recommendations for ${destination} for ${travelers} travelers visiting from ${startDate} to ${endDate}. 
 
       Please provide a comprehensive list of activities including:
@@ -28,11 +28,14 @@ export async function POST(req: Request) {
       - Category (outdoor, indoor, nightlife, culture, food, adventure, sightseeing)
 
       Format the response as a detailed travel guide.`,
-    })
+    });
 
-    return Response.json({ research: result.text })
+    return Response.json({ research: result.text });
   } catch (error) {
-    console.error("Research error:", error)
-    return Response.json({ error: "Failed to research activities" }, { status: 500 })
+    console.error('Research error:', error);
+    return Response.json(
+      { error: 'Failed to research activities' },
+      { status: 500 }
+    );
   }
 }

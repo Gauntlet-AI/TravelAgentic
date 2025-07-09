@@ -2,11 +2,11 @@
 const nextConfig = {
   // External packages that should not be bundled by webpack in server components
   serverExternalPackages: ['@react-pdf/renderer'],
-  
+
   experimental: {
     // Enable App Router features
   },
-  
+
   // Enable streaming for flight search and travel data
   async rewrites() {
     return [
@@ -22,7 +22,7 @@ const nextConfig = {
         source: '/api/activities/stream',
         destination: '/api/activities/search?stream=true',
       },
-    ]
+    ];
   },
 
   // Environment variables for phase-based development
@@ -81,7 +81,7 @@ const nextConfig = {
           },
         ],
       },
-    ]
+    ];
   },
 
   // Performance optimizations for travel booking flow
@@ -96,6 +96,6 @@ const nextConfig = {
       enabled: true,
     },
   }),
-}
+};
 
-export default nextConfig
+export default nextConfig;

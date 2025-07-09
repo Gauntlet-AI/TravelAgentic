@@ -7,6 +7,7 @@ An AI-powered travel planning application that automates the entire trip booking
 ## 🚀 Overview
 
 TravelAgentic is an **active** open-source AI-first travel planning platform that will:
+
 - Collect user preferences and constraints through intelligent intake
 - Search flights, hotels, and activities simultaneously using APIs and browser automation
 - Handle booking automation with comprehensive 5-layer fallback system
@@ -17,14 +18,14 @@ TravelAgentic is an **active** open-source AI-first travel planning platform tha
 
 ## 📋 Quick Navigation
 
-| Section | Description |
-|---------|-------------|
-| [🎯 Phase-Based Strategy](#-phase-based-development-strategy) | 3-phase development approach |
-| [🚀 Quick Start](#-quick-start) | Get up and running in 5 minutes |
-| [🛡️ Fallback System](#-comprehensive-fallback-system) | 5-layer fallback hierarchy |
-| [🧪 Testing](#-testing) | Mock APIs and browser automation testing |
-| [🔧 Development](#-development) | Phase-based development and contribution guide |
-| [🎯 Roadmap](#-roadmap) | Current progress and future plans |
+| Section                                                       | Description                                    |
+| ------------------------------------------------------------- | ---------------------------------------------- |
+| [🎯 Phase-Based Strategy](#-phase-based-development-strategy) | 3-phase development approach                   |
+| [🚀 Quick Start](#-quick-start)                               | Get up and running in 5 minutes                |
+| [🛡️ Fallback System](#-comprehensive-fallback-system)         | 5-layer fallback hierarchy                     |
+| [🧪 Testing](#-testing)                                       | Mock APIs and browser automation testing       |
+| [🔧 Development](#-development)                               | Phase-based development and contribution guide |
+| [🎯 Roadmap](#-roadmap)                                       | Current progress and future plans              |
 
 ## 🏗️ Architecture
 
@@ -47,41 +48,46 @@ TravelAgentic/
 ## 🛠️ Tech Stack
 
 ### **Current Working Stack**
-| Component | Technology |
-|-----------|------------|
-| **Frontend** | Next.js 15 + App Router + TypeScript |
-| **UI Components** | Shadcn/UI + Radix UI + Tailwind CSS |
-| **AI Integration** | OpenAI API + AI SDK |
-| **Forms** | React Hook Form + Zod validation |
-| **Styling** | Tailwind CSS + CSS Variables |
-| **Development** | ESLint + TypeScript |
+
+| Component          | Technology                           |
+| ------------------ | ------------------------------------ |
+| **Frontend**       | Next.js 15 + App Router + TypeScript |
+| **UI Components**  | Shadcn/UI + Radix UI + Tailwind CSS  |
+| **AI Integration** | OpenAI API + AI SDK                  |
+| **Forms**          | React Hook Form + Zod validation     |
+| **Styling**        | Tailwind CSS + CSS Variables         |
+| **Development**    | ESLint + TypeScript                  |
 
 ### **Planned Enhanced Stack**
-| Component | Technology |
-|-----------|------------|
-| **AI Orchestration** | Langflow |
-| **Database** | Supabase Cloud |
-| **Authentication** | Supabase Auth |
-| **PDF Generation** | React-PDF (@react-pdf/renderer) |
-| **Browser Automation** | Playwright + browser-use |
-| **Voice Calls** | Twilio + ElevenLabs + OpenAI |
-| **Deployment** | Docker Containers |
+
+| Component              | Technology                      |
+| ---------------------- | ------------------------------- |
+| **AI Orchestration**   | Langflow                        |
+| **Database**           | Supabase Cloud                  |
+| **Authentication**     | Supabase Auth                   |
+| **PDF Generation**     | React-PDF (@react-pdf/renderer) |
+| **Browser Automation** | Playwright + browser-use        |
+| **Voice Calls**        | Twilio + ElevenLabs + OpenAI    |
+| **Deployment**         | Docker Containers               |
 
 ## 🎯 Phase-Based Development Strategy
 
 TravelAgentic follows a strategic 3-phase development approach that balances rapid MVP delivery with production-ready scalability:
 
 ### **Phase 1: MVP Foundation (Days 1-2)**
+
 - **Focus**: Core automation with comprehensive mocks
 - **APIs**: OpenAI (AI), Stripe (payments), all travel APIs mocked
 - **Goal**: Complete booking flow demonstration
 
 ### **Phase 2: Enhanced Features (Days 3-4)**
+
 - **Focus**: Real API integration + browser automation fallbacks
 - **APIs**: Tequila (flights), Booking.com (hotels), Viator (activities)
 - **Fallbacks**: Playwright + browser-use automation for API failures
 
 ### **Phase 3: Production Ready (Days 5-6)**
+
 - **Focus**: Advanced features + comprehensive testing
 - **APIs**: Twilio Voice, ElevenLabs, Rome2Rio, FlightAware
 - **Goal**: Production-ready with 95% feature completeness
@@ -91,21 +97,26 @@ TravelAgentic follows a strategic 3-phase development approach that balances rap
 ### **Current Setup (Working v0)**
 
 #### Prerequisites
+
 - Node.js 18+
 - Git
 
 #### 1. Clone the Repository
+
 ```bash
 git clone https://github.com/yourusername/TravelAgentic.git
 cd TravelAgentic
 ```
 
 #### 2. Install Dependencies
+
 ```bash
-npm install
+# Install all workspace dependencies
+npm run install:all
 ```
 
 #### 3. Set up Environment Variables
+
 ```bash
 # Create environment file
 cp .env.example .env.local
@@ -115,28 +126,46 @@ OPENAI_API_KEY=your_openai_key
 ```
 
 #### 4. Start Development Server
+
 ```bash
 npm run dev
 ```
 
 #### 5. Access the Application
+
 - **Web App**: http://localhost:3000
 
 #### Available Scripts
+
 ```bash
-npm run dev    # Start development server
-npm run build  # Build for production
-npm run start  # Start production server
-npm run lint   # Run ESLint
+# Development
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
+
+# Code Quality
+npm run validate         # Run type-check + lint + format:check
+npm run fix              # Auto-fix formatting and linting issues
+npm run lint             # Run ESLint
+npm run lint:fix         # Run ESLint with auto-fix
+npm run format           # Format code with Prettier
+npm run format:check     # Check code formatting
+npm run type-check       # Run TypeScript type checking
+
+# Workspace Management
+npm run install:all      # Install all workspace dependencies
+npm run clean            # Clean all node_modules and build artifacts
 ```
 
 ### **Planned Enhanced Setup**
 
 #### Future Prerequisites
+
 - Docker & Docker Compose
 - Supabase CLI
 
 #### Enhanced Environment Variables (Planned)
+
 ```bash
 # Phase-based configuration (planned approach)
 USE_MOCK_APIS=true
@@ -154,12 +183,13 @@ ELEVENLABS_API_KEY=your_elevenlabs_key
 ```
 
 #### Enhanced Development (Planned)
+
 ```bash
 # Start all services (Web App, Langflow, Redis, Local DB)
 docker-compose up -d
 
 # Access services
-# - Langflow UI: http://localhost:7860  
+# - Langflow UI: http://localhost:7860
 # - Local PostgreSQL: localhost:5432
 # - Redis: localhost:6379
 ```
@@ -169,6 +199,7 @@ docker-compose up -d
 TravelAgentic implements a 5-layer fallback hierarchy to ensure maximum booking success:
 
 ### **Fallback Hierarchy**
+
 1. **Primary API** → Try main travel API (Tequila, Booking.com, Viator) with 3 retries
 2. **Secondary API** → Switch to alternative provider for same service
 3. **Browser Automation** → Playwright + browser-use for web scraping when APIs fail
@@ -176,6 +207,7 @@ TravelAgentic implements a 5-layer fallback hierarchy to ensure maximum booking 
 5. **User Manual Input** → Pause and request user intervention as last resort
 
 ### **Browser Automation Features**
+
 - **AI-Powered Navigation**: Natural language instructions to Playwright + browser-use
 - **Target Sites**: Google Flights, Booking.com, OpenTable, GetYourGuide
 - **Respectful Automation**: Rate limiting, human-like behavior, proper user agents
@@ -184,25 +216,33 @@ TravelAgentic implements a 5-layer fallback hierarchy to ensure maximum booking 
 ## 📁 Planned Package Structure
 
 ### 🧠 Langflow Package (Planned)
+
 AI workflow orchestration for travel planning logic.
+
 - **Location**: `packages/langflow/` (to be created)
 - **Purpose**: Visual AI workflows for user preferences, search coordination, and booking automation
 - **Key Features**: User intake flows, search orchestration, booking fallback strategies
 
 ### 🔗 Edge Functions Package (Planned)
+
 Serverless API endpoints for external integrations.
+
 - **Location**: `packages/edge-functions/` (to be created)
 - **Purpose**: API orchestration for flights, hotels, activities, and bookings
 - **Key Features**: Rate limiting, error handling, mock API support
 
 ### 🌐 Web Package (Planned)
+
 Next.js frontend application.
+
 - **Location**: `packages/web/` (to be created)
 - **Purpose**: User interface for travel planning and booking
 - **Key Features**: Responsive design, authentication, real-time search
 
 ### 🗄️ Database Package (Planned)
+
 Supabase database schema and migrations.
+
 - **Location**: `packages/database/` (to be created)
 - **Purpose**: Database structure, migrations, and seed data
 - **Key Features**: RLS policies, TypeScript types, performance optimization
@@ -210,6 +250,7 @@ Supabase database schema and migrations.
 ## 🧪 Testing Strategy
 
 ### **Current Testing State**
+
 - **Status**: Test suite in development
 - **Available**: Basic linting with `npm run lint`
 - **Planned**: Comprehensive testing with mock APIs
@@ -217,6 +258,7 @@ Supabase database schema and migrations.
 ### **Planned Testing Implementation**
 
 #### Run Tests with Mock APIs (Planned)
+
 ```bash
 # Enable mock mode for OSS-friendly development
 export USE_MOCK_APIS=true
@@ -234,6 +276,7 @@ npm run test:playwright
 ```
 
 #### Run Tests with Real APIs (Future)
+
 ```bash
 # Requires all API keys to be configured
 export USE_MOCK_APIS=false
@@ -244,6 +287,7 @@ npm run test:browser-automation
 ```
 
 ### Testing Strategy
+
 - **Unit Tests**: Jest + React Testing Library for components
 - **Integration Tests**: API client testing with mocks and real APIs
 - **E2E Tests**: Playwright for full user journeys
@@ -253,6 +297,7 @@ npm run test:browser-automation
 ## 📚 Documentation
 
 ### **Main Documentation**
+
 - **[Complete Architecture](_docs/Architecture.md)** - Full technical specification with user flows and Langflow architecture
 - **[Product Requirements](_docs/PRD.md)** - Complete product vision with user stories and enterprise features
 - **[MVP PRD](_docs/MVP_PRD.md)** - 6-day development plan with specific deliverables
@@ -261,12 +306,14 @@ npm run test:browser-automation
 - **[Contributing Guide](CONTRIBUTING.md)** - Development workflow and guidelines
 
 ### **Detailed Design Documentation**
+
 - **[Travel Preferences](_docs/notes/travel_preferences.md)** - Context-based preference collection system
 - **[Profile Preferences](_docs/notes/profile_preferences.md)** - User profile and system interaction preferences
 - **[User Flow Design](_docs/notes/flow.md)** - Detailed user stories and flow specifications
 - **[Langflow Architecture](_docs/notes/langflow_architecture.md)** - Comprehensive Langflow implementation with context management
 
 ### **Package Documentation**
+
 - **[Package READMEs](packages/)** - Detailed documentation for each package (when implemented)
 
 ## 🔧 Development
@@ -302,6 +349,7 @@ npm run dev
 ```
 
 **Why Mock APIs?**
+
 - **Zero Setup**: No API keys required for development
 - **Consistent Testing**: Predictable responses for automated testing
 - **Offline Development**: Work without internet connectivity
@@ -313,10 +361,13 @@ npm run dev
 ### Adding New Features
 
 1. **Create feature branch**: `git checkout -b feature/your-feature-name`
-2. **Develop with mock APIs**: `USE_MOCK_APIS=true`
-3. **Add tests**: Cover new functionality
-4. **Update documentation**: README and code comments
-5. **Submit PR**: Small, focused changes
+2. **Install dependencies**: `npm run install:all`
+3. **Develop with mock APIs**: `USE_MOCK_APIS=true`
+4. **Validate frequently**: `npm run validate`
+5. **Auto-fix issues**: `npm run fix`
+6. **Add tests**: Cover new functionality
+7. **Update documentation**: README and code comments
+8. **Submit PR**: Small, focused changes
 
 ## 🚢 Deployment
 
@@ -350,7 +401,8 @@ docker build -t travelagentic:latest .
 ## 🏗️ CI/CD Pipeline
 
 - **Automated Testing**: All PRs run tests with mock APIs
-- **Code Quality**: ESLint, TypeScript checks, and formatting
+- **Code Quality**: `npm run validate` (TypeScript + ESLint + Prettier)
+- **Auto-fixing**: `npm run fix` for consistent code formatting
 - **Docker Build**: Automatic container builds on merge to main
 - **Container Registry**: Push to your chosen container registry
 - **Production Deployment**: Deploy to your container platform
@@ -363,14 +415,17 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 1. **Fork the repository**
 2. **Create a feature branch**
-3. **Set up mock APIs**: `USE_MOCK_APIS=true`
-4. **Make your changes**
-5. **Add tests**
-6. **Submit a pull request**
+3. **Install dependencies**: `npm run install:all`
+4. **Set up mock APIs**: `USE_MOCK_APIS=true`
+5. **Make your changes**
+6. **Validate code quality**: `npm run validate`
+7. **Auto-fix issues**: `npm run fix`
+8. **Submit a pull request**
 
 ## 🎯 Roadmap
 
 ### ✅ **Current Status: Working v0 Prototype**
+
 - [x] Next.js 15 + App Router foundation
 - [x] Shadcn/UI component library integration
 - [x] OpenAI API integration
@@ -379,6 +434,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Chat interface and research API routes
 
 ### 🔄 **Phase 1: Architecture Migration (In Progress)**
+
 - [ ] Migrate to packages/web structure
 - [ ] Implement mock API system
 - [ ] Add comprehensive travel search flow
@@ -386,6 +442,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [ ] Add database integration (Supabase)
 
 ### 📋 **Phase 2: Enhanced Features (Planned)**
+
 - [ ] Real API integration (Tequila, Booking.com, Viator)
 - [ ] Browser automation fallbacks (Playwright + browser-use)
 - [ ] Advanced activity filtering and personalization
@@ -393,6 +450,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [ ] Improved UI/UX with loading states
 
 ### 🚀 **Phase 3: Production Ready (Planned)**
+
 - [ ] Voice call fallback system (Twilio + ElevenLabs)
 - [ ] Comprehensive testing (85% coverage)
 - [ ] Performance optimization and caching
@@ -400,6 +458,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [ ] Production deployment and monitoring
 
 ### Future Enhancements 🚀
+
 - [ ] Multi-language support (15+ languages)
 - [ ] Group travel planning and coordination
 - [ ] White-label solutions for travel agencies
@@ -447,6 +506,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 We have a **working v0 prototype** and are enhancing it with comprehensive architecture. Check out our documentation:
 
 ### **Core Documentation**
+
 - [📋 Complete PRD](_docs/PRD.md) - Full product requirements with user stories and enterprise features
 - [📋 MVP PRD](_docs/MVP_PRD.md) - 6-day development plan with specific deliverables
 - [🏗️ Architecture](_docs/Architecture.md) - Complete technical specifications with Langflow architecture
@@ -454,9 +514,10 @@ We have a **working v0 prototype** and are enhancing it with comprehensive archi
 - [⚙️ Phase 1 Setup](_docs/setup_phase_1.md) - Complete development setup guide
 
 ### **Detailed Design**
+
 - [🎯 Travel Preferences](_docs/notes/travel_preferences.md) - Context-based preference collection system
 - [👤 Profile Preferences](_docs/notes/profile_preferences.md) - User profile and system interaction preferences
 - [🔄 User Flow Design](_docs/notes/flow.md) - Detailed user stories and flow specifications
 - [🧠 Langflow Architecture](_docs/notes/langflow_architecture.md) - Comprehensive Langflow implementation with context management, shopping cart, and backtracking
 
-**Development is active with working v0 prototype - contributions welcome!** 
+**Development is active with working v0 prototype - contributions welcome!**

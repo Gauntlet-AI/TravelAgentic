@@ -5,6 +5,7 @@ This package contains the Next.js frontend application for TravelAgentic.
 ## Overview
 
 The web application provides the user interface for:
+
 - User onboarding and preference collection
 - Travel search and filtering
 - Booking management
@@ -15,35 +16,68 @@ The web application provides the user interface for:
 
 ```
 packages/web/
-├── pages/          → Next.js pages
+├── app/            → Next.js 15 App Router pages and layouts
 ├── components/     → Reusable UI components
+├── hooks/          → Custom React hooks
+├── lib/            → Utility functions and API clients
+├── public/         → Static assets
 ├── styles/         → CSS and styling files
-├── lib/           → Utility functions and API clients
-├── hooks/         → Custom React hooks
-├── context/       → React context providers
-├── public/        → Static assets
-├── types/         → TypeScript type definitions
-├── .next/         → Next.js build output (gitignored)
-├── dist/          → Production build (gitignored)
-└── README.md      → This file
+├── .next/          → Next.js build output (gitignored)
+├── node_modules/   → Local dependencies (some hoisted to root)
+├── .eslintrc.json  → ESLint configuration
+├── .prettierrc.json → Prettier configuration
+├── .prettierignore → Prettier ignore patterns
+├── package.json    → Package dependencies and scripts
+├── tsconfig.json   → TypeScript configuration
+├── tailwind.config.ts → Tailwind CSS configuration
+├── next.config.mjs → Next.js configuration
+└── README.md       → This file
 ```
+
+## Workspace Architecture
+
+This package is part of a monorepo workspace structure:
+
+```
+TravelAgentic/
+├── packages/web/           ← You are here
+├── node_modules/           ← Dependencies hoisted here
+├── package.json            ← Root workspace configuration
+└── .gitignore              ← Single gitignore for entire project
+```
+
+**Key Points:**
+
+- **Dependencies are hoisted** to the root `node_modules` for efficiency
+- **Next.js binary** is available from root: `../../node_modules/.bin/next`
+- **Workspace scripts** delegate to this package: `npm run dev` calls `packages/web/npm run dev`
+- **No local .gitignore** - uses root `.gitignore` which covers all patterns
 
 ## Setup
 
 ### Development Environment
 
 ```bash
-# Install dependencies
-npm install
+# From project root (recommended):
+npm run install:all      # Install all workspace dependencies
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
 
-# Start development server
-npm run dev
+# From packages/web directory (also works):
+npm install              # Install local dependencies
+npm run dev              # Start development server
+npm run build            # Build for production
+npm run start            # Start production server
 
-# Build for production
-npm run build
-
-# Start production server
-npm start
+# Code Quality Commands:
+npm run validate         # Type-check + lint + format:check
+npm run fix              # Auto-fix formatting and linting
+npm run lint             # Run ESLint
+npm run lint:fix         # Run ESLint with auto-fix
+npm run format           # Format code with Prettier
+npm run format:check     # Check code formatting
+npm run type-check       # Run TypeScript type checking
 ```
 
 ### Environment Variables
@@ -77,24 +111,24 @@ The application uses React Context for global state management:
 
 ```typescript
 // contexts/AppContext.tsx
-import { createContext, useContext } from 'react'
+import { createContext, useContext } from 'react';
 
 interface AppContextType {
-  user: User | null
-  preferences: UserPreferences
-  bookings: Booking[]
+  user: User | null;
+  preferences: UserPreferences;
+  bookings: Booking[];
   // ... other state
 }
 
-const AppContext = createContext<AppContextType | undefined>(undefined)
+const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const useApp = () => {
-  const context = useContext(AppContext)
+  const context = useContext(AppContext);
   if (!context) {
-    throw new Error('useApp must be used within AppProvider')
+    throw new Error('useApp must be used within AppProvider');
   }
-  return context
-}
+  return context;
+};
 ```
 
 ### API Integration
@@ -107,10 +141,10 @@ export const searchFlights = async (params: FlightSearchParams) => {
   const response = await fetch('/api/flights/search', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(params)
-  })
-  return response.json()
-}
+    body: JSON.stringify(params),
+  });
+  return response.json();
+};
 ```
 
 ### Authentication
@@ -119,16 +153,16 @@ Authentication is handled through Supabase Auth:
 
 ```typescript
 // lib/auth.ts
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-)
+);
 
 export const signIn = async (email: string, password: string) => {
-  return await supabase.auth.signInWithPassword({ email, password })
-}
+  return await supabase.auth.signInWithPassword({ email, password });
+};
 ```
 
 ## Components
@@ -251,7 +285,8 @@ Global styles are defined in `styles/globals.css`:
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   line-height: 1.6;
   color: #333;
 }
@@ -270,6 +305,10 @@ npm run test:watch
 
 # Run tests with coverage
 npm run test:coverage
+
+# Code quality validation
+npm run validate         # Run all checks (type + lint + format)
+npm run fix              # Auto-fix code style issues
 ```
 
 ### E2E Tests
@@ -321,10 +360,10 @@ describe('Button', () => {
 export const trackPageView = (url: string) => {
   if (typeof window !== 'undefined' && window.gtag) {
     window.gtag('config', process.env.NEXT_PUBLIC_GOOGLE_ANALYTICS_ID, {
-      page_path: url
-    })
+      page_path: url,
+    });
   }
-}
+};
 ```
 
 ## Deployment
@@ -356,9 +395,9 @@ const nextConfig = {
   env: {
     CUSTOM_KEY: process.env.CUSTOM_KEY,
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
 ```
 
 ## Phase Configuration
@@ -397,7 +436,7 @@ import { getPhaseConfig } from '../lib/phase-config'
 export const SearchPage = () => {
   const phase = parseInt(process.env.NEXT_PUBLIC_DEVELOPMENT_PHASE || '1');
   const config = getPhaseConfig(phase);
-  
+
   return (
     <div>
       {config.browserFallback && <BrowserFallbackIndicator />}
@@ -411,28 +450,31 @@ export const SearchPage = () => {
 
 ### Development Guidelines
 
-1. Follow the established file structure
-2. Use TypeScript for all new code
-3. Add unit tests for new components
-4. Update component documentation
-5. Test with different phase configurations
-6. Follow the established naming conventions
+1. **Install dependencies**: `npm run install:all` (from root)
+2. **Follow the established file structure** and App Router patterns
+3. **Use TypeScript** for all new code with strict typing
+4. **Validate frequently**: `npm run validate` during development
+5. **Auto-fix issues**: `npm run fix` before committing
+6. **Add unit tests** for new components
+7. **Update component documentation** with proper JSDoc comments
+8. **Test with different phase configurations**
+9. **Follow established naming conventions** and code style
 
 ### Code Style
 
 ```typescript
 // ✅ Good
 interface UserPreferences {
-  budget: number
-  destination: string
-  dates: { start: Date; end: Date }
+  budget: number;
+  destination: string;
+  dates: { start: Date; end: Date };
 }
 
 // ❌ Bad
 interface userPrefs {
-  budget: any
-  destination: any
-  dates: any
+  budget: any;
+  destination: any;
+  dates: any;
 }
 ```
 
@@ -449,4 +491,4 @@ git commit -m "fix: resolve booking form validation"
 
 # Documentation
 git commit -m "docs: update component README"
-``` 
+```

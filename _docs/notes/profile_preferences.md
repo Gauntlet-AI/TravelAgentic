@@ -7,6 +7,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Automation & Control
 
 #### Automation Level
+
 - **automation_level** - User's preferred automation level (0-10 scale)
   - 0-2: Manual approval required for every selection
   - 3-5: Auto-select obvious choices, ask for approval on complex decisions
@@ -14,6 +15,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - 9-10: Full automation, only interrupt for critical failures
 
 #### Fallback System
+
 - **fallback_comfort** - Which fallback methods user is comfortable with
   - API retries (always enabled)
   - Browser automation (yes/no/ask)
@@ -28,6 +30,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Trip Management
 
 #### Trip History & Templates
+
 - **trip_history_retention** - How long to keep trip history
   - 30 days, 90 days, 1 year, indefinite
 - **template_sharing** - Willingness to share/import trip templates
@@ -36,6 +39,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Disabled, family only, friends, anyone with permission
 
 #### Trip Organization
+
 - **trip_naming_style** - Preferred trip naming convention
   - Auto-generate, custom names, date-based, destination-based
 - **trip_comparison** - Enable side-by-side trip comparison
@@ -45,6 +49,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Booking Process
 
 #### Purchase Flow
+
 - **booking_review_style** - Level of detail in purchase review
   - Quick summary, detailed breakdown, itemized review
 - **payment_confirmation** - Required confirmation steps for purchases
@@ -55,6 +60,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Auto-accept increases under 5%, always ask, cancel if increased
 
 #### Booking Notifications
+
 - **booking_status_updates** - Frequency of booking progress updates
   - Real-time, major milestones only, completion only
 - **booking_confirmation_delivery** - How to receive booking confirmations
@@ -65,6 +71,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Agent Interaction
 
 #### Recommendation Style
+
 - **agent_interaction_style** - How to present agent recommendations
   - Sequential (one category at a time), parallel (all categories), mixed
 - **recommendation_detail_level** - Amount of detail in recommendations
@@ -73,6 +80,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Top choice only, 3 options, 5 options, 10 options
 
 #### AI Communication
+
 - **explanation_depth** - Level of AI reasoning explanation
   - None, basic rationale, detailed reasoning
 - **confidence_display** - Show AI confidence levels
@@ -83,6 +91,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Communication & Notifications
 
 #### Progress Updates
+
 - **progress_updates** - Frequency and detail of progress notifications
   - Silent, major milestones, detailed progress, real-time
 - **manual_intervention_alerts** - How to handle fallback warnings
@@ -91,6 +100,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Hidden, progress bar, detailed status, agent-by-agent
 
 #### Contact Preferences
+
 - **preferred_contact_method** - Primary communication channel
   - Email, SMS, push notification, phone call
 - **contact_hours** - When system can contact user
@@ -101,6 +111,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### Output & Itinerary
 
 #### Itinerary Format
+
 - **itinerary_format** - Preferred itinerary delivery format
   - PDF email, interactive web view, mobile app, printed mail
 - **itinerary_detail_level** - Comprehensive vs summary format
@@ -111,6 +122,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Minimal, standard, full branding, custom branding
 
 #### Sharing & Privacy
+
 - **sharing_preferences** - Who can access completed itineraries
   - Private only, travel companions, family, custom sharing
 - **social_sharing** - Allow sharing to social media
@@ -121,6 +133,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
 ### User Experience
 
 #### Interface Preferences
+
 - **ui_complexity** - Interface complexity level
   - Simplified, standard, advanced, expert
 - **tutorial_preferences** - Onboarding and help preferences
@@ -129,6 +142,7 @@ This section defines how users prefer to interact with the TravelAgentic system 
   - Brief messages, detailed explanations, troubleshooting steps
 
 #### Accessibility
+
 - **accessibility_needs** - System accessibility requirements
   - Screen reader support, high contrast, large text, keyboard navigation
 - **language_preference** - System language
@@ -144,4 +158,4 @@ This section defines how users prefer to interact with the TravelAgentic system 
 - Enable preference import/export for account migration
 - Provide preference reset to defaults option
 - Consider A/B testing optimal default values
-- Track preference changes to improve system UX 
+- Track preference changes to improve system UX

@@ -1,6 +1,6 @@
-'use client'
+'use client';
 
-import { useEffect } from 'react'
+import { useEffect } from 'react';
 
 /**
  * Global error boundary component
@@ -10,93 +10,95 @@ export default function GlobalError({
   error,
   reset,
 }: {
-  error: Error & { digest?: string }
-  reset: () => void
+  error: Error & { digest?: string };
+  reset: () => void;
 }) {
   useEffect(() => {
     // Log the error to monitoring service
-    console.error('Global application error:', error)
-  }, [error])
+    console.error('Global application error:', error);
+  }, [error]);
 
   return (
     <html>
       <body>
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="bg-white rounded-lg shadow-xl p-8 max-w-lg mx-auto text-center">
+        <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
+          <div className="mx-auto max-w-lg rounded-lg bg-white p-8 text-center shadow-xl">
             {/* Error Icon */}
-            <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <svg 
-                className="w-10 h-10 text-red-600" 
-                fill="none" 
-                stroke="currentColor" 
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-red-100">
+              <svg
+                className="h-10 w-10 text-red-600"
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" 
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
                 />
               </svg>
             </div>
 
             {/* Error Message */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">
+            <h1 className="mb-4 text-2xl font-bold text-gray-900">
               Something Went Wrong
             </h1>
-            
-            <p className="text-gray-600 mb-8">
-              We're experiencing technical difficulties with our AI-powered travel platform. 
-              Don't worry - we have fallback options to help you plan your trip.
+
+            <p className="mb-8 text-gray-600">
+              We're experiencing technical difficulties with our AI-powered
+              travel platform. Don't worry - we have fallback options to help
+              you plan your trip.
             </p>
 
             {/* Recovery Actions */}
-            <div className="space-y-4 mb-8">
+            <div className="mb-8 space-y-4">
               <button
                 onClick={reset}
-                className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg"
+                className="w-full rounded-lg bg-blue-600 px-6 py-3 text-lg font-medium text-white transition-colors hover:bg-blue-700"
               >
                 Try Again
               </button>
-              
+
               <button
-                onClick={() => window.location.href = '/'}
-                className="w-full bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition-colors"
+                onClick={() => (window.location.href = '/')}
+                className="w-full rounded-lg bg-gray-200 px-6 py-3 text-gray-700 transition-colors hover:bg-gray-300"
               >
                 Reload Application
               </button>
             </div>
 
             {/* Manual Booking Fallback */}
-            <div className="bg-blue-50 rounded-lg p-6 border border-blue-200">
-              <h3 className="text-lg font-semibold text-blue-900 mb-3">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+              <h3 className="mb-3 text-lg font-semibold text-blue-900">
                 Need to Book Right Away?
               </h3>
-              
-              <p className="text-blue-800 mb-4 text-sm">
-                Our 5-layer fallback system ensures you can always book your travel:
+
+              <p className="mb-4 text-sm text-blue-800">
+                Our 5-layer fallback system ensures you can always book your
+                travel:
               </p>
-              
-              <div className="space-y-2 text-sm text-blue-700 mb-4">
+
+              <div className="mb-4 space-y-2 text-sm text-blue-700">
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-blue-400"></span>
                   Manual search assistance
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-blue-400"></span>
                   Phone booking support
                 </div>
                 <div className="flex items-center">
-                  <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                  <span className="mr-2 h-2 w-2 rounded-full bg-blue-400"></span>
                   Direct airline/hotel booking
                 </div>
               </div>
-              
-              <div className="flex flex-col sm:flex-row gap-3">
-                <button className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <button className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700">
                   Call Support: 1-800-TRAVEL
                 </button>
-                <button className="flex-1 bg-white text-blue-600 border border-blue-300 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium">
+                <button className="flex-1 rounded-lg border border-blue-300 bg-white px-4 py-2 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-50">
                   Manual Search
                 </button>
               </div>
@@ -105,10 +107,10 @@ export default function GlobalError({
             {/* Error Details (Development) */}
             {process.env.NODE_ENV === 'development' && (
               <details className="mt-6 text-left">
-                <summary className="text-sm text-gray-500 cursor-pointer">
+                <summary className="cursor-pointer text-sm text-gray-500">
                   Error Details (Development)
                 </summary>
-                <pre className="mt-2 text-xs bg-gray-100 p-3 rounded overflow-auto">
+                <pre className="mt-2 overflow-auto rounded bg-gray-100 p-3 text-xs">
                   {error.message}
                   {error.stack}
                 </pre>
@@ -118,5 +120,5 @@ export default function GlobalError({
         </div>
       </body>
     </html>
-  )
-} 
+  );
+}

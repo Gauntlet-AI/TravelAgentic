@@ -1,43 +1,54 @@
-"use client"
+'use client';
 
-import { useChat } from "ai/react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, MessageCircle } from "lucide-react"
+import { useChat } from 'ai/react';
+import { MessageCircle, Send } from 'lucide-react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ChatInterfaceProps {
-  className?: string
-  isMobile?: boolean
-  isCollapsed?: boolean
-  onToggle?: () => void
-  hideCard?: boolean  // New prop to hide card styling
+  className?: string;
+  isMobile?: boolean;
+  isCollapsed?: boolean;
+  onToggle?: () => void;
+  hideCard?: boolean; // New prop to hide card styling
 }
 
-export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hideCard }: ChatInterfaceProps) {
-  const { messages, input, handleInputChange, handleSubmit, isLoading } = useChat()
+export function ChatInterface({
+  className,
+  isMobile,
+  isCollapsed,
+  onToggle,
+  hideCard,
+}: ChatInterfaceProps) {
+  const { messages, input, handleInputChange, handleSubmit, isLoading } =
+    useChat();
 
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
-  const containerClasses = `${className ?? ""} flex flex-col ${!isMobile ? "sticky top-0 max-h-screen overflow-y-auto" : ""}`
+  const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
 
   // Legacy mobile collapsed view (no longer used with new bubble)
   if (isMobile && isCollapsed) {
     return (
-      <div className={`${className} bg-blue-500 text-white p-4 cursor-pointer`} onClick={onToggle}>
+      <div
+        className={`${className} cursor-pointer bg-blue-500 p-4 text-white`}
+        onClick={onToggle}
+      >
         <div className="flex items-center justify-center gap-2">
           <MessageCircle size={20} />
           <span>Chat with AI Assistant</span>
         </div>
       </div>
-    )
+    );
   }
 
   const chatContent = (
     <>
       {/* Header - only show if not hiding card */}
       {!hideCard && (
-        <CardHeader className="pb-3 sticky top-0 bg-white z-10">
+        <CardHeader className="sticky top-0 z-10 bg-white pb-3">
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">AI Assistant</CardTitle>
             {isMobile && (
@@ -48,67 +59,85 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hide
           </div>
         </CardHeader>
       )}
-      
-      <CardContent className={hideCard ? "p-0 h-full flex flex-col" : ""}>
+
+      <CardContent className={hideCard ? 'flex h-full flex-col p-0' : ''}>
         {/* Empty State Message */}
         {messages.length === 0 && (
-          <div className={`text-center text-muted-foreground py-8 ${hideCard ? 'sticky top-0 bg-white z-10' : 'sticky top-16 bg-white z-10'}`}>
+          <div
+            className={`py-8 text-center text-muted-foreground ${hideCard ? 'sticky top-0 z-10 bg-white' : 'sticky top-16 z-10 bg-white'}`}
+          >
             <MessageCircle className="mx-auto mb-2" size={32} />
             <p>Ask me anything about your vacation plans!</p>
             <p>Change any detail about your vacation.</p>
           </div>
         )}
-        
+
         {/* Scrollable Messages Area */}
-        <ScrollArea className="flex-1 p-4 overflow-y-auto">
+        <ScrollArea className="flex-1 overflow-y-auto p-4">
           {messages.map((message) => (
-            <div key={message.id} className={`mb-4 ${message.role === "user" ? "text-right" : "text-left"}`}>
+            <div
+              key={message.id}
+              className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
+            >
               <div
-                className={`inline-block max-w-[80%] p-3 rounded-lg ${
-                  message.role === "user" ? "bg-blue-500 text-white" : "bg-gray-100 text-gray-900"
+                className={`inline-block max-w-[80%] rounded-lg p-3 ${
+                  message.role === 'user'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-100 text-gray-900'
                 }`}
               >
                 {message.content}
-                
+
                 {/* Show tool calls if they exist */}
-                {message.toolInvocations && message.toolInvocations.length > 0 && (
-                  <div className="mt-3 space-y-2">
-                    {message.toolInvocations.map((tool, index) => (
-                      <div key={index} className="bg-blue-50 border border-blue-200 rounded-lg p-2 text-sm">
-                        <div className="flex items-center gap-2 text-blue-700 font-medium">
-                          {tool.toolName === 'searchFlights' && '✈️ Searching flights...'}
-                          {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}  
-                          {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
-                        </div>
-                        {'result' in tool && tool.result && (
-                          <div className="mt-1 text-gray-600 text-xs">
-                            {(tool.result as any).success ? (
-                              <span className="text-green-600">
-                                ✅ Found {(tool.result as any).data?.length || 0} options
-                              </span>
-                            ) : (
-                              <span className="text-red-600">
-                                ❌ {(tool.result as any).message}
-                              </span>
-                            )}
+                {message.toolInvocations &&
+                  message.toolInvocations.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.toolInvocations.map((tool, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2 font-medium text-blue-700">
+                            {tool.toolName === 'searchFlights' &&
+                              '✈️ Searching flights...'}
+                            {tool.toolName === 'searchHotels' &&
+                              '🏨 Searching hotels...'}
+                            {tool.toolName === 'searchActivities' &&
+                              '🎯 Searching activities...'}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
+                          {'result' in tool && tool.result && (
+                            <div className="mt-1 text-xs text-gray-600">
+                              {(tool.result as any).success ? (
+                                <span className="text-green-600">
+                                  ✅ Found{' '}
+                                  {(tool.result as any).data?.length || 0}{' '}
+                                  options
+                                </span>
+                              ) : (
+                                <span className="text-red-600">
+                                  ❌ {(tool.result as any).message}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
               </div>
             </div>
           ))}
           {isLoading && (
             <div className="text-left">
-              <div className="inline-block bg-gray-100 text-gray-900 p-3 rounded-lg">AI is thinking...</div>
+              <div className="inline-block rounded-lg bg-gray-100 p-3 text-gray-900">
+                AI is thinking...
+              </div>
             </div>
           )}
         </ScrollArea>
-        
+
         {/* Input Form */}
-        <div className="sticky bottom-0 bg-white z-10 p-4">
+        <div className="sticky bottom-0 z-10 bg-white p-4">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}
@@ -123,20 +152,12 @@ export function ChatInterface({ className, isMobile, isCollapsed, onToggle, hide
         </div>
       </CardContent>
     </>
-  )
+  );
 
   // Return content with or without Card wrapper
   if (hideCard) {
-    return (
-      <div className={containerClasses}>
-        {chatContent}
-      </div>
-    )
+    return <div className={containerClasses}>{chatContent}</div>;
   }
 
-  return (
-    <Card className={containerClasses}>
-      {chatContent}
-    </Card>
-  )
+  return <Card className={containerClasses}>{chatContent}</Card>;
 }

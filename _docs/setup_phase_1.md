@@ -5,6 +5,7 @@ Get TravelAgentic running locally with **mock APIs** in 5 minutes. Perfect for f
 ## What is Phase 1?
 
 **Phase 1** is our foundation development environment:
+
 - ✅ **Mock APIs** for flights, hotels, activities (no API keys needed for most features!)
 - ✅ **Real AI integration** with OpenAI for trip planning
 - ✅ **Local database** with Supabase (will be initialized)
@@ -17,19 +18,22 @@ Get TravelAgentic running locally with **mock APIs** in 5 minutes. Perfect for f
 ## Quick Start
 
 ### 1. Prerequisites
+
 - **Node.js** 18+ ([download here](https://nodejs.org/))
 - **Git** ([download here](https://git-scm.com/))
 - **Docker** ([download here](https://docker.com/)) - Required for local Supabase
 - **OpenAI API Key** ([get here](https://platform.openai.com/api-keys)) - Only required API key!
 
 ### 2. Clone and Install
+
 ```bash
 git clone https://github.com/Gauntlet-AI/TravelAgentic.git
 cd TravelAgentic
-npm install
+npm run install:all
 ```
 
 ### 3. Database Setup (Using Docker Compose)
+
 ```bash
 # Start the full development stack (Database + Langflow + Redis)
 docker-compose up -d
@@ -39,11 +43,13 @@ docker-compose ps
 ```
 
 **What this starts:**
+
 - PostgreSQL database on port 5432
 - Langflow on port 7860 (AI workflow builder)
 - Redis on port 6379 (caching)
 
 ### 4. Environment Setup
+
 Create `.env.local` in the project root:
 
 ```bash
@@ -74,6 +80,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### 5. Verify Database Setup
+
 ```bash
 # The database schema is created automatically from packages/seed/01_init.sql
 # Verify it worked by connecting to the database
@@ -83,8 +90,12 @@ psql -h localhost -p 5432 -U postgres -d travelagentic -c "\dt"
 ```
 
 ### 6. Start Development
+
 ```bash
-# Start the Next.js development server
+# Start the Next.js development server (from root - recommended)
+npm run dev
+
+# Or from packages/web directory
 cd packages/web
 npm run dev
 ```
@@ -96,6 +107,7 @@ npm run dev
 ## What You Just Built
 
 ### ✅ **Working Development Environment**
+
 - Next.js application running locally
 - PostgreSQL database with travel schema
 - Langflow AI workflow builder (http://localhost:7860)
@@ -104,6 +116,7 @@ npm run dev
 - AI integration ready (with OpenAI key)
 
 ### ✅ **Current Phase 1 Status**
+
 - **Database**: ✅ Working with travel schema
 - **Langflow**: ✅ Ready for AI workflow development
 - **Redis**: ✅ Ready for caching
@@ -111,6 +124,7 @@ npm run dev
 - **AI Integration**: ✅ Ready with OpenAI
 
 ### ✅ **Ready for Development**
+
 - Frontend components in `packages/web/components/`
 - Database schema in place
 - Environment configuration complete
@@ -121,16 +135,23 @@ npm run dev
 ## Phase 1 Development Workflow
 
 ### Starting Development (Daily)
+
 ```bash
 # Start database and services (if not running)
 docker-compose up -d
 
-# Start development server
-cd packages/web
+# Start development server (from root)
 npm run dev
+
+# Validate your code frequently
+npm run validate
+
+# Auto-fix code style issues
+npm run fix
 ```
 
 ### Stopping Development
+
 ```bash
 # Stop development server
 Ctrl+C
@@ -140,6 +161,7 @@ docker-compose down
 ```
 
 ### Database Management
+
 ```bash
 # View database directly
 psql -h localhost -p 5432 -U postgres -d travelagentic
@@ -157,17 +179,26 @@ docker-compose logs supabase-db
 
 ```
 TravelAgentic/
-├── packages/web/              # Next.js full-stack app (frontend + API routes)
-│   ├── components/           # React components
-│   ├── pages/               # Next.js pages and API routes
+├── packages/web/              # Next.js 15 full-stack app (App Router)
+│   ├── app/                 # Next.js App Router pages and layouts
 │   │   ├── api/             # API routes (flights, hotels, activities)
-│   │   └── ...              # Frontend pages
+│   │   ├── (auth)/          # Auth pages (login, signup)
+│   │   ├── (booking)/       # Booking flow pages
+│   │   └── (dashboard)/     # User dashboard pages
+│   ├── components/          # React components (Shadcn/UI + custom)
 │   ├── lib/                 # Utilities, API integration
-│   └── styles/              # CSS and styling
+│   ├── hooks/               # Custom React hooks
+│   ├── styles/              # CSS and styling
+│   ├── .eslintrc.json       # ESLint configuration
+│   ├── .prettierrc.json     # Prettier configuration
+│   └── package.json         # Web package dependencies
 ├── packages/database/        # Database documentation
 ├── packages/langflow/        # Langflow AI workflows
-├── packages/mocks/          # Mock API services (empty, ready for implementation)
+├── packages/mocks/          # Mock API services (ready for implementation)
 ├── packages/seed/           # Database seed data (ready for implementation)
+├── node_modules/            # Hoisted workspace dependencies
+├── .gitignore               # Single gitignore for entire project
+├── .env.example             # Environment variable template
 ├── docker-compose.yml       # PostgreSQL + Langflow + Redis
 └── _docs/                   # Documentation
 ```
@@ -179,6 +210,7 @@ TravelAgentic/
 Based on the current project structure, here's what needs to be implemented:
 
 ### 🔄 **Immediate TODOs**
+
 1. **Mock Flight API Routes** - Implement in `packages/web/pages/api/flights/`
 2. **Mock Hotel API Routes** - Implement in `packages/web/pages/api/hotels/`
 3. **Mock Activity API Routes** - Implement in `packages/web/pages/api/activities/`
@@ -186,6 +218,7 @@ Based on the current project structure, here's what needs to be implemented:
 5. **Database Integration** - Connect frontend to Supabase
 
 ### 📋 **Complete TODO List**
+
 - [ ] Setup mock flight search API route
 - [ ] Setup mock hotel search API route
 - [ ] Setup mock activity search API route
@@ -200,6 +233,7 @@ Based on the current project structure, here's what needs to be implemented:
 ## Common Issues & Solutions
 
 ### "Docker not found" or "Services won't start"
+
 ```bash
 # Make sure Docker is installed and running
 docker --version
@@ -210,6 +244,7 @@ docker --version
 ```
 
 ### "Port already in use"
+
 ```bash
 # Check what's using port 5432 (PostgreSQL)
 lsof -i :5432
@@ -220,6 +255,7 @@ docker-compose up -d
 ```
 
 ### "Database connection failed"
+
 ```bash
 # Check if services are running
 docker-compose ps
@@ -232,6 +268,7 @@ docker-compose up -d
 ```
 
 ### "OpenAI API errors"
+
 ```bash
 # Check your API key in .env.local
 echo $OPENAI_API_KEY
@@ -242,6 +279,7 @@ curl https://api.openai.com/v1/models \
 ```
 
 ### "Mock APIs not working"
+
 This is expected! The mock APIs need to be implemented. This is part of Phase 1 development.
 
 ---
@@ -249,17 +287,20 @@ This is expected! The mock APIs need to be implemented. This is part of Phase 1 
 ## Development Best Practices
 
 ### Environment
+
 - Always use `USE_MOCK_APIS=true` in Phase 1
-- Keep `DEVELOPMENT_PHASE=1` 
+- Keep `DEVELOPMENT_PHASE=1`
 - Start Docker services before developing
 
 ### Database
+
 - Use `psql` or database client to view data
 - Don't modify the database directly in production
 - Use migrations for schema changes (future)
 - Database persists between docker-compose restarts
 
 ### AI Integration
+
 - Test OpenAI integration early
 - Handle API failures gracefully
 - Use reasonable token limits
@@ -269,13 +310,20 @@ This is expected! The mock APIs need to be implemented. This is part of Phase 1 
 ## Getting Help
 
 ### 1. Check Service Status
+
 ```bash
 # Check if services are running
 docker-compose ps
 npm run dev # (should show no errors)
+
+# Available development commands:
+npm run validate     # Check TypeScript + ESLint + Prettier
+npm run fix          # Auto-fix formatting and linting
+npm run build        # Test production build
 ```
 
 ### 2. Check Logs
+
 ```bash
 # Database logs
 docker-compose logs supabase-db
@@ -287,6 +335,7 @@ docker-compose logs langflow
 ```
 
 ### 3. Restart Everything
+
 ```bash
 # Stop everything
 docker-compose down
@@ -298,6 +347,7 @@ cd packages/web && npm run dev
 ```
 
 ### 4. Common Solutions
+
 - **Database issues**: Usually fixed by `docker-compose down` then `docker-compose up -d`
 - **Environment issues**: Double-check `.env.local` has correct values
 - **Port conflicts**: Change ports in docker-compose.yml or kill conflicting processes
@@ -326,4 +376,4 @@ Once you have this working:
 - 🧪 **Mock-first approach** - Build features before API complexity
 - 🚀 **Production-ready foundation** - Real database and auth system
 
-**This setup gets you productive immediately with the current codebase!** 🎉 
+**This setup gets you productive immediately with the current codebase!** 🎉

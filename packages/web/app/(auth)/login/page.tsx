@@ -1,47 +1,49 @@
-"use client"
+'use client';
 
-import type React from "react"
+import { ArrowLeft, Eye, EyeOff } from 'lucide-react';
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Eye, EyeOff, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { Inter } from "next/font/google"
+import { Inter } from 'next/font/google';
+import Link from 'next/link';
+import type React from 'react';
+import { useState } from 'react';
+
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const inter = Inter({
-  weight: ["400", "500", "600", "700"],
-  subsets: ["latin"],
-})
+  weight: ['400', '500', '600', '700'],
+  subsets: ['latin'],
+});
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setIsLoading(true)
+    e.preventDefault();
+    setIsLoading(true);
 
     // Simulate login API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     // Here you would typically handle the login logic
-    console.log("Login attempt:", { email, password })
+    console.log('Login attempt:', { email, password });
 
-    setIsLoading(false)
-  }
+    setIsLoading(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gray-50 p-4">
       {/* Background */}
       <div
         className="absolute inset-0 bg-cover bg-center opacity-60"
         style={{
-          backgroundImage: "url(https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg)",
+          backgroundImage:
+            'url(https://images.pexels.com/photos/1591373/pexels-photo-1591373.jpeg)',
         }}
       />
       <div className="absolute inset-0 bg-black/20" />
@@ -49,22 +51,26 @@ export default function LoginPage() {
       {/* Back Button */}
       <Link
         href="/"
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-white hover:text-gray-200 transition-colors"
+        className="absolute left-6 top-6 z-20 flex items-center gap-2 text-white transition-colors hover:text-gray-200"
       >
         <ArrowLeft size={20} />
         <span>Back to Home</span>
       </Link>
 
       {/* Logo */}
-      <div className="absolute top-6 right-6 z-20">
-        <span className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}>
+      <div className="absolute right-6 top-6 z-20">
+        <span
+          className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}
+        >
           TravelAgentic
         </span>
       </div>
 
-      <Card className="w-full max-w-md relative z-10 bg-white/90 backdrop-blur-sm">
+      <Card className="relative z-10 w-full max-w-md bg-white/90 backdrop-blur-sm">
         <CardHeader className="text-center">
-          <CardTitle className={`text-2xl ${inter.className} font-medium`}>Welcome back</CardTitle>
+          <CardTitle className={`text-2xl ${inter.className} font-medium`}>
+            Welcome back
+          </CardTitle>
           <p className="text-gray-600">Sign in to your account to continue</p>
         </CardHeader>
         <CardContent>
@@ -89,7 +95,7 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -99,7 +105,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
@@ -114,8 +120,12 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11" disabled={isLoading}>
-              {isLoading ? "Signing in..." : "Sign in"}
+            <Button
+              type="submit"
+              className="h-11 w-full bg-blue-600 hover:bg-blue-700"
+              disabled={isLoading}
+            >
+              {isLoading ? 'Signing in...' : 'Sign in'}
             </Button>
 
             {/* Divider */}
@@ -124,14 +134,16 @@ export default function LoginPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Or continue with</span>
+                <span className="bg-white px-2 text-gray-500">
+                  Or continue with
+                </span>
               </div>
             </div>
 
             {/* Social Login */}
             <div className="grid grid-cols-2 gap-3">
               <Button variant="outline" className="h-11 bg-transparent">
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
+                <svg className="mr-2 h-5 w-5" viewBox="0 0 24 24">
                   <path
                     fill="currentColor"
                     d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -152,7 +164,11 @@ export default function LoginPage() {
                 Google
               </Button>
               <Button variant="outline" className="h-11 bg-transparent">
-                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                <svg
+                  className="mr-2 h-5 w-5"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 Facebook
@@ -160,10 +176,13 @@ export default function LoginPage() {
             </div>
 
             {/* Sign Up Link */}
-            <div className="text-center pt-4">
+            <div className="pt-4 text-center">
               <p className="text-sm text-gray-600">
-                Don't have an account?{" "}
-                <Link href="/signup" className="text-blue-600 hover:underline font-medium">
+                Don't have an account?{' '}
+                <Link
+                  href="/signup"
+                  className="font-medium text-blue-600 hover:underline"
+                >
                   Sign up
                 </Link>
               </p>
@@ -172,5 +191,5 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

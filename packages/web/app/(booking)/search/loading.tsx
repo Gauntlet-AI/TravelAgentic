@@ -6,40 +6,40 @@ export default function SearchLoading() {
   return (
     <div className="space-y-8">
       {/* Search Form Skeleton */}
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="rounded-lg bg-white p-6 shadow">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="h-10 bg-gray-200 rounded"></div>
-            <div className="h-10 bg-gray-200 rounded"></div>
-            <div className="h-10 bg-gray-200 rounded"></div>
-            <div className="h-10 bg-gray-200 rounded"></div>
+          <div className="mb-4 h-4 w-1/4 rounded bg-gray-200"></div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+            <div className="h-10 rounded bg-gray-200"></div>
+            <div className="h-10 rounded bg-gray-200"></div>
+            <div className="h-10 rounded bg-gray-200"></div>
+            <div className="h-10 rounded bg-gray-200"></div>
           </div>
         </div>
       </div>
 
       {/* Search Results Skeleton */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Flights Skeleton */}
         <div className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
+          <div className="mb-4 flex items-center space-x-2">
+            <div className="h-6 w-6 animate-pulse rounded bg-gray-200"></div>
+            <div className="h-5 w-20 animate-pulse rounded bg-gray-200"></div>
           </div>
-          
+
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-4">
+            <div key={i} className="rounded-lg bg-white p-4 shadow">
               <div className="animate-pulse">
-                <div className="flex justify-between items-start mb-3">
+                <div className="mb-3 flex items-start justify-between">
                   <div className="space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-24"></div>
-                    <div className="h-3 bg-gray-200 rounded w-16"></div>
+                    <div className="h-4 w-24 rounded bg-gray-200"></div>
+                    <div className="h-3 w-16 rounded bg-gray-200"></div>
                   </div>
-                  <div className="h-6 bg-gray-200 rounded w-16"></div>
+                  <div className="h-6 w-16 rounded bg-gray-200"></div>
                 </div>
                 <div className="flex items-center justify-between">
-                  <div className="h-3 bg-gray-200 rounded w-32"></div>
-                  <div className="h-8 bg-blue-200 rounded w-20"></div>
+                  <div className="h-3 w-32 rounded bg-gray-200"></div>
+                  <div className="h-8 w-20 rounded bg-blue-200"></div>
                 </div>
               </div>
             </div>
@@ -48,21 +48,21 @@ export default function SearchLoading() {
 
         {/* Hotels Skeleton */}
         <div className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-5 bg-gray-200 rounded w-20 animate-pulse"></div>
+          <div className="mb-4 flex items-center space-x-2">
+            <div className="h-6 w-6 animate-pulse rounded bg-gray-200"></div>
+            <div className="h-5 w-20 animate-pulse rounded bg-gray-200"></div>
           </div>
-          
+
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-4">
+            <div key={i} className="rounded-lg bg-white p-4 shadow">
               <div className="animate-pulse">
-                <div className="w-full h-32 bg-gray-200 rounded mb-3"></div>
+                <div className="mb-3 h-32 w-full rounded bg-gray-200"></div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                  <div className="flex justify-between items-center mt-3">
-                    <div className="h-3 bg-gray-200 rounded w-16"></div>
-                    <div className="h-6 bg-gray-200 rounded w-20"></div>
+                  <div className="h-4 w-3/4 rounded bg-gray-200"></div>
+                  <div className="h-3 w-1/2 rounded bg-gray-200"></div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="h-3 w-16 rounded bg-gray-200"></div>
+                    <div className="h-6 w-20 rounded bg-gray-200"></div>
                   </div>
                 </div>
               </div>
@@ -72,21 +72,21 @@ export default function SearchLoading() {
 
         {/* Activities Skeleton */}
         <div className="space-y-4">
-          <div className="flex items-center space-x-2 mb-4">
-            <div className="w-6 h-6 bg-gray-200 rounded animate-pulse"></div>
-            <div className="h-5 bg-gray-200 rounded w-24 animate-pulse"></div>
+          <div className="mb-4 flex items-center space-x-2">
+            <div className="h-6 w-6 animate-pulse rounded bg-gray-200"></div>
+            <div className="h-5 w-24 animate-pulse rounded bg-gray-200"></div>
           </div>
-          
+
           {[...Array(3)].map((_, i) => (
-            <div key={i} className="bg-white rounded-lg shadow p-4">
+            <div key={i} className="rounded-lg bg-white p-4 shadow">
               <div className="animate-pulse">
-                <div className="w-full h-24 bg-gray-200 rounded mb-3"></div>
+                <div className="mb-3 h-24 w-full rounded bg-gray-200"></div>
                 <div className="space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-5/6"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                  <div className="flex justify-between items-center mt-3">
-                    <div className="h-3 bg-gray-200 rounded w-12"></div>
-                    <div className="h-6 bg-gray-200 rounded w-16"></div>
+                  <div className="h-4 w-5/6 rounded bg-gray-200"></div>
+                  <div className="h-3 w-1/3 rounded bg-gray-200"></div>
+                  <div className="mt-3 flex items-center justify-between">
+                    <div className="h-3 w-12 rounded bg-gray-200"></div>
+                    <div className="h-6 w-16 rounded bg-gray-200"></div>
                   </div>
                 </div>
               </div>
@@ -95,5 +95,5 @@ export default function SearchLoading() {
         </div>
       </div>
     </div>
-  )
-} 
+  );
+}
