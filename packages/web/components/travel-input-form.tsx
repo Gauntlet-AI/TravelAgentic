@@ -474,29 +474,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         <div className="absolute inset-0 z-0">
           {backgroundImages.map((image, index) => {
             const isActive = index === currentImageIndex;
-            const isPrevious =
-              index ===
-              (currentImageIndex - 1 + backgroundImages.length) %
-                backgroundImages.length;
-
             return (
               <div
                 key={index}
-                className={`duration-[3000ms] absolute inset-0 bg-cover bg-center transition-opacity ease-in-out ${
-                  isActive
-                    ? 'opacity-50'
-                    : isPrevious
-                      ? 'opacity-0'
-                      : 'opacity-0'
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[3000ms] ease-in-out ${
+                  isActive ? 'opacity-50' : 'opacity-0'
                 }`}
                 style={{
                   backgroundImage: `url(${image.url})`,
-                  zIndex: isActive ? 2 : 1,
                 }}
               />
             );
           })}
-          <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
+          <div className="absolute inset-0 bg-black bg-opacity-10 z-10" />
         </div>
 
         {/* Mobile Logo and Auth */}
@@ -864,25 +854,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       <div className="absolute inset-0 z-0">
         {backgroundImages.map((image, index) => {
           const isActive = index === currentImageIndex;
-          const isPrevious =
-            index ===
-            (currentImageIndex - 1 + backgroundImages.length) %
-              backgroundImages.length;
-
           return (
             <div
               key={index}
-              className={`duration-[3000ms] absolute inset-0 bg-cover bg-center transition-opacity ease-in-out ${
-                isActive ? 'opacity-60' : isPrevious ? 'opacity-0' : 'opacity-0'
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[3000ms] ease-in-out ${
+                isActive ? 'opacity-60' : 'opacity-0'
               }`}
               style={{
                 backgroundImage: `url(${image.url})`,
-                zIndex: isActive ? 2 : 1,
               }}
             />
           );
         })}
-        <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
+        <div className="absolute inset-0 bg-black bg-opacity-10 z-10" />
       </div>
 
       {/* Logo and Auth */}
