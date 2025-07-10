@@ -509,7 +509,12 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     if (!selectedDate) return;
 
     console.log('Date selected:', selectedDate);
-    console.log('Current state - firstDate:', firstDate, 'secondDate:', secondDate);
+    console.log(
+      'Current state - firstDate:',
+      firstDate,
+      'secondDate:',
+      secondDate
+    );
 
     if (!firstDate) {
       // First click: select first date
@@ -535,7 +540,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
   const getDisplayRange = () => {
     if (!firstDate) return undefined;
-    
+
     if (secondDate) {
       // Both dates selected - show actual range
       const range = {
@@ -545,7 +550,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       console.log('Display range (both dates):', range);
       return range;
     }
-    
+
     if (hoveredDate && firstDate) {
       // Show hover preview between first date and hovered date
       const range = {
@@ -555,8 +560,11 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       console.log('Display range (hover):', range);
       return range;
     }
-    
-    console.log('Display range (single date):', { from: firstDate, to: undefined });
+
+    console.log('Display range (single date):', {
+      from: firstDate,
+      to: undefined,
+    });
     return { from: firstDate, to: undefined }; // Only first date selected
   };
 
@@ -566,7 +574,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       // Determine start and end dates based on chronological order
       const startDate = firstDate < secondDate ? firstDate : secondDate;
       const endDate = firstDate < secondDate ? secondDate : firstDate;
-      
+
       onSubmit({
         departureLocation,
         destination,
@@ -580,7 +588,8 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     }
   };
 
-  const isFormValid = departureLocation && destination && firstDate && secondDate;
+  const isFormValid =
+    departureLocation && destination && firstDate && secondDate;
 
   if (isMobile) {
     return (
@@ -798,25 +807,25 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         range_middle: (() => {
                           const range = getDisplayRange();
                           console.log('Calculating range_middle for:', range);
-                          
+
                           if (!range?.from || !range?.to) return [];
-                          
+
                           const days = [];
                           const start = new Date(range.from);
                           const end = new Date(range.to);
-                          
+
                           // Make sure we're comparing dates correctly
                           start.setHours(0, 0, 0, 0);
                           end.setHours(0, 0, 0, 0);
-                          
+
                           const current = new Date(start);
                           current.setDate(current.getDate() + 1); // Start from day after start
-                          
+
                           while (current < end) {
                             days.push(new Date(current));
                             current.setDate(current.getDate() + 1);
                           }
-                          
+
                           console.log('Range middle days:', days);
                           return days;
                         })(),
@@ -1206,26 +1215,29 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         range_end: secondDate ? [secondDate] : [],
                         range_middle: (() => {
                           const range = getDisplayRange();
-                          console.log('Calculating range_middle for desktop:', range);
-                          
+                          console.log(
+                            'Calculating range_middle for desktop:',
+                            range
+                          );
+
                           if (!range?.from || !range?.to) return [];
-                          
+
                           const days = [];
                           const start = new Date(range.from);
                           const end = new Date(range.to);
-                          
+
                           // Make sure we're comparing dates correctly
                           start.setHours(0, 0, 0, 0);
                           end.setHours(0, 0, 0, 0);
-                          
+
                           const current = new Date(start);
                           current.setDate(current.getDate() + 1); // Start from day after start
-                          
+
                           while (current < end) {
                             days.push(new Date(current));
                             current.setDate(current.getDate() + 1);
                           }
-                          
+
                           console.log('Range middle days (desktop):', days);
                           return days;
                         })(),

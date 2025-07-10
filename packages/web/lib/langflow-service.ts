@@ -3,8 +3,7 @@
  * High-level service for AI-powered travel planning workflows
  * Provides fallback to mock data when Langflow is unavailable
  */
-
-import { langflowClient, type LangflowRunRequest } from './langflow-client';
+import { type LangflowRunRequest, langflowClient } from './langflow-client';
 
 export interface UserPreferences {
   destination: string;
@@ -37,19 +36,19 @@ export interface SearchParameters {
     departure_date: string;
     return_date: string;
     passengers: number;
-    cabin: "economy" | "premium" | "business" | "first";
+    cabin: 'economy' | 'premium' | 'business' | 'first';
   };
   hotel_search: {
     destination: string;
     check_in: string;
     check_out: string;
     guests: number;
-    price_range: "budget" | "mid-range" | "luxury" | "any";
+    price_range: 'budget' | 'mid-range' | 'luxury' | 'any';
   };
   activity_search: {
     destination: string;
     interests: string[];
-    duration: "half-day" | "full-day" | "multi-day" | "any";
+    duration: 'half-day' | 'full-day' | 'multi-day' | 'any';
   };
 }
 
@@ -103,10 +102,23 @@ export class TravelLangflowService {
    * Initialize flow IDs mapping
    */
   private initializeFlowIds(): void {
-    this.flowIds.set('user_intake', process.env.LANGFLOW_USER_INTAKE_FLOW_ID || 'user_intake_flow');
-    this.flowIds.set('search_coordination', process.env.LANGFLOW_SEARCH_COORDINATION_FLOW_ID || 'search_coordination_flow');
-    this.flowIds.set('booking_decisions', process.env.LANGFLOW_BOOKING_FLOW_ID || 'booking_flow');
-    this.flowIds.set('itinerary_generation', process.env.LANGFLOW_ITINERARY_FLOW_ID || 'itinerary_generation_flow');
+    this.flowIds.set(
+      'user_intake',
+      process.env.LANGFLOW_USER_INTAKE_FLOW_ID || 'user_intake_flow'
+    );
+    this.flowIds.set(
+      'search_coordination',
+      process.env.LANGFLOW_SEARCH_COORDINATION_FLOW_ID ||
+        'search_coordination_flow'
+    );
+    this.flowIds.set(
+      'booking_decisions',
+      process.env.LANGFLOW_BOOKING_FLOW_ID || 'booking_flow'
+    );
+    this.flowIds.set(
+      'itinerary_generation',
+      process.env.LANGFLOW_ITINERARY_FLOW_ID || 'itinerary_generation_flow'
+    );
   }
 
   /**
@@ -158,12 +170,12 @@ export class TravelLangflowService {
         start_date: startDate,
         end_date: endDate,
         travelers,
-        budget: budget || 5000
+        budget: budget || 5000,
       };
 
       const response = await langflowClient.runFlow(flowId, {
         input_value: JSON.stringify(input),
-        input_type: "json"
+        input_type: 'json',
       });
 
       const data = langflowClient.parseResponseData(response);
@@ -183,7 +195,9 @@ export class TravelLangflowService {
    * @param preferences - User travel preferences
    * @returns Promise<SearchParameters>
    */
-  async generateSearchParameters(preferences: UserPreferences): Promise<SearchParameters> {
+  async generateSearchParameters(
+    preferences: UserPreferences
+  ): Promise<SearchParameters> {
     if (!this.isEnabled || !this.healthStatus) {
       console.log('Langflow unavailable, using mock search parameters');
       return this.getMockSearchParameters(preferences);
@@ -197,7 +211,7 @@ export class TravelLangflowService {
 
       const response = await langflowClient.runFlow(flowId, {
         input_value: JSON.stringify(preferences),
-        input_type: "json"
+        input_type: 'json',
       });
 
       const data = langflowClient.parseResponseData(response);
@@ -235,12 +249,12 @@ export class TravelLangflowService {
 
       const input = {
         search_results: searchResults,
-        preferences: preferences
+        preferences: preferences,
       };
 
       const response = await langflowClient.runFlow(flowId, {
         input_value: JSON.stringify(input),
-        input_type: "json"
+        input_type: 'json',
       });
 
       const data = langflowClient.parseResponseData(response);
@@ -278,12 +292,12 @@ export class TravelLangflowService {
 
       const input = {
         bookings,
-        preferences
+        preferences,
       };
 
       const response = await langflowClient.runFlow(flowId, {
         input_value: JSON.stringify(input),
-        input_type: "json"
+        input_type: 'json',
       });
 
       const data = langflowClient.parseResponseData(response);
@@ -312,14 +326,14 @@ export class TravelLangflowService {
       enabled: this.isEnabled,
       healthy: this.healthStatus,
       flows_available: [] as string[],
-      version: undefined as string | undefined
+      version: undefined as string | undefined,
     };
 
     if (this.isEnabled && this.healthStatus) {
       try {
         const flows = await langflowClient.getFlows();
-        status.flows_available = flows.map(f => f.name);
-        
+        status.flows_available = flows.map((f) => f.name);
+
         const versionInfo = await langflowClient.getStatus();
         status.version = versionInfo.version;
       } catch (error) {
@@ -351,75 +365,107 @@ export class TravelLangflowService {
     const destinationSpecific = destination.toLowerCase();
     const questions: DynamicQuestion[] = [
       {
-        id: "travel_style",
+        id: 'travel_style',
         question: "What's your primary travel style?",
-        options: ["Adventure", "Relaxation", "Cultural", "Business", "Mixed"],
+        options: ['Adventure', 'Relaxation', 'Cultural', 'Business', 'Mixed'],
         required: true,
-        category: "general"
+        category: 'general',
       },
       {
-        id: "accommodation",
-        question: "What type of accommodation do you prefer?",
-        options: ["Hotel", "Airbnb", "Hostel", "Resort", "Boutique Hotel"],
+        id: 'accommodation',
+        question: 'What type of accommodation do you prefer?',
+        options: ['Hotel', 'Airbnb', 'Hostel', 'Resort', 'Boutique Hotel'],
         required: true,
-        category: "accommodation"
+        category: 'accommodation',
       },
       {
-        id: "budget_priority",
-        question: "How would you like to allocate your budget?",
-        options: ["Luxury accommodations", "Unique experiences", "Fine dining", "Balanced approach"],
+        id: 'budget_priority',
+        question: 'How would you like to allocate your budget?',
+        options: [
+          'Luxury accommodations',
+          'Unique experiences',
+          'Fine dining',
+          'Balanced approach',
+        ],
         required: false,
-        category: "budget"
-      }
+        category: 'budget',
+      },
     ];
 
     // Add destination-specific questions
-    if (destinationSpecific.includes('tokyo') || destinationSpecific.includes('japan')) {
+    if (
+      destinationSpecific.includes('tokyo') ||
+      destinationSpecific.includes('japan')
+    ) {
       questions.push({
-        id: "japan_interests",
-        question: "What aspects of Japan interest you most?",
-        options: ["Traditional culture", "Modern technology", "Cuisine", "Pop culture", "Nature"],
+        id: 'japan_interests',
+        question: 'What aspects of Japan interest you most?',
+        options: [
+          'Traditional culture',
+          'Modern technology',
+          'Cuisine',
+          'Pop culture',
+          'Nature',
+        ],
         required: false,
-        category: "destination_specific"
+        category: 'destination_specific',
       });
     }
 
-    if (destinationSpecific.includes('paris') || destinationSpecific.includes('france')) {
+    if (
+      destinationSpecific.includes('paris') ||
+      destinationSpecific.includes('france')
+    ) {
       questions.push({
-        id: "paris_interests",
-        question: "What draws you to Paris?",
-        options: ["Art and museums", "Fashion and shopping", "Cuisine", "History", "Romance"],
+        id: 'paris_interests',
+        question: 'What draws you to Paris?',
+        options: [
+          'Art and museums',
+          'Fashion and shopping',
+          'Cuisine',
+          'History',
+          'Romance',
+        ],
         required: false,
-        category: "destination_specific"
+        category: 'destination_specific',
       });
     }
 
     return questions;
   }
 
-  private getMockSearchParameters(preferences: UserPreferences): SearchParameters {
+  private getMockSearchParameters(
+    preferences: UserPreferences
+  ): SearchParameters {
     return {
       flight_search: {
-        origin: "NYC", // This would be determined from user location
+        origin: 'NYC', // This would be determined from user location
         destination: preferences.destination,
         departure_date: preferences.startDate,
         return_date: preferences.endDate,
         passengers: preferences.travelers,
-        cabin: preferences.budget && preferences.budget > 5000 ? "business" : "economy"
+        cabin:
+          preferences.budget && preferences.budget > 5000
+            ? 'business'
+            : 'economy',
       },
       hotel_search: {
         destination: preferences.destination,
         check_in: preferences.startDate,
         check_out: preferences.endDate,
         guests: preferences.travelers,
-        price_range: preferences.budget && preferences.budget > 3000 ? "luxury" : 
-                    preferences.budget && preferences.budget > 1500 ? "mid-range" : "budget"
+        price_range:
+          preferences.budget && preferences.budget > 3000
+            ? 'luxury'
+            : preferences.budget && preferences.budget > 1500
+              ? 'mid-range'
+              : 'budget',
       },
       activity_search: {
         destination: preferences.destination,
-        interests: preferences.interests || ["culture", "sightseeing"],
-        duration: "any"
-      }
+        interests: preferences.interests || ['culture', 'sightseeing'],
+        duration: 'any',
+      },
     };
   }
 
@@ -429,19 +475,25 @@ export class TravelLangflowService {
       recommended_hotel: searchResults.hotels?.[0],
       recommended_activities: searchResults.activities?.slice(0, 3),
       confidence_score: 0.85,
-      reasoning: "Selected based on optimal balance of price, rating, and user preferences. Flight offers good timing with reasonable cost. Hotel provides excellent amenities in central location. Activities align with stated interests in culture and sightseeing.",
+      reasoning:
+        'Selected based on optimal balance of price, rating, and user preferences. Flight offers good timing with reasonable cost. Hotel provides excellent amenities in central location. Activities align with stated interests in culture and sightseeing.',
       alternatives: {
         flights: searchResults.flights?.slice(1, 3),
         hotels: searchResults.hotels?.slice(1, 3),
-        activities: searchResults.activities?.slice(3, 6)
-      }
+        activities: searchResults.activities?.slice(3, 6),
+      },
     };
   }
 
-  private getMockItinerary(bookings: any, preferences: UserPreferences): ItineraryContent {
+  private getMockItinerary(
+    bookings: any,
+    preferences: UserPreferences
+  ): ItineraryContent {
     const startDate = new Date(preferences.startDate);
     const endDate = new Date(preferences.endDate);
-    const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
+    const days = Math.ceil(
+      (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)
+    );
 
     return {
       title: `${preferences.destination} Adventure`,
@@ -449,63 +501,68 @@ export class TravelLangflowService {
       days: Array.from({ length: days }, (_, i) => {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + i);
-        
+
         return {
           day: i + 1,
           date: currentDate.toISOString().split('T')[0],
           activities: [
             {
-              time: "09:00",
-              activity: i === 0 ? "Arrival and hotel check-in" : "Morning exploration",
-              location: bookings.hotel?.name || "Hotel",
-              notes: i === 0 ? "Take time to rest and acclimate" : "Start early to avoid crowds"
+              time: '09:00',
+              activity:
+                i === 0 ? 'Arrival and hotel check-in' : 'Morning exploration',
+              location: bookings.hotel?.name || 'Hotel',
+              notes:
+                i === 0
+                  ? 'Take time to rest and acclimate'
+                  : 'Start early to avoid crowds',
             },
             {
-              time: "12:00",
-              activity: "Lunch at local restaurant",
-              location: "City center",
-              notes: "Try local specialties"
+              time: '12:00',
+              activity: 'Lunch at local restaurant',
+              location: 'City center',
+              notes: 'Try local specialties',
             },
             {
-              time: "14:00",
-              activity: bookings.activities?.[i % 3]?.name || "Sightseeing",
-              location: bookings.activities?.[i % 3]?.location || "Main attractions",
-              notes: "Book tickets in advance if needed"
+              time: '14:00',
+              activity: bookings.activities?.[i % 3]?.name || 'Sightseeing',
+              location:
+                bookings.activities?.[i % 3]?.location || 'Main attractions',
+              notes: 'Book tickets in advance if needed',
             },
             {
-              time: "18:00",
-              activity: "Dinner and evening leisure",
-              location: "Local neighborhood",
-              notes: "Explore nightlife and local culture"
-            }
-          ]
+              time: '18:00',
+              activity: 'Dinner and evening leisure',
+              location: 'Local neighborhood',
+              notes: 'Explore nightlife and local culture',
+            },
+          ],
         };
       }),
       packing_list: [
-        "Comfortable walking shoes",
-        "Weather-appropriate clothing",
-        "Travel documents and copies",
-        "Portable charger",
-        "Camera",
-        "Sunscreen and sunglasses",
-        "Small daypack for excursions",
-        "Local currency or travel card"
+        'Comfortable walking shoes',
+        'Weather-appropriate clothing',
+        'Travel documents and copies',
+        'Portable charger',
+        'Camera',
+        'Sunscreen and sunglasses',
+        'Small daypack for excursions',
+        'Local currency or travel card',
       ],
       local_info: {
-        currency: "Local currency", // This would be destination-specific
-        language: "Local language",
-        emergency_numbers: ["Emergency: 911", "Tourist Hotline: 555-0123"],
+        currency: 'Local currency', // This would be destination-specific
+        language: 'Local language',
+        emergency_numbers: ['Emergency: 911', 'Tourist Hotline: 555-0123'],
         cultural_tips: [
-          "Research local customs and etiquette",
-          "Learn basic phrases in the local language",
-          "Respect local dress codes at religious sites",
-          "Be aware of tipping customs",
-          "Keep important documents secure"
-        ]
-      }
+          'Research local customs and etiquette',
+          'Learn basic phrases in the local language',
+          'Respect local dress codes at religious sites',
+          'Be aware of tipping customs',
+          'Keep important documents secure',
+        ],
+      },
     };
   }
 }
 
 // Singleton instance
-export const travelLangflowService = new TravelLangflowService(); 
+export const travelLangflowService = new TravelLangflowService();
