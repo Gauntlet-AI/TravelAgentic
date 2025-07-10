@@ -6,7 +6,6 @@ export interface TravelDetails {
   travelers: number;
   adults: number;
   children: number;
-  travelingWithPets?: boolean;
 }
 
 export interface Hotel {

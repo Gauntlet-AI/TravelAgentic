@@ -17,7 +17,6 @@ export interface UserPreferences {
   accommodation?: string;
   interests?: string[];
   specialRequirements?: string[];
-  travelingWithPets?: boolean;
 }
 
 export interface DynamicQuestion {

@@ -507,10 +507,9 @@ export default function VacationPlanner() {
                 {format(travelDetails.endDate, 'MMM d')} ({nights} nights) •{' '}
                 {travelDetails.adults} adult
                 {travelDetails.adults !== 1 ? 's' : ''}
-                {travelDetails.children > 0
-                  ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
-                  : ''}
-                {travelDetails.travelingWithPets ? ' • with pets' : ''}
+                                  {travelDetails.children > 0
+                    ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
+                    : ''}
               </div>
             )}
           </div>
@@ -748,7 +747,6 @@ export default function VacationPlanner() {
                   {travelDetails.children > 0
                     ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
                     : ''}
-                  {travelDetails.travelingWithPets ? ' • with pets' : ''}
                 </div>
               )}
             </div>

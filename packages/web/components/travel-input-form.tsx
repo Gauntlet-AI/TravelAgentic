@@ -27,7 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 
 import type { TravelDetails } from '@/lib/mock-data';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -289,7 +288,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
-  const [travelingWithPets, setTravelingWithPets] = useState(false);
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isTravelersOpen, setIsTravelersOpen] = useState(false);
 
@@ -380,9 +378,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     if (children > 0) {
       parts.push(`${children} child${children !== 1 ? 'ren' : ''}`);
     }
-    if (travelingWithPets) {
-      parts.push('Pets');
-    }
     parts.push(`${rooms} room${rooms !== 1 ? 's' : ''}`);
     return parts.join(' • ');
   };
@@ -465,7 +460,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         travelers: adults + children, // Total travelers for backward compatibility
         adults,
         children,
-        travelingWithPets,
       });
     }
   };
@@ -825,25 +819,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           >
                             <Plus size={16} />
                           </Button>
-                        </div>
-                      </div>
-
-                      {/* Pets */}
-                      <div className="space-y-3 border-t pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">
-                            Traveling with pets?
-                          </Label>
-                          <Switch
-                            checked={travelingWithPets}
-                            onCheckedChange={setTravelingWithPets}
-                          />
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <p>Assistance animals aren't considered pets.</p>
-                          <a href="#" className="text-blue-600 hover:underline">
-                            Read more about traveling with assistance animals
-                          </a>
                         </div>
                       </div>
 
@@ -1245,19 +1220,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           >
                             <Plus size={16} />
                           </Button>
-                        </div>
-                      </div>
-
-                      {/* Pets */}
-                      <div className="space-y-3 border-t pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">
-                            Traveling with pets?
-                          </Label>
-                          <Switch
-                            checked={travelingWithPets}
-                            onCheckedChange={setTravelingWithPets}
-                          />
                         </div>
                       </div>
 
