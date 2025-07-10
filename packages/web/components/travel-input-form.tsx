@@ -477,7 +477,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
             return (
               <div
                 key={index}
-                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[3000ms] ease-in-out ${
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
                   isActive ? 'opacity-50' : 'opacity-0'
                 }`}
                 style={{
@@ -857,7 +857,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
           return (
             <div
               key={index}
-              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-[3000ms] ease-in-out ${
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
                 isActive ? 'opacity-60' : 'opacity-0'
               }`}
               style={{
