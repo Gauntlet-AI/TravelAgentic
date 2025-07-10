@@ -498,7 +498,7 @@ export default function VacationPlanner() {
       {/* Mobile Header */}
       <div className="bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Vacation Planner</h1>
+          <h1 className="text-xl font-bold">TravelAgentic</h1>
           <div className="flex items-center gap-2">
             {user ? (
               <UserProfileDropdown />
