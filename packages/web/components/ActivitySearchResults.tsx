@@ -7,14 +7,16 @@ interface ActivityResult {
   id: string;
   name: string;
   location: string;
-  category: string;
+  category: string | string[]; // Support both formats
   duration: string;
   rating: number;
-  reviewCount: number;
+  reviewCount?: number;
   price: number;
-  currency: string;
-  imageUrl: string;
-  source: 'api' | 'browser' | 'voice' | 'manual';
+  currency?: string;
+  imageUrl?: string; // Legacy API format
+  image?: string; // New AI format
+  description?: string;
+  source: 'api' | 'browser' | 'voice' | 'manual' | 'ai';
 }
 
 /**
@@ -47,25 +49,43 @@ export function ActivitySearchResults({
 
   return (
     <div className="space-y-4">
-      {activities.map((activity) => (
-        <ActivityCard
-          key={activity.id}
-          activity={{
-            id: activity.id,
-            name: activity.name,
-            description: `${activity.category} • ${activity.duration}`,
-            category: [activity.category.toLowerCase()],
-            price: activity.price,
-            duration: activity.duration,
-            rating: activity.rating,
-            image: activity.imageUrl,
-            location: activity.location,
-          }}
-        />
-      ))}
+      {activities.map((activity) => {
+        // Handle both string and array category formats
+        const categoryArray = Array.isArray(activity.category) 
+          ? activity.category 
+          : [activity.category.toLowerCase()];
+        
+        return (
+          <ActivityCard
+            key={activity.id}
+            activity={{
+              id: activity.id,
+              name: activity.name,
+              description: activity.description || `${Array.isArray(activity.category) ? activity.category.join(', ') : activity.category} • ${activity.duration}`,
+              category: categoryArray,
+              price: activity.price,
+              duration: activity.duration,
+              rating: activity.rating,
+              image: activity.image || activity.imageUrl || '/placeholder.jpg',
+              location: activity.location,
+            }}
+          />
+        );
+      })}
+
+      {/* AI indicator */}
+      {activities.length > 0 && activities[0]?.source === 'ai' && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+          <div className="flex items-center">
+            <span className="text-sm text-purple-600">
+              🤖 Activities curated by AI based on your preferences
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Fallback indicator */}
-      {activities.length > 0 && activities[0]?.source !== 'api' && (
+      {activities.length > 0 && activities[0]?.source !== 'api' && activities[0]?.source !== 'ai' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
           <div className="flex items-center">
             <span className="text-sm text-yellow-600">

@@ -1,0 +1,24 @@
+{
+  "name": "@travelagentic/mocks",
+  "version": "0.1.0",
+  "description": "Mock services for TravelAgentic development",
+  "main": "index.ts",
+  "types": "index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./types": "./types/index.ts",
+    "./services/*": "./services/*.ts",
+    "./data/*": "./data/*.ts",
+    "./factories/*": "./factories/*.ts"
+  },
+  "scripts": {
+    "build": "echo 'No build needed for TypeScript files'",
+    "test": "echo 'No tests specified'"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {},
+  "keywords": ["mock", "travel", "api", "development"],
+  "author": "TravelAgentic Team",
+  "license": "MIT"
+} 

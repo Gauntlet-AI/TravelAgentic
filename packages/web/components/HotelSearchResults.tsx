@@ -8,12 +8,15 @@ interface HotelResult {
   name: string;
   location: string;
   rating: number;
-  reviewCount: number;
-  price: number;
-  currency: string;
-  imageUrl: string;
+  reviewCount?: number;
+  price?: number; // Legacy API format
+  pricePerNight?: number; // New AI format
+  currency?: string;
+  imageUrl?: string; // Legacy API format
+  image?: string; // New AI format
   amenities: string[];
-  source: 'api' | 'browser' | 'voice' | 'manual';
+  description?: string;
+  source: 'api' | 'browser' | 'voice' | 'manual' | 'ai';
 }
 
 /**
@@ -55,18 +58,29 @@ export function HotelSearchResults({
             id: hotel.id,
             name: hotel.name,
             rating: hotel.rating,
-            pricePerNight: hotel.price,
-            image: hotel.imageUrl,
+            pricePerNight: hotel.pricePerNight || hotel.price || 150,
+            image: hotel.image || hotel.imageUrl || '/placeholder.jpg',
             amenities: hotel.amenities,
             location: hotel.location,
-            description: `Rated ${hotel.rating}/5 by ${hotel.reviewCount} guests`,
+            description: hotel.description || `Rated ${hotel.rating}/5 by ${hotel.reviewCount || 100} guests`,
           }}
           nights={nights}
         />
       ))}
 
+      {/* AI indicator */}
+      {hotels.length > 0 && hotels[0]?.source === 'ai' && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+          <div className="flex items-center">
+            <span className="text-sm text-purple-600">
+              🤖 Hotels curated by AI based on your preferences
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Fallback indicator */}
-      {hotels.length > 0 && hotels[0]?.source !== 'api' && (
+      {hotels.length > 0 && hotels[0]?.source !== 'api' && hotels[0]?.source !== 'ai' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
           <div className="flex items-center">
             <span className="text-sm text-yellow-600">
