@@ -670,7 +670,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           setHoveredDate(undefined);
                         }
                       }}
-                      disabled={(d) => d < new Date()}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const compareDate = new Date(d);
+                        compareDate.setHours(0, 0, 0, 0);
+                        return compareDate < today;
+                      }}
                       numberOfMonths={1}
                       initialFocus
                       modifiers={{
@@ -701,11 +707,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           console.log('Range middle days:', days);
                           return days;
                         })(),
+                        past: (date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const compareDate = new Date(date);
+                          compareDate.setHours(0, 0, 0, 0);
+                          return compareDate < today;
+                        },
                       }}
                       modifiersClassNames={{
                         range_start: 'bg-primary text-primary-foreground',
                         range_end: 'bg-primary text-primary-foreground',
                         range_middle: 'bg-accent text-accent-foreground',
+                        past: 'text-muted-foreground opacity-30 cursor-not-allowed bg-gray-100',
                       }}
                     />
                   </PopoverContent>
@@ -1060,7 +1074,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           setHoveredDate(undefined);
                         }
                       }}
-                      disabled={(d) => d < new Date()}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const compareDate = new Date(d);
+                        compareDate.setHours(0, 0, 0, 0);
+                        return compareDate < today;
+                      }}
                       numberOfMonths={2}
                       initialFocus
                       modifiers={{
@@ -1094,11 +1114,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           console.log('Range middle days (desktop):', days);
                           return days;
                         })(),
+                        past: (date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const compareDate = new Date(date);
+                          compareDate.setHours(0, 0, 0, 0);
+                          return compareDate < today;
+                        },
                       }}
                       modifiersClassNames={{
                         range_start: 'bg-primary text-primary-foreground',
                         range_end: 'bg-primary text-primary-foreground',
                         range_middle: 'bg-accent text-accent-foreground',
+                        past: 'text-muted-foreground opacity-30 cursor-not-allowed bg-gray-100',
                       }}
                     />
                   </PopoverContent>
