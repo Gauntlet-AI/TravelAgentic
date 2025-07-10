@@ -30,6 +30,8 @@ import {
 import { Switch } from '@/components/ui/switch';
 
 import type { TravelDetails } from '@/lib/mock-data';
+import { useAuth } from '@/lib/auth/auth-context';
+import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -297,6 +299,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 
   const router = useRouter();
+  const { user } = useAuth();
 
   // Background slideshow images
   const backgroundImages = [
@@ -502,7 +505,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
           <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
         </div>
 
-        {/* Mobile Logo and Auth Buttons */}
+        {/* Mobile Logo and Auth */}
         <div className="relative z-20 mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span
@@ -511,23 +514,29 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
               TravelAgentic
             </span>
           </div>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="bg-transparent text-sm text-white"
-              onClick={() => router.push('/login')}
-            >
-              Log in
-            </Button>
-            <Button
-              size="sm"
-              className="bg-blue-600 text-sm hover:bg-blue-700"
-              onClick={() => router.push('/signup')}
-            >
-              Sign up
-            </Button>
-          </div>
+          
+          {/* Conditional Auth Display */}
+          {user ? (
+            <UserProfileDropdown className="text-white" />
+          ) : (
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                className="bg-transparent text-sm text-white border-white hover:bg-white hover:text-gray-900"
+                onClick={() => router.push('/login')}
+              >
+                Log in
+              </Button>
+              <Button
+                size="sm"
+                className="bg-blue-600 text-sm hover:bg-blue-700"
+                onClick={() => router.push('/signup')}
+              >
+                Sign up
+              </Button>
+            </div>
+          )}
         </div>
 
         <Card className="relative z-10 w-full bg-white/75 backdrop-blur-sm">
@@ -901,7 +910,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
       </div>
 
-      {/* Logo and Auth Buttons */}
+      {/* Logo and Auth */}
       <div className="absolute left-6 right-6 top-6 z-20 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span
@@ -910,21 +919,27 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
             TravelAgentic
           </span>
         </div>
-        <div className="flex gap-3">
-          <Button
-            variant="outline"
-            className="border-white bg-transparent text-white hover:bg-white hover:text-gray-900"
-            onClick={() => router.push('/login')}
-          >
-            Log in
-          </Button>
-          <Button
-            className="bg-blue-600 hover:bg-blue-700"
-            onClick={() => router.push('/signup')}
-          >
-            Sign up
-          </Button>
-        </div>
+        
+        {/* Conditional Auth Display */}
+        {user ? (
+          <UserProfileDropdown className="text-white" />
+        ) : (
+          <div className="flex gap-3">
+            <Button
+              variant="outline"
+              className="border-white bg-transparent text-white hover:bg-white hover:text-gray-900"
+              onClick={() => router.push('/login')}
+            >
+              Log in
+            </Button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700"
+              onClick={() => router.push('/signup')}
+            >
+              Sign up
+            </Button>
+          </div>
+        )}
       </div>
 
       <Card className="relative z-10 w-full max-w-4xl bg-white/75 backdrop-blur-sm">

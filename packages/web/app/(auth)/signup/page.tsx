@@ -44,13 +44,44 @@ export default function SignupPage() {
 
     setIsLoading(true);
 
-    // Simulate signup API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName,
+          lastName,
+          email,
+          password,
+        }),
+      });
 
-    // Here you would typically handle the signup logic
-    console.log('Signup attempt:', { firstName, lastName, email, password });
+      const data = await response.json();
 
-    setIsLoading(false);
+      if (data.success) {
+        if (data.requiresConfirmation) {
+          alert('Please check your email to confirm your account');
+        } else {
+          alert('Account created successfully! Welcome to TravelAgentic.');
+          window.location.href = '/';
+        }
+      } else {
+        if (data.details) {
+          // Show validation errors
+          const errorMessages = data.details.map((detail: any) => detail.message).join('\n');
+          alert(errorMessages);
+        } else {
+          alert(data.error || 'Sign up failed');
+        }
+      }
+    } catch (error) {
+      console.error('Sign up error:', error);
+      alert('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
