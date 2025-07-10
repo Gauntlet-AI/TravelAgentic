@@ -1,14 +1,12 @@
 /**
  * Travel Tools for Agentic AI
  * These functions allow the AI to take real actions for travel planning
+ * Now integrated with mock API services
  */
 import {
   type Activity,
   type Flight,
   type Hotel,
-  mockActivities,
-  mockFlights,
-  mockHotels,
 } from '@/lib/mock-data';
 
 export interface FlightSearchParams {
@@ -37,7 +35,7 @@ export interface ActivitySearchParams {
 
 /**
  * Search for flights between two destinations
- * In Phase 1: Uses mock data, Phase 2+: Real APIs with fallback
+ * Now uses integrated mock API service
  */
 export async function searchFlights(params: FlightSearchParams): Promise<{
   success: boolean;
@@ -48,54 +46,74 @@ export async function searchFlights(params: FlightSearchParams): Promise<{
   try {
     console.log('🔍 AI is searching for flights:', params);
 
-    // Simulate API delay for realistic behavior
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1500 + Math.random() * 1000)
-    );
+    // Make API call to our integrated mock service
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/flights/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        origin: params.origin,
+        destination: params.destination,
+        departureDate: params.departureDate,
+        returnDate: params.returnDate,
+        passengers: params.passengers || 1,
+        cabin: params.cabin || 'economy'
+      }),
+    });
 
-    // Phase 1: Use mock data (USE_MOCK_APIS=true)
-    if (process.env.USE_MOCK_APIS !== 'false') {
-      // Filter mock flights based on search criteria
-      const filteredFlights = mockFlights
-        .filter((flight) => {
-          const matchesRoute =
-            flight.departure.city
-              .toLowerCase()
-              .includes(params.origin.toLowerCase()) ||
-            flight.arrival.city
-              .toLowerCase()
-              .includes(params.destination.toLowerCase());
-          const matchesCabin =
-            !params.cabin || flight.class.toLowerCase() === params.cabin;
-          return matchesRoute && matchesCabin;
-        })
-        .slice(0, 5); // Limit to 5 results
-
-      // Simulate occasional API failures for testing fallback
-      if (Math.random() < 0.1) {
-        return {
-          success: false,
-          message: 'Mock API timeout - testing fallback system',
-          source: 'error',
-        };
-      }
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      // Transform API response to match expected Flight interface
+      const transformedFlights = data.data.map((flight: any) => ({
+        id: flight.id,
+        airline: flight.airline,
+        flightNumber: flight.flightNumber,
+        departure: {
+          airport: flight.segments?.[0]?.origin || params.origin,
+          city: params.origin,
+          time: new Date(flight.segments?.[0]?.departure || Date.now()).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }),
+          date: new Date(flight.segments?.[0]?.departure || Date.now()).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+        },
+        arrival: {
+          airport: flight.segments?.[flight.segments.length - 1]?.destination || params.destination,
+          city: params.destination,
+          time: new Date(flight.segments?.[flight.segments.length - 1]?.arrival || Date.now()).toLocaleTimeString('en-US', { 
+            hour: 'numeric', 
+            minute: '2-digit',
+            hour12: true 
+          }),
+          date: new Date(flight.segments?.[flight.segments.length - 1]?.arrival || Date.now()).toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: 'numeric' 
+          }),
+        },
+        duration: flight.totalDuration || '4h 0m',
+        stops: (flight.segments?.length || 1) - 1,
+        price: flight.price?.amount || 299,
+        class: params.cabin || 'Economy',
+        aircraft: flight.aircraft || 'Boeing 737',
+      }));
 
       return {
         success: true,
-        data: filteredFlights,
-        message: `Found ${filteredFlights.length} flight options from ${params.origin} to ${params.destination}`,
-        source: 'mock',
+        data: transformedFlights,
+        message: `Found ${transformedFlights.length} flight options from ${params.origin} to ${params.destination}`,
+        source: 'api',
+      };
+    } else {
+      return {
+        success: false,
+        message: data.error || 'Flight search failed',
+        source: 'error',
       };
     }
-
-    // Phase 2+: Real API integration would go here
-    // For now, return mock data even when USE_MOCK_APIS=false
-    return {
-      success: true,
-      data: mockFlights.slice(0, 3),
-      message: 'Flight search completed (real API integration pending)',
-      source: 'api',
-    };
   } catch (error) {
     console.error('Flight search error:', error);
     return {
@@ -108,7 +126,7 @@ export async function searchFlights(params: FlightSearchParams): Promise<{
 
 /**
  * Search for hotels in a destination
- * In Phase 1: Uses mock data, Phase 2+: Real APIs with fallback
+ * Now uses integrated mock API service
  */
 export async function searchHotels(params: HotelSearchParams): Promise<{
   success: boolean;
@@ -119,52 +137,50 @@ export async function searchHotels(params: HotelSearchParams): Promise<{
   try {
     console.log('🏨 AI is searching for hotels:', params);
 
-    // Simulate API delay
-    await new Promise((resolve) =>
-      setTimeout(resolve, 2000 + Math.random() * 1500)
-    );
+    // Make API call to our integrated mock service
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/hotels/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destination: params.destination,
+        checkIn: params.checkIn,
+        checkOut: params.checkOut,
+        guests: {
+          adults: params.guests || 2,
+          children: 0,
+          rooms: 1
+        }
+      }),
+    });
 
-    // Phase 1: Use mock data
-    if (process.env.USE_MOCK_APIS !== 'false') {
-      // Filter hotels based on destination and price range
-      let filteredHotels = mockHotels.filter((hotel) =>
-        hotel.location.toLowerCase().includes(params.destination.toLowerCase())
-      );
-
-      // Filter by price range if specified
-      if (params.priceRange && params.priceRange !== 'any') {
-        filteredHotels = filteredHotels.filter((hotel) => {
-          if (params.priceRange === 'budget') return hotel.pricePerNight < 150;
-          if (params.priceRange === 'mid-range')
-            return hotel.pricePerNight >= 150 && hotel.pricePerNight <= 300;
-          if (params.priceRange === 'luxury') return hotel.pricePerNight > 300;
-          return true;
-        });
-      }
-
-      // Adjust pricing based on number of guests
-      const adjustedHotels = filteredHotels
-        .map((hotel) => ({
-          ...hotel,
-          pricePerNight: hotel.pricePerNight + ((params.guests || 1) - 1) * 25,
-        }))
-        .slice(0, 5);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      // Transform API response to match expected Hotel interface
+      const transformedHotels = data.data.map((hotel: any) => ({
+        id: hotel.id,
+        name: hotel.name,
+        rating: hotel.rating?.score || 4.0,
+        pricePerNight: hotel.price?.amount || 150,
+        image: hotel.images?.[0] || '/placeholder.jpg',
+        amenities: hotel.amenities || ['WiFi'],
+        location: hotel.location?.city || params.destination,
+        description: hotel.description || 'Comfortable hotel with modern amenities',
+      }));
 
       return {
         success: true,
-        data: adjustedHotels,
-        message: `Found ${adjustedHotels.length} hotel options in ${params.destination}`,
-        source: 'mock',
+        data: transformedHotels,
+        message: `Found ${transformedHotels.length} hotel options in ${params.destination}`,
+        source: 'api',
+      };
+    } else {
+      return {
+        success: false,
+        message: data.error || 'Hotel search failed',
+        source: 'error',
       };
     }
-
-    // Phase 2+: Real API integration would go here
-    return {
-      success: true,
-      data: mockHotels.slice(0, 4),
-      message: 'Hotel search completed (real API integration pending)',
-      source: 'api',
-    };
   } catch (error) {
     console.error('Hotel search error:', error);
     return {
@@ -177,7 +193,7 @@ export async function searchHotels(params: HotelSearchParams): Promise<{
 
 /**
  * Search for activities and attractions in a destination
- * In Phase 1: Uses mock data, Phase 2+: Real APIs with fallback
+ * Now uses integrated mock API service
  */
 export async function searchActivities(params: ActivitySearchParams): Promise<{
   success: boolean;
@@ -188,46 +204,47 @@ export async function searchActivities(params: ActivitySearchParams): Promise<{
   try {
     console.log('🎯 AI is searching for activities:', params);
 
-    // Simulate API delay
-    await new Promise((resolve) =>
-      setTimeout(resolve, 1800 + Math.random() * 1200)
-    );
+    // Make API call to our integrated mock service
+    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/activities/search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destination: params.destination,
+        startDate: params.dates?.[0],
+        endDate: params.dates?.[1],
+        categories: params.interests || ['outdoor', 'culture']
+      }),
+    });
 
-    // Phase 1: Use mock data
-    if (process.env.USE_MOCK_APIS !== 'false') {
-      let filteredActivities = mockActivities;
-
-      // Filter by interests if specified
-      if (params.interests && params.interests.length > 0) {
-        filteredActivities = mockActivities.filter((activity) =>
-          activity.category.some((cat) =>
-            params.interests!.some(
-              (interest) =>
-                cat.toLowerCase().includes(interest.toLowerCase()) ||
-                interest.toLowerCase().includes(cat.toLowerCase())
-            )
-          )
-        );
-      }
-
-      // Limit results
-      const selectedActivities = filteredActivities.slice(0, 6);
+    const data = await response.json();
+    
+    if (data.success && data.data) {
+      // Transform API response to match expected Activity interface
+      const transformedActivities = data.data.map((activity: any) => ({
+        id: activity.id,
+        name: activity.name,
+        description: activity.description || activity.shortDescription || 'Exciting activity',
+        category: activity.categories || ['activity'],
+        price: activity.price?.amount || 50,
+        duration: activity.duration?.description || '2-3 hours',
+        rating: activity.rating?.score || 4.0,
+        image: activity.images?.[0] || '/placeholder.jpg',
+        location: activity.location?.city || params.destination,
+      }));
 
       return {
         success: true,
-        data: selectedActivities,
-        message: `Found ${selectedActivities.length} activity options in ${params.destination}${params.interests ? ` matching your interests: ${params.interests.join(', ')}` : ''}`,
-        source: 'mock',
+        data: transformedActivities,
+        message: `Found ${transformedActivities.length} activity options in ${params.destination}${params.interests ? ` matching your interests: ${params.interests.join(', ')}` : ''}`,
+        source: 'api',
+      };
+    } else {
+      return {
+        success: false,
+        message: data.error || 'Activity search failed',
+        source: 'error',
       };
     }
-
-    // Phase 2+: Real API integration would go here
-    return {
-      success: true,
-      data: mockActivities.slice(0, 5),
-      message: 'Activity search completed (real API integration pending)',
-      source: 'api',
-    };
   } catch (error) {
     console.error('Activity search error:', error);
     return {
