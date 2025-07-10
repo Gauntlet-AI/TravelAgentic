@@ -27,13 +27,29 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch('/api/auth/signin', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    // Here you would typically handle the login logic
-    console.log('Login attempt:', { email, password });
+      const data = await response.json();
 
-    setIsLoading(false);
+      if (data.success) {
+        // Redirect to dashboard or home page
+        window.location.href = '/';
+      } else {
+        alert(data.error || 'Sign in failed');
+      }
+    } catch (error) {
+      console.error('Sign in error:', error);
+      alert('An unexpected error occurred');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
