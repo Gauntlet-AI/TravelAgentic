@@ -3,17 +3,23 @@
 import { useChat } from 'ai/react';
 import { MessageCircle, Send } from 'lucide-react';
 
+import { useEffect, useRef } from 'react';
+
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
+import type { TravelDetails } from '@/lib/mock-data';
 
 interface ChatInterfaceProps {
   className?: string;
   isMobile?: boolean;
   isCollapsed?: boolean;
   onToggle?: () => void;
-  hideCard?: boolean; // New prop to hide card styling
+  hideCard?: boolean;
+  travelDetails?: TravelDetails | null; // Add travel details prop
+  onTabChange?: (tabValue: string) => void; // Add tab change handler
 }
 
 export function ChatInterface({
@@ -22,9 +28,94 @@ export function ChatInterface({
   isCollapsed,
   onToggle,
   hideCard,
+  travelDetails,
+  onTabChange,
 }: ChatInterfaceProps) {
+  // Create context message with current travel selections
+  // Track processed tool calls to prevent re-execution
+  const processedToolCallsRef = useRef<Set<string>>(new Set());
+
+  const getTravelContext = () => {
+    if (!travelDetails) {
+      return "The user hasn't made any travel selections yet.";
+    }
+    
+    const { 
+      departureLocation, 
+      destination, 
+      startDate, 
+      endDate, 
+      adults, 
+      children, 
+      travelingWithPets 
+    } = travelDetails;
+    
+    let context = "CURRENT USER SELECTIONS:\n";
+    
+    if (departureLocation) {
+      context += `- Departure: ${departureLocation}\n`;
+    }
+    
+    if (destination) {
+      context += `- Destination: ${destination}\n`;
+    }
+    
+    if (startDate && endDate) {
+      context += `- Travel Dates: ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}\n`;
+    } else if (startDate) {
+      context += `- Departure Date: ${startDate.toLocaleDateString()}\n`;
+    }
+    
+    if (adults || children) {
+      const travelerInfo = [];
+      if (adults) travelerInfo.push(`${adults} adult${adults !== 1 ? 's' : ''}`);
+      if (children) travelerInfo.push(`${children} child${children !== 1 ? 'ren' : ''}`);
+      context += `- Travelers: ${travelerInfo.join(', ')}\n`;
+    }
+    
+    if (travelingWithPets) {
+      context += `- Traveling with pets: Yes\n`;
+    }
+    
+    context += "\nIMPORTANT: Use these existing selections when making recommendations. If the user asks to search for something and relevant details are already selected, use them automatically without asking again.";
+    
+    return context;
+  };
+
   const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat();
+    useChat({
+      api: '/api/chat',
+      body: {
+        travelContext: getTravelContext(), // Include travel context in API calls
+      },
+    });
+
+  // Effect to handle tab changes from tool calls
+  useEffect(() => {
+    // Find all changeTab tool calls across all messages
+    const allChangeTabToolCalls = messages.flatMap((msg) => 
+      msg.toolInvocations?.filter(tool => tool.toolName === 'changeTab') || []
+    );
+
+    // Process only new tool calls that haven't been processed yet
+    allChangeTabToolCalls.forEach((toolCall) => {
+      const toolCallId = toolCall.toolCallId;
+      
+      // Skip if already processed
+      if (processedToolCallsRef.current.has(toolCallId)) {
+        return;
+      }
+      
+      // Execute the tab change for new tool calls
+      if ('args' in toolCall && toolCall.args) {
+        const args = toolCall.args as { tabValue: string };
+        onTabChange?.(args.tabValue);
+        
+        // Mark as processed
+        processedToolCallsRef.current.add(toolCallId);
+      }
+    });
+  }, [messages, onTabChange]);
 
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
   const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
@@ -50,13 +141,32 @@ export function ChatInterface({
       {!hideCard && (
         <CardHeader className="sticky top-0 z-10 bg-white pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg">AI Assistant</CardTitle>
+            <CardTitle className="text-lg">AI Travel Assistant</CardTitle>
             {isMobile && (
               <Button variant="ghost" size="sm" onClick={onToggle}>
                 ×
               </Button>
             )}
           </div>
+          
+          {/* Show current selections summary */}
+          {travelDetails && (
+            <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
+              <div className="font-medium text-blue-700 mb-1">Current Trip:</div>
+              {travelDetails.departureLocation && travelDetails.destination && (
+                <div>{travelDetails.departureLocation} → {travelDetails.destination}</div>
+              )}
+              {travelDetails.startDate && travelDetails.endDate && (
+                <div>{travelDetails.startDate.toLocaleDateString()} - {travelDetails.endDate.toLocaleDateString()}</div>
+              )}
+              {(travelDetails.adults || travelDetails.children) && (
+                <div>
+                  {travelDetails.adults} adult{travelDetails.adults !== 1 ? 's' : ''}
+                  {travelDetails.children > 0 && `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`}
+                </div>
+              )}
+            </div>
+          )}
         </CardHeader>
       )}
 
@@ -68,7 +178,11 @@ export function ChatInterface({
           >
             <MessageCircle className="mx-auto mb-2" size={32} />
             <p>Ask me anything about your vacation plans!</p>
-            <p>Change any detail about your vacation.</p>
+            {travelDetails ? (
+              <p className="text-sm text-blue-600">I can see your current selections and will use them in my recommendations.</p>
+            ) : (
+              <p className="text-sm">Fill out your travel details and I'll help with personalized suggestions.</p>
+            )}
           </div>
         )}
 
@@ -142,7 +256,11 @@ export function ChatInterface({
             <Input
               value={input}
               onChange={handleInputChange}
-              placeholder="e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
+              placeholder={
+                travelDetails 
+                  ? "e.g., 'Find flights' or 'Search budget hotels' or 'Show me outdoor activities'"
+                  : "e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
+              }
               className="flex-1"
             />
             <Button type="submit" disabled={isLoading}>

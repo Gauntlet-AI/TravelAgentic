@@ -71,6 +71,14 @@ export default function VacationPlanner() {
   const [hasShownCelebration, setHasShownCelebration] = useState(false);
   const celebrationProcessingRef = useRef(false);
 
+  // Add active tab state management
+  const [activeTab, setActiveTab] = useState<string>('activities');
+
+  // Function for AI to control tabs
+  const handleTabChange = (tabValue: string) => {
+    setActiveTab(tabValue);
+  };
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
@@ -345,6 +353,7 @@ export default function VacationPlanner() {
     setAllAgentsComplete(false);
     setShowCelebrationModal(false);
     setHasShownCelebration(false);
+    setActiveTab('activities'); // Reset to default tab
     celebrationProcessingRef.current = false;
   };
 
@@ -365,7 +374,7 @@ export default function VacationPlanner() {
   const mobileLayout = (
     <div className="min-h-screen bg-gray-50">
       {/* Mobile Chat Bubble - only show after all agents complete */}
-      {allAgentsComplete && <MobileChatBubble />}
+      {allAgentsComplete && <MobileChatBubble travelDetails={travelDetails} onTabChange={handleTabChange} />}
 
       {/* Mobile Header */}
       <div className="bg-white p-4 shadow-sm">
@@ -396,7 +405,7 @@ export default function VacationPlanner() {
 
       {/* Mobile Content */}
       <div className="p-4">
-        <Tabs defaultValue="activities" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="activities">Activity Types</TabsTrigger>
             <TabsTrigger value="flights" className="flex items-center gap-1">
@@ -632,7 +641,7 @@ export default function VacationPlanner() {
           )}
         </div>
 
-        <Tabs defaultValue="activities" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="mb-6 grid w-full grid-cols-4">
             <TabsTrigger value="activities">Activity Preferences</TabsTrigger>
             <TabsTrigger value="flights" className="flex items-center gap-2">
@@ -876,7 +885,11 @@ export default function VacationPlanner() {
       {/* Chat Panel - only show after all agents complete */}
       {allAgentsComplete && (
         <div className="w-96 border-l bg-white">
-          <ChatInterface className="h-full border-none shadow-none" />
+          <ChatInterface 
+            className="h-full border-none shadow-none" 
+            travelDetails={travelDetails}
+            onTabChange={handleTabChange}
+          />
         </div>
       )}
     </div>
