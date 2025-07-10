@@ -120,7 +120,6 @@ export default function VacationPlanner() {
         ? ` and ${details.children} child${details.children !== 1 ? 'ren' : ''}`
         : ''
     }`;
-    const petText = details.travelingWithPets ? ' that allows pets' : '';
 
     // Extract city names from location strings for cleaner display
     const getLocationName = (location: string) => {
@@ -132,120 +131,235 @@ export default function VacationPlanner() {
     const departureCity = getLocationName(details.departureLocation);
     const destinationCity = getLocationName(details.destination);
 
-    // Flight thinking simulation
-    const flightThinkingSteps = [
-      `Searching for flights from ${departureCity} to ${destinationCity}...`,
-      `Analyzing departure times for ${travelerText}...`,
-      `Comparing prices across multiple airlines...`,
-      `Checking seat availability for ${details.travelers} passengers...`,
-      `Finding the best flight options for your travel dates...`,
-      `Finalizing flight recommendations...`,
+    // AI research thinking simulation
+    const researchThinkingSteps = [
+      `Analyzing your travel preferences...`,
+      `Researching best flight options from ${departureCity} to ${destinationCity}...`,
+      `Finding ideal accommodations for ${travelerText}...`,
+      `Discovering personalized activities and attractions...`,
+      `Comparing prices and availability...`,
+      `Generating customized recommendations...`,
     ];
 
-    // Hotel thinking simulation
-    const hotelThinkingSteps = [
-      `Searching for hotels in ${destinationCity}${petText}...`,
-      `Looking for accommodations for ${travelerText}...`,
-      `Checking availability for ${nights} night${nights !== 1 ? 's' : ''}...`,
-      `Comparing amenities and guest reviews...`,
-      `Filtering hotels based on your preferences...`,
-      `Selecting the best hotel options...`,
-    ];
-
-    // Activity thinking simulation
-    const activityThinkingSteps = [
-      `Researching activities in ${destinationCity}...`,
-      `Finding family-friendly options for ${travelerText}...`,
-      `Discovering local attractions and experiences...`,
-      `Checking activity availability for your dates...`,
-      `Curating personalized recommendations...`,
-      `Finalizing activity suggestions...`,
-    ];
-
-    // Simulate thinking process for flights
-    let flightStep = 0;
-    const flightThinkingInterval = setInterval(() => {
-      if (flightStep < flightThinkingSteps.length) {
-        setFlightThoughts((prev) => [...prev, flightThinkingSteps[flightStep]]);
-        flightStep++;
+    // Show AI research thinking process
+    let researchStep = 0;
+    const researchThinkingInterval = setInterval(() => {
+      if (researchStep < researchThinkingSteps.length) {
+        setFlightThoughts((prev) => [...prev, researchThinkingSteps[researchStep]]);
+        researchStep++;
       } else {
-        clearInterval(flightThinkingInterval);
+        clearInterval(researchThinkingInterval);
       }
-    }, 1500);
+    }, 2000);
 
-    // Simulate thinking process for hotels
-    let hotelStep = 0;
-    const hotelThinkingInterval = setInterval(() => {
-      if (hotelStep < hotelThinkingSteps.length) {
-        setHotelThoughts((prev) => [...prev, hotelThinkingSteps[hotelStep]]);
-        hotelStep++;
-      } else {
-        clearInterval(hotelThinkingInterval);
-      }
-    }, 1600);
-
-    // Simulate thinking process for activities
-    let activityStep = 0;
-    const activityThinkingInterval = setInterval(() => {
-      if (activityStep < activityThinkingSteps.length) {
-        setActivityThoughts((prev) => [
-          ...prev,
-          activityThinkingSteps[activityStep],
-        ]);
-        activityStep++;
-      } else {
-        clearInterval(activityThinkingInterval);
-      }
-    }, 1400);
-
-    // Load flights after 10 seconds
-    setTimeout(() => {
-      setFlights(mockFlights);
-      setIsLoadingFlights(false);
-      clearInterval(flightThinkingInterval);
-      checkAllAgentsComplete();
-    }, 10000);
-
-    // Load hotels after 10 seconds
-    setTimeout(() => {
-      searchHotels(details)
-        .then(setHotels)
-        .catch(console.error)
-        .finally(() => {
-          setIsLoadingHotels(false);
-          clearInterval(hotelThinkingInterval);
-          checkAllAgentsComplete();
-        });
-    }, 10000);
-
-    // Load activities after 10 seconds
-    setTimeout(() => {
-      researchActivities(details)
-        .then(setAllActivities)
-        .catch(console.error)
-        .finally(() => {
-          setIsLoadingActivities(false);
-          clearInterval(activityThinkingInterval);
-          checkAllAgentsComplete();
-        });
-    }, 10000);
-
-    // Also trigger LLM research
-    if (details.startDate && details.endDate) {
-      fetch('/api/research', {
+    // Call AI research API to get structured data
+    try {
+      const response = await fetch('/api/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           destination: details.destination,
-          startDate: format(details.startDate, 'yyyy-MM-dd'),
-          endDate: format(details.endDate, 'yyyy-MM-dd'),
+          departureLocation: details.departureLocation,
+          startDate: details.startDate ? format(details.startDate, 'yyyy-MM-dd') : '',
+          endDate: details.endDate ? format(details.endDate, 'yyyy-MM-dd') : '',
           travelers: details.travelers,
         }),
-      })
-        .then((res) => res.json())
-        .then((data) => setActivityResearch(data.research))
-        .catch(console.error);
+      });
+
+      const researchData = await response.json();
+      
+      if (researchData.structured && details.startDate && details.endDate) {
+        // Use AI-generated preferences to populate results
+        
+        // Generate AI-informed flights
+        const aiFlights = generateAIFlights(
+          researchData.flightPreferences,
+          details.departureLocation,
+          details.destination,
+          details.startDate,
+          details.endDate,
+          details.travelers
+        );
+        
+        // Generate AI-informed hotels
+        const aiHotels = generateAIHotels(
+          researchData.hotelPreferences,
+          details.destination,
+          details.startDate,
+          details.endDate,
+          details.travelers
+        );
+
+        // Use AI-generated activity recommendations
+        const aiActivities = researchData.activityRecommendations.map((activity: any, index: number) => ({
+          id: `ai-activity-${index}`,
+          name: activity.name,
+          location: destinationCity,
+          category: Array.isArray(activity.category) ? activity.category : [activity.category],
+          duration: activity.duration,
+          rating: Math.round((4.0 + Math.random() * 1.0) * 10) / 10,
+          reviewCount: Math.floor(Math.random() * 500) + 100,
+          price: activity.estimatedCost,
+          currency: 'USD',
+          image: '/placeholder.jpg',
+          description: activity.description,
+          bestTime: activity.bestTime,
+          priority: activity.priority,
+          source: 'ai' as const,
+        }));
+
+        // Set the AI-generated data
+        setTimeout(() => {
+          setFlights(aiFlights);
+          setIsLoadingFlights(false);
+          clearInterval(researchThinkingInterval);
+          setFlightThoughts((prev) => [...prev, '✅ AI flight recommendations ready!']);
+          checkAllAgentsComplete();
+        }, 12000);
+
+        setTimeout(() => {
+          setHotels(aiHotels);
+          setIsLoadingHotels(false);
+          setHotelThoughts((prev) => [...prev, '✅ AI hotel recommendations ready!']);
+          checkAllAgentsComplete();
+        }, 13000);
+
+        setTimeout(() => {
+          setAllActivities(aiActivities);
+          setIsLoadingActivities(false);
+          setActivityThoughts((prev) => [...prev, '✅ AI activity recommendations ready!']);
+          checkAllAgentsComplete();
+        }, 14000);
+
+        // Store the travel guide
+        setActivityResearch(researchData.research);
+        
+      } else {
+        // Fallback to mock data if AI research fails
+        console.warn('AI research failed, using mock data');
+        fallbackToMockData();
+      }
+    } catch (error) {
+      console.error('Error calling AI research:', error);
+      // Fallback to mock data if API call fails
+      fallbackToMockData();
     }
+
+    // Fallback function to use mock data
+    function fallbackToMockData() {
+      setTimeout(() => {
+        setFlights(mockFlights);
+        setIsLoadingFlights(false);
+        clearInterval(researchThinkingInterval);
+        checkAllAgentsComplete();
+      }, 10000);
+
+      setTimeout(() => {
+        searchHotels(details)
+          .then(setHotels)
+          .catch(console.error)
+          .finally(() => {
+            setIsLoadingHotels(false);
+            checkAllAgentsComplete();
+          });
+      }, 10000);
+
+      setTimeout(() => {
+        researchActivities(details)
+          .then(setAllActivities)
+          .catch(console.error)
+          .finally(() => {
+            setIsLoadingActivities(false);
+            checkAllAgentsComplete();
+          });
+      }, 10000);
+    }
+  };
+
+  // Helper function to generate AI-informed flights
+  const generateAIFlights = (
+    preferences: any,
+    departureLocation: string,
+    destination: string,
+    startDate: Date,
+    endDate: Date,
+    travelers: number
+  ): Flight[] => {
+    const departureAirport = departureLocation.match(/\(([A-Z]{3})\)/)?.[1] || 'ATL';
+    const destinationAirport = destination.match(/\(([A-Z]{3})\)/)?.[1] || 'JFK';
+    const departureCity = departureLocation.match(/^([^(]+)/)?.[1]?.trim() || 'Atlanta';
+    const destinationCity = destination.match(/^([^(]+)/)?.[1]?.trim() || 'New York';
+    
+    const airlines = preferences.preferredAirlines || ['Delta Air Lines', 'American Airlines', 'United Airlines'];
+    const basePrice = preferences.cabinClass === 'business' ? 800 : 
+                     preferences.cabinClass === 'premium' ? 400 : 200;
+    
+    const aircraftTypes = ['Boeing 737-800', 'Airbus A320', 'Boeing 777-200'];
+    const cabinClass = preferences.cabinClass === 'business' ? 'Business' : 
+                      preferences.cabinClass === 'premium' ? 'Premium Economy' : 'Economy';
+    
+    return airlines.slice(0, 3).map((airline: string, index: number) => {
+      const departureTime = index === 0 ? '8:30 AM' : index === 1 ? '2:15 PM' : '6:45 PM';
+      const arrivalTime = index === 0 ? '12:30 PM' : index === 1 ? '6:15 PM' : '10:45 PM';
+      const stops = preferences.stopPreference === 'direct' ? 0 : Math.floor(Math.random() * 2);
+      
+      return {
+        id: `ai-flight-${index}`,
+        airline,
+        flightNumber: `${airline.substr(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
+        departure: {
+          airport: departureAirport,
+          city: departureCity,
+          time: departureTime,
+          date: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        },
+        arrival: {
+          airport: destinationAirport,
+          city: destinationCity,
+          time: arrivalTime,
+          date: startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        },
+        duration: stops === 0 ? '4h 0m' : '6h 30m',
+        price: basePrice + Math.floor(Math.random() * 200),
+        stops,
+        class: cabinClass,
+        aircraft: aircraftTypes[index % aircraftTypes.length],
+        source: 'ai' as const,
+      };
+    });
+  };
+
+  // Helper function to generate AI-informed hotels
+  const generateAIHotels = (
+    preferences: any,
+    destination: string,
+    startDate: Date,
+    endDate: Date,
+    travelers: number
+  ): Hotel[] => {
+    const destinationCity = destination.match(/^([^(]+)/)?.[1]?.trim() || 'New York';
+    const hotelTypes = preferences.preferredTypes || ['luxury', 'boutique', 'business'];
+    const basePrice = preferences.priceRange === 'luxury' ? 300 : 
+                     preferences.priceRange === 'mid-range' ? 150 : 80;
+    
+    const descriptions = {
+      luxury: 'Elegant luxury hotel with world-class amenities and exceptional service',
+      boutique: 'Charming boutique hotel with unique character and personalized attention',
+      business: 'Modern business hotel with convenient location and professional facilities',
+      'family-friendly': 'Comfortable family hotel with amenities for all ages'
+    };
+    
+    return hotelTypes.slice(0, 3).map((type: string, index: number) => ({
+      id: `ai-hotel-${index}`,
+      name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${destinationCity} Hotel`,
+      location: `${destinationCity}, ${preferences.locationPreference || 'city center'}`,
+      rating: Math.round((4.0 + Math.random() * 1.0) * 10) / 10,
+      pricePerNight: basePrice + Math.floor(Math.random() * 100),
+      image: '/placeholder.jpg',
+      amenities: preferences.amenities || ['WiFi', 'Pool', 'Gym'],
+      description: descriptions[type as keyof typeof descriptions] || 'Quality accommodation with modern amenities',
+      source: 'ai' as const,
+    }));
   };
 
   const handleActivityTypeSelect = (typeId: string) => {

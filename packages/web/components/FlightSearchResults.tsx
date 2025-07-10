@@ -9,15 +9,27 @@ interface FlightResult {
   id: string;
   airline: string;
   flightNumber: string;
-  origin: string;
-  destination: string;
-  departure: string;
-  arrival: string;
+  origin?: string; // Legacy API format
+  destination?: string; // Legacy API format
+  departure: string | {
+    airport: string;
+    city: string;
+    time: string;
+    date: string;
+  };
+  arrival: string | {
+    airport: string;
+    city: string;
+    time: string;
+    date: string;
+  };
   duration: string;
   price: number;
-  currency: string;
+  currency?: string;
   stops: number;
-  source: 'api' | 'browser' | 'voice' | 'manual';
+  class?: string;
+  aircraft?: string;
+  source: 'api' | 'browser' | 'voice' | 'manual' | 'ai';
 }
 
 /**
@@ -32,17 +44,33 @@ interface FlightSearchResultsProps {
  * Convert FlightResult to Flight interface
  */
 function convertToFlight(flightResult: FlightResult): Flight {
-  // Parse departure and arrival times
-  const departureDate = new Date(flightResult.departure);
-  const arrivalDate = new Date(flightResult.arrival);
+  // Check if this is already in the proper format (AI-generated)
+  if (typeof flightResult.departure === 'object' && typeof flightResult.arrival === 'object') {
+    return {
+      id: flightResult.id,
+      airline: flightResult.airline,
+      flightNumber: flightResult.flightNumber,
+      departure: flightResult.departure,
+      arrival: flightResult.arrival,
+      duration: flightResult.duration,
+      stops: flightResult.stops,
+      price: flightResult.price,
+      class: flightResult.class || 'Economy',
+      aircraft: flightResult.aircraft || 'Commercial Aircraft',
+    };
+  }
+
+  // Legacy API format conversion
+  const departureDate = new Date(flightResult.departure as string);
+  const arrivalDate = new Date(flightResult.arrival as string);
 
   return {
     id: flightResult.id,
     airline: flightResult.airline,
     flightNumber: flightResult.flightNumber,
     departure: {
-      airport: flightResult.origin,
-      city: flightResult.origin,
+      airport: flightResult.origin || 'ATL',
+      city: flightResult.origin || 'Atlanta',
       time: departureDate.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
@@ -54,8 +82,8 @@ function convertToFlight(flightResult: FlightResult): Flight {
       }),
     },
     arrival: {
-      airport: flightResult.destination,
-      city: flightResult.destination,
+      airport: flightResult.destination || 'JFK',
+      city: flightResult.destination || 'New York',
       time: arrivalDate.toLocaleTimeString('en-US', {
         hour: 'numeric',
         minute: '2-digit',
@@ -69,8 +97,8 @@ function convertToFlight(flightResult: FlightResult): Flight {
     duration: flightResult.duration,
     stops: flightResult.stops,
     price: flightResult.price,
-    class: 'Economy',
-    aircraft: 'Commercial Aircraft',
+    class: flightResult.class || 'Economy',
+    aircraft: flightResult.aircraft || 'Commercial Aircraft',
   };
 }
 
@@ -106,8 +134,19 @@ export function FlightSearchResults({
         />
       ))}
 
+      {/* AI indicator */}
+      {flights.length > 0 && flights[0]?.source === 'ai' && (
+        <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+          <div className="flex items-center">
+            <span className="text-sm text-purple-600">
+              🤖 Flights selected by AI based on your preferences
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* Fallback indicator */}
-      {flights.length > 0 && flights[0]?.source !== 'api' && (
+      {flights.length > 0 && flights[0]?.source !== 'api' && flights[0]?.source !== 'ai' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-3">
           <div className="flex items-center">
             <span className="text-sm text-yellow-600">
