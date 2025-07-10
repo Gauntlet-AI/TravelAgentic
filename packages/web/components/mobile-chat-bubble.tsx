@@ -13,11 +13,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import type { TravelDetails } from '@/lib/mock-data';
+
 interface MobileChatBubbleProps {
   className?: string;
+  travelDetails?: TravelDetails | null;
+  onTabChange?: (tabValue: string) => void;
 }
 
-export function MobileChatBubble({ className }: MobileChatBubbleProps) {
+export function MobileChatBubble({ className, travelDetails, onTabChange }: MobileChatBubbleProps) {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   return (
@@ -37,7 +41,7 @@ export function MobileChatBubble({ className }: MobileChatBubbleProps) {
           <DialogHeader className="rounded-t-2xl bg-white p-4 pb-2">
             <div className="flex items-center justify-between">
               <DialogTitle className="text-lg font-semibold">
-                AI Assistant
+                AI Travel Assistant
               </DialogTitle>
               {/* Built-in Dialog close button handles closing, so custom button removed to prevent duplicate X icons */}
             </div>
@@ -50,6 +54,8 @@ export function MobileChatBubble({ className }: MobileChatBubbleProps) {
               isMobile={true}
               isCollapsed={false}
               hideCard={true}
+              travelDetails={travelDetails}
+              onTabChange={onTabChange}
             />
           </div>
         </DialogContent>

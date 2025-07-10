@@ -36,8 +36,29 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-// Import openflights-cached for comprehensive airport data
-const openflights = require('openflights-cached');
+// Mock airport data for development - replace with API call in production
+const mockAirports = [
+  { iata: 'LAX', city: 'Los Angeles', country: 'United States', name: 'Los Angeles International Airport' },
+  { iata: 'JFK', city: 'New York', country: 'United States', name: 'John F. Kennedy International Airport' },
+  { iata: 'SFO', city: 'San Francisco', country: 'United States', name: 'San Francisco International Airport' },
+  { iata: 'LHR', city: 'London', country: 'United Kingdom', name: 'Heathrow Airport' },
+  { iata: 'CDG', city: 'Paris', country: 'France', name: 'Charles de Gaulle Airport' },
+  { iata: 'NRT', city: 'Tokyo', country: 'Japan', name: 'Narita International Airport' },
+  { iata: 'DXB', city: 'Dubai', country: 'United Arab Emirates', name: 'Dubai International Airport' },
+  { iata: 'SYD', city: 'Sydney', country: 'Australia', name: 'Kingsford Smith Airport' },
+  { iata: 'HKG', city: 'Hong Kong', country: 'Hong Kong', name: 'Hong Kong International Airport' },
+  { iata: 'SIN', city: 'Singapore', country: 'Singapore', name: 'Singapore Changi Airport' },
+  { iata: 'FRA', city: 'Frankfurt', country: 'Germany', name: 'Frankfurt Airport' },
+  { iata: 'AMS', city: 'Amsterdam', country: 'Netherlands', name: 'Amsterdam Airport Schiphol' },
+  { iata: 'ICN', city: 'Seoul', country: 'South Korea', name: 'Incheon International Airport' },
+  { iata: 'BKK', city: 'Bangkok', country: 'Thailand', name: 'Suvarnabhumi Airport' },
+  { iata: 'DEL', city: 'New Delhi', country: 'India', name: 'Indira Gandhi International Airport' },
+  { iata: 'ORD', city: 'Chicago', country: 'United States', name: 'O\'Hare International Airport' },
+  { iata: 'ATL', city: 'Atlanta', country: 'United States', name: 'Hartsfield-Jackson Atlanta International Airport' },
+  { iata: 'DEN', city: 'Denver', country: 'United States', name: 'Denver International Airport' },
+  { iata: 'MIA', city: 'Miami', country: 'United States', name: 'Miami International Airport' },
+  { iata: 'LAS', city: 'Las Vegas', country: 'United States', name: 'McCarran International Airport' },
+];
 
 // Type definition for airport data
 interface AirportData {
@@ -210,68 +231,42 @@ function matchesStateOrProvince(airport: any, searchTerm: string): boolean {
   return false;
 }
 
-// Search function using openflights-cached
+// Simple airport search function using mock data
 function searchAirports(query: string): AirportData[] {
   if (!query || query.length < 2) return [];
   
   const searchTerm = query.toLowerCase();
   
   try {
-    // Separate state matches from other matches for proper prioritization
-    const stateMatches: any[] = [];
-    const otherMatches: any[] = [];
-    
-    openflights.array.forEach((airport: any) => {
-      // Only include airports with IATA codes for better UX
-      if (!airport.iata || airport.iata === '\\N') return;
-      
-      // Check if this is a state/province search
-      const isStateMatch = matchesStateOrProvince(airport, searchTerm);
-      
-      if (isStateMatch) {
-        stateMatches.push(airport);
-        return;
-      }
-      
-      // For short queries (2-3 chars), be more restrictive to avoid false positives
+    const matches = mockAirports.filter((airport) => {
+      // For short queries (2-3 chars), be more restrictive
       if (searchTerm.length <= 3) {
-        if (
+        return (
           airport.city?.toLowerCase().startsWith(searchTerm) ||
           airport.iata?.toLowerCase() === searchTerm ||
           airport.country?.toLowerCase().startsWith(searchTerm)
-        ) {
-          otherMatches.push(airport);
-        }
+        );
       } else {
         // For longer queries, use inclusive search
-        if (
+        return (
           airport.city?.toLowerCase().includes(searchTerm) ||
           airport.name?.toLowerCase().includes(searchTerm) ||
           airport.country?.toLowerCase().includes(searchTerm) ||
           airport.iata?.toLowerCase().includes(searchTerm)
-        ) {
-          otherMatches.push(airport);
-        }
+        );
       }
     });
     
-    // Combine results with state matches first, then other matches
-    const allMatches = [...stateMatches, ...otherMatches]
+    return matches
       .slice(0, 8) // Limit to 8 results for performance
-      .map((airport: any) => {
-        const state = getAirportState(airport);
-        return {
-          iata: airport.iata,
-          icao: airport.icao || '',
-          name: airport.name,
-          city: airport.city,
-          country: airport.country,
-          state,
-          displayLocation: formatDisplayLocation(airport)
-        };
-      });
-    
-    return allMatches;
+      .map((airport) => ({
+        iata: airport.iata,
+        icao: airport.iata, // Use IATA as ICAO for simplicity
+        name: airport.name,
+        city: airport.city,
+        country: airport.country,
+        displayLocation: `${airport.city}, ${airport.country}`
+      }));
   } catch (error) {
     console.error('Error searching airports:', error);
     return [];
