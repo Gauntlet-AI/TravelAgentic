@@ -1,10 +1,10 @@
 /**
- * Langflow API Route for TravelAgentic
- * Proxy requests to Langflow workflows and handle travel planning actions
+ * LangGraph API Route for TravelAgentic
+ * Proxy requests to LangGraph workflows and handle travel planning actions
  */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { travelLangflowService } from '@/lib/langflow-service';
+import { travelLangGraphService } from '@/lib/langgraph-service';
 
 export const maxDuration = 60;
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`🤖 Langflow API: ${action}`, {
+    console.log(`🤖 LangGraph API: ${action}`, {
       destination: data?.destination,
       travelers: data?.travelers,
     });
@@ -65,10 +65,10 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const status = await travelLangflowService.getServiceStatus();
+    const status = await travelLangGraphService.getServiceStatus();
     return NextResponse.json(status);
   } catch (error) {
-    console.error('Langflow status check error:', error);
+    console.error('LangGraph status check error:', error);
 
     return NextResponse.json(
       {
@@ -101,7 +101,7 @@ async function handleGenerateQuestions(data: any): Promise<NextResponse> {
   }
 
   try {
-    const questions = await travelLangflowService.generatePreferenceQuestions(
+    const questions = await travelLangGraphService.generatePreferenceQuestions(
       data.destination,
       data.startDate,
       data.endDate,
@@ -149,7 +149,7 @@ async function handleGenerateSearchParameters(
 
   try {
     const searchParams =
-      await travelLangflowService.generateSearchParameters(data);
+      await travelLangGraphService.generateSearchParameters(data);
 
     return NextResponse.json({
       success: true,
@@ -182,7 +182,7 @@ async function handleProcessBookingDecisions(data: any): Promise<NextResponse> {
   }
 
   try {
-    const decisions = await travelLangflowService.processBookingDecisions(
+    const decisions = await travelLangGraphService.processBookingDecisions(
       data.searchResults,
       data.preferences
     );
@@ -219,7 +219,7 @@ async function handleGenerateItinerary(data: any): Promise<NextResponse> {
   }
 
   try {
-    const itinerary = await travelLangflowService.generateItinerary(
+    const itinerary = await travelLangGraphService.generateItinerary(
       data.bookings,
       data.preferences
     );
@@ -249,7 +249,7 @@ async function handleGenerateItinerary(data: any): Promise<NextResponse> {
  */
 async function handleGetStatus(): Promise<NextResponse> {
   try {
-    const status = await travelLangflowService.getServiceStatus();
+    const status = await travelLangGraphService.getServiceStatus();
 
     return NextResponse.json({
       success: true,

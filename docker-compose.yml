@@ -16,11 +16,12 @@ services:
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
       # AI Integration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - LANGFLOW_URL=http://langflow:7860
+      - LANGGRAPH_URL=http://langgraph:8000
+      - ENABLE_LANGGRAPH=true
       # Caching
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - langflow
+      - langgraph
       - redis
     volumes:
       - ./packages/web:/app/packages/web
@@ -28,19 +29,17 @@ services:
     restart: unless-stopped
     command: npm run dev
 
-  # Langflow (AI Workflows) - Using Supabase Cloud
-  langflow:
-    image: langflowai/langflow:latest
+  # LangGraph (AI Workflows)
+  langgraph:
+    build:
+      context: packages/langgraph
     environment:
-      - LANGFLOW_DATABASE_URL=${SUPABASE_URL}
-      - LANGFLOW_SUPERUSER=admin
-      - LANGFLOW_SUPERUSER_PASSWORD=admin
-      - LANGFLOW_SECRET_KEY=your-secret-key-here
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     ports:
-      - "7860:7860"
-    volumes:
-      - ./packages/langflow/flows:/app/flows
-      - ./packages/langflow/data:/app/data
+      - "8000:8000"
+    depends_on:
+      - redis
     restart: unless-stopped
 
   # Redis (for caching and sessions)

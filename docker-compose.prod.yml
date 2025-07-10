@@ -21,7 +21,8 @@ services:
       # AI Integration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
-      - LANGFLOW_URL=http://langflow:7860
+      - LANGGRAPH_URL=http://langgraph:8000
+      - ENABLE_LANGGRAPH=true
       
       # Travel APIs
       - TEQUILA_API_KEY=${TEQUILA_API_KEY}
@@ -52,7 +53,7 @@ services:
       - AUTOMATION_DELAY_MS=2000
       
     depends_on:
-      - langflow
+      - langgraph
       - redis
     restart: unless-stopped
     deploy:
@@ -63,21 +64,17 @@ services:
       restart_policy:
         condition: on-failure
 
-  # Langflow (AI Workflows)
-  langflow:
-    image: langflowai/langflow:latest
+  # LangGraph (AI Workflows)
+  langgraph:
+    build:
+      context: packages/langgraph
     environment:
-      # Use Supabase Cloud for Langflow storage
-      - LANGFLOW_DATABASE_URL=${SUPABASE_URL}
-      - LANGFLOW_SUPERUSER=${LANGFLOW_SUPERUSER:-admin}
-      - LANGFLOW_SUPERUSER_PASSWORD=${LANGFLOW_SUPERUSER_PASSWORD}
-      - LANGFLOW_SECRET_KEY=${LANGFLOW_SECRET_KEY}
-      - LANGFLOW_AUTO_LOGIN=false
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     ports:
-      - "7860:7860"
-    volumes:
-      - ./packages/langflow/flows:/app/flows
-      - langflow-data:/app/data
+      - "8000:8000"
+    depends_on:
+      - redis
     restart: unless-stopped
     deploy:
       resources:
@@ -116,7 +113,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  langflow-data:
   redis-data:
 
 networks:

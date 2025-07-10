@@ -207,28 +207,114 @@ npm run install:all      # Install all workspace dependencies
 npm run clean            # Clean all node_modules and build artifacts
 ```
 
-### **Planned Enhanced Setup**
+#### Quick Reference
 
-#### Future Prerequisites
+**Start full development environment:**
+```bash
+# Setup LangGraph virtual environment (first time only)
+cd packages/langgraph
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+# Start all services with Docker
+cd ../..
+docker-compose up --build
+```
+
+**Common Docker commands:**
+```bash
+# Start services in background
+docker-compose up -d --build
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+
+# Rebuild specific service
+docker-compose up --build langgraph
+```
+
+**LangGraph development:**
+```bash
+# Activate virtual environment
+cd packages/langgraph
+source .venv/bin/activate
+# or
+./activate.sh
+
+# Start LangGraph server
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+```
+
+### **Enhanced Setup with LangGraph**
+
+#### Prerequisites
 
 - Docker & Docker Compose
-- Supabase CLI
+- Python 3.8+
+- Supabase CLI (optional)
+
+#### LangGraph Virtual Environment Setup
+
+The LangGraph service requires a Python virtual environment:
+
+```bash
+# Navigate to LangGraph directory
+cd packages/langgraph
+
+# Create virtual environment (first time only)
+python3 -m venv .venv
+
+# Activate virtual environment
+source .venv/bin/activate
+
+# Or use the provided activation script
+chmod +x activate.sh
+./activate.sh
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Upgrade pip (recommended)
+python -m pip install --upgrade pip
+```
+
+**Virtual Environment Management:**
+```bash
+# Activate (standard method)
+source .venv/bin/activate
+
+# Activate (using custom script)
+./activate.sh
+
+# Deactivate
+deactivate
+
+# If .venv is corrupted, recreate it
+rm -rf .venv && python3 -m venv .venv
+```
 
 #### Enhanced Environment Variables
 
 ```bash
-# Phase-based configuration
+# Create environment file
+cp .env.example .env
+
+# Core configuration
 USE_MOCK_APIS=true
 DEVELOPMENT_PHASE=1
 SUPABASE_URL=your_supabase_url
-LANGFLOW_API_KEY=your_langflow_key
+OPENAI_API_KEY=your_openai_key
+ANTHROPIC_API_KEY=your_anthropic_key
 
-# Phase 2: Amadeus API (primary travel API)
-AMADEUS_CLIENT_ID=your_amadeus_client_id
-AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
-AMADEUS_ENVIRONMENT=test
+# LangGraph configuration
+LANGGRAPH_URL=http://langgraph:8000
+ENABLE_LANGGRAPH=true
 
-# Phase 2: Alternative/fallback travel APIs (optional)
+# Phase 2: Add travel APIs (optional)
 TEQUILA_API_KEY=your_tequila_key
 BOOKING_API_KEY=your_booking_key
 VIATOR_API_KEY=your_viator_key
@@ -238,16 +324,44 @@ TWILIO_ACCOUNT_SID=your_twilio_sid
 ELEVENLABS_API_KEY=your_elevenlabs_key
 ```
 
-#### Enhanced Development (Planned)
+#### Enhanced Development with Docker
 
 ```bash
-# Start all services (Web App, Langflow, Redis, Local DB)
-docker-compose up -d
+# Start all services (Web App, LangGraph, Redis)
+docker-compose up --build
 
-# Access services
-# - Langflow UI: http://localhost:7860
-# - Local PostgreSQL: localhost:5432
-# - Redis: localhost:6379
+# Start in detached mode
+docker-compose up -d --build
+
+# Rebuild specific service
+docker-compose up --build web
+docker-compose up --build langgraph
+
+# View logs
+docker-compose logs -f web
+docker-compose logs -f langgraph
+
+# Stop all services
+docker-compose down
+```
+
+#### Access Services
+
+- **Web App**: http://localhost:3000
+- **LangGraph API**: http://localhost:8000
+- **Redis**: localhost:6379
+
+#### Development Without Docker
+
+```bash
+# Terminal 1: Start LangGraph service
+cd packages/langgraph
+source .venv/bin/activate
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
+
+# Terminal 2: Start web application
+cd packages/web
+npm run dev
 ```
 
 ## 🛡️ Comprehensive Fallback System
