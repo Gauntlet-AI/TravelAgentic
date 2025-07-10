@@ -507,7 +507,7 @@ export default function VacationPlanner() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="bg-transparent text-sm text-white border-white hover:bg-white hover:text-gray-900"
+                  className="text-sm text-gray-900"
                   onClick={() => router.push('/login')}
                 >
                   Log in
