@@ -61,6 +61,17 @@ CREATE TABLE IF NOT EXISTS public.user_sessions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Conversations for LangGraph orchestrator
+CREATE TABLE IF NOT EXISTS public.conversations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  session_id UUID REFERENCES user_sessions(id) ON DELETE CASCADE,
+  conversation_title TEXT,
+  state JSONB NOT NULL DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- ============================================================================
 -- BOOKING & TRAVEL MANAGEMENT (3 tables)
 -- ============================================================================
@@ -402,6 +413,8 @@ CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_token ON user_sessions(session_token);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_active ON user_sessions(is_active, expires_at);
+CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_conversations_session_id ON conversations(session_id);
 
 -- Booking and travel indexes
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
@@ -496,6 +509,12 @@ CREATE TRIGGER update_user_preferences_updated_at
 DROP TRIGGER IF EXISTS update_user_sessions_updated_at ON user_sessions;
 CREATE TRIGGER update_user_sessions_updated_at
   BEFORE UPDATE ON user_sessions
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Conversations trigger
+DROP TRIGGER IF EXISTS update_conversations_updated_at ON conversations;
+CREATE TRIGGER update_conversations_updated_at
+  BEFORE UPDATE ON conversations
   FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Bookings trigger

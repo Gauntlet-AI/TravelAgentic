@@ -494,9 +494,11 @@ export default function VacationPlanner() {
       <div className="bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
           <h1 className="text-xl font-bold">Vacation Planner</h1>
-          <Button variant="outline" size="sm" onClick={resetAll}>
-            <RotateCcw size={16} />
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              <RotateCcw size={16} />
+            </Button>
+          </div>
         </div>
         {travelDetails && (
           <div className="mb-2 text-sm text-gray-600">
@@ -728,10 +730,12 @@ export default function VacationPlanner() {
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-3xl font-bold">TravelAgentic</h1>
-            <Button variant="outline" onClick={resetAll}>
-              <RotateCcw size={16} className="mr-2" />
-              Start Over
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={resetAll}>
+                <RotateCcw size={16} className="mr-2" />
+                Start Over
+              </Button>
+            </div>
           </div>
           {travelDetails && (
             <div className="mb-4 text-center text-gray-600">
