@@ -36,341 +36,247 @@ const inter = Inter({
   subsets: ['latin'],
 });
 
-const airportData = [
-  // US Major Cities & Airports
-  {
-    code: 'ATL',
-    city: 'Atlanta',
-    country: 'United States',
-    name: 'Hartsfield-Jackson Atlanta International Airport',
-  },
-  {
-    code: 'LAX',
-    city: 'Los Angeles',
-    country: 'United States',
-    name: 'Los Angeles International Airport',
-  },
-  {
-    code: 'ORD',
-    city: 'Chicago',
-    country: 'United States',
-    name: "O'Hare International Airport",
-  },
-  {
-    code: 'DFW',
-    city: 'Dallas',
-    country: 'United States',
-    name: 'Dallas/Fort Worth International Airport',
-  },
-  {
-    code: 'DEN',
-    city: 'Denver',
-    country: 'United States',
-    name: 'Denver International Airport',
-  },
-  {
-    code: 'JFK',
-    city: 'New York',
-    country: 'United States',
-    name: 'John F. Kennedy International Airport',
-  },
-  {
-    code: 'LGA',
-    city: 'New York',
-    country: 'United States',
-    name: 'LaGuardia Airport',
-  },
-  {
-    code: 'EWR',
-    city: 'Newark',
-    country: 'United States',
-    name: 'Newark Liberty International Airport',
-  },
-  {
-    code: 'SFO',
-    city: 'San Francisco',
-    country: 'United States',
-    name: 'San Francisco International Airport',
-  },
-  {
-    code: 'SEA',
-    city: 'Seattle',
-    country: 'United States',
-    name: 'Seattle-Tacoma International Airport',
-  },
-  {
-    code: 'LAS',
-    city: 'Las Vegas',
-    country: 'United States',
-    name: 'McCarran International Airport',
-  },
-  {
-    code: 'MCO',
-    city: 'Orlando',
-    country: 'United States',
-    name: 'Orlando International Airport',
-  },
-  {
-    code: 'MIA',
-    city: 'Miami',
-    country: 'United States',
-    name: 'Miami International Airport',
-  },
-  {
-    code: 'BOS',
-    city: 'Boston',
-    country: 'United States',
-    name: 'Logan International Airport',
-  },
-  {
-    code: 'PHX',
-    city: 'Phoenix',
-    country: 'United States',
-    name: 'Phoenix Sky Harbor International Airport',
-  },
-  {
-    code: 'IAH',
-    city: 'Houston',
-    country: 'United States',
-    name: 'George Bush Intercontinental Airport',
-  },
-  {
-    code: 'AUS',
-    city: 'Austin',
-    country: 'United States',
-    name: 'Austin-Bergstrom International Airport',
-  },
-  {
-    code: 'SAN',
-    city: 'San Diego',
-    country: 'United States',
-    name: 'San Diego International Airport',
-  },
-  {
-    code: 'TPA',
-    city: 'Tampa',
-    country: 'United States',
-    name: 'Tampa International Airport',
-  },
-  {
-    code: 'PDX',
-    city: 'Portland',
-    country: 'United States',
-    name: 'Portland International Airport',
-  },
+// Import openflights-cached for comprehensive airport data
+const openflights = require('openflights-cached');
 
-  // International Major Airports
-  {
-    code: 'LHR',
-    city: 'London',
-    country: 'United Kingdom',
-    name: 'Heathrow Airport',
-  },
-  {
-    code: 'LGW',
-    city: 'London',
-    country: 'United Kingdom',
-    name: 'Gatwick Airport',
-  },
-  {
-    code: 'CDG',
-    city: 'Paris',
-    country: 'France',
-    name: 'Charles de Gaulle Airport',
-  },
-  { code: 'ORY', city: 'Paris', country: 'France', name: 'Orly Airport' },
-  {
-    code: 'FCO',
-    city: 'Rome',
-    country: 'Italy',
-    name: 'Leonardo da Vinci International Airport',
-  },
-  {
-    code: 'BCN',
-    city: 'Barcelona',
-    country: 'Spain',
-    name: 'Barcelona-El Prat Airport',
-  },
-  {
-    code: 'MAD',
-    city: 'Madrid',
-    country: 'Spain',
-    name: 'Adolfo Suárez Madrid-Barajas Airport',
-  },
-  {
-    code: 'AMS',
-    city: 'Amsterdam',
-    country: 'Netherlands',
-    name: 'Amsterdam Airport Schiphol',
-  },
-  {
-    code: 'FRA',
-    city: 'Frankfurt',
-    country: 'Germany',
-    name: 'Frankfurt Airport',
-  },
-  { code: 'MUC', city: 'Munich', country: 'Germany', name: 'Munich Airport' },
-  {
-    code: 'ZUR',
-    city: 'Zurich',
-    country: 'Switzerland',
-    name: 'Zurich Airport',
-  },
-  {
-    code: 'VIE',
-    city: 'Vienna',
-    country: 'Austria',
-    name: 'Vienna International Airport',
-  },
-  {
-    code: 'CPH',
-    city: 'Copenhagen',
-    country: 'Denmark',
-    name: 'Copenhagen Airport',
-  },
-  {
-    code: 'ARN',
-    city: 'Stockholm',
-    country: 'Sweden',
-    name: 'Stockholm Arlanda Airport',
-  },
-  { code: 'OSL', city: 'Oslo', country: 'Norway', name: 'Oslo Airport' },
+// Type definition for airport data
+interface AirportData {
+  iata: string;
+  icao: string;
+  name: string;
+  city: string;
+  country: string;
+  state?: string;
+  displayLocation?: string; // Formatted display string
+}
 
-  // Asia Pacific
-  {
-    code: 'NRT',
-    city: 'Tokyo',
-    country: 'Japan',
-    name: 'Narita International Airport',
-  },
-  { code: 'HND', city: 'Tokyo', country: 'Japan', name: 'Haneda Airport' },
-  {
-    code: 'ICN',
-    city: 'Seoul',
-    country: 'South Korea',
-    name: 'Incheon International Airport',
-  },
-  {
-    code: 'PVG',
-    city: 'Shanghai',
-    country: 'China',
-    name: 'Shanghai Pudong International Airport',
-  },
-  {
-    code: 'PEK',
-    city: 'Beijing',
-    country: 'China',
-    name: 'Beijing Capital International Airport',
-  },
-  {
-    code: 'HKG',
-    city: 'Hong Kong',
-    country: 'Hong Kong',
-    name: 'Hong Kong International Airport',
-  },
-  {
-    code: 'SIN',
-    city: 'Singapore',
-    country: 'Singapore',
-    name: 'Singapore Changi Airport',
-  },
-  {
-    code: 'BKK',
-    city: 'Bangkok',
-    country: 'Thailand',
-    name: 'Suvarnabhumi Airport',
-  },
-  {
-    code: 'KUL',
-    city: 'Kuala Lumpur',
-    country: 'Malaysia',
-    name: 'Kuala Lumpur International Airport',
-  },
-  {
-    code: 'SYD',
-    city: 'Sydney',
-    country: 'Australia',
-    name: 'Kingsford Smith Airport',
-  },
-  {
-    code: 'MEL',
-    city: 'Melbourne',
-    country: 'Australia',
-    name: 'Melbourne Airport',
-  },
+// US State mapping for major airports (IATA code -> state abbreviation)
+const US_AIRPORT_STATES: Record<string, string> = {
+  // Major US airports by state
+  'ATL': 'GA', 'VLD': 'GA', 'CSG': 'GA',
+  'LAX': 'CA', 'SFO': 'CA', 'SAN': 'CA', 'SMF': 'CA', 'SJC': 'CA', 'BUR': 'CA', 'LGB': 'CA', 'OAK': 'CA', 'ONT': 'CA', 'PSP': 'CA', 'FAT': 'CA',
+  'ORD': 'IL', 'MDW': 'IL', 'RFD': 'IL',
+  'DFW': 'TX', 'IAH': 'TX', 'HOU': 'TX', 'AUS': 'TX', 'SAT': 'TX', 'ELP': 'TX', 'LBB': 'TX',
+  'DEN': 'CO', 'COS': 'CO', 'GJT': 'CO',
+  'JFK': 'NY', 'LGA': 'NY', 'EWR': 'NJ', 'ALB': 'NY', 'BUF': 'NY', 'ROC': 'NY', 'SYR': 'NY',
+  'MIA': 'FL', 'MCO': 'FL', 'TPA': 'FL', 'FLL': 'FL', 'JAX': 'FL', 'PBI': 'FL', 'RSW': 'FL', 'PIE': 'FL', 'TLH': 'FL', 'GNV': 'FL', 'DAB': 'FL', 'MLB': 'FL',
+  'SEA': 'WA', 'PDX': 'OR', 'BOI': 'ID',
+  'LAS': 'NV', 'RNO': 'NV',
+  'BOS': 'MA', 'PVD': 'RI', 'BGR': 'ME', 'PWM': 'ME',
+  'PHX': 'AZ', 'TUS': 'AZ', 'FLG': 'AZ',
+  'MSP': 'MN', 'DLH': 'MN',
+  'DTW': 'MI', 'GRR': 'MI', 'FNT': 'MI',
+  'CLT': 'NC', 'RDU': 'NC', 'ILM': 'NC', 'GSO': 'NC', 'AVL': 'NC', 'OAJ': 'NC',
+  'PHL': 'PA', 'PIT': 'PA', 'ABE': 'PA',
+  'BWI': 'MD', 'DCA': 'VA', 'IAD': 'VA', 'ORF': 'VA', 'RIC': 'VA',
+  'SLC': 'UT', 'OGD': 'UT',
+  'CMH': 'OH', 'CLE': 'OH', 'DAY': 'OH',
+  'IND': 'IN', 'SBN': 'IN', 'EVV': 'IN',
+  'MKE': 'WI', 'MSN': 'WI', 'GRB': 'WI',
+  'STL': 'MO', 'MCI': 'MO', 'SGF': 'MO',
+  'MEM': 'TN', 'BNA': 'TN', 'TYS': 'TN', 'CHA': 'TN',
+  'BHM': 'AL', 'HSV': 'AL', 'MOB': 'AL', 'MGM': 'AL',
+  'JAC': 'WY', 'COD': 'WY', 'CPR': 'WY',
+  'HNL': 'HI', 'OGG': 'HI', 'KOA': 'HI', 'ITO': 'HI', 'LIH': 'HI',
+  'ANC': 'AK', 'FAI': 'AK', 'JNU': 'AK', 'KTN': 'AK', 'OME': 'AK', 'AKN': 'AK', 'BET': 'AK', 'OTZ': 'AK',
+  'ABQ': 'NM', 'SAF': 'NM', 'ROW': 'NM',
+  'OKC': 'OK', 'TUL': 'OK', 'LAW': 'OK',
+  'LIT': 'AR', 'XNA': 'AR', 'TXK': 'AR',
+  'MSY': 'LA', 'BTR': 'LA', 'SHV': 'LA', 'LFT': 'LA',
+  'JAN': 'MS', 'GPT': 'MS', 'GTR': 'MS',
+  'BDL': 'CT', 'HVN': 'CT',
+  'MHT': 'NH', 'LEB': 'NH',
+  'BTV': 'VT',
+  'CHS': 'SC', 'CAE': 'SC', 'MYR': 'SC', 'GSP': 'SC',
+  'SAV': 'GA', 'AGS': 'GA',
+  'SDF': 'KY', 'LEX': 'KY', 'PAH': 'KY', 'OWB': 'KY', 'CVG': 'KY', // Cincinnati is actually in Kentucky
+  'GUM': 'GU', // Guam
+  'SJU': 'PR', 'BQN': 'PR', 'PSE': 'PR', // Puerto Rico
+  'STT': 'VI', 'STX': 'VI', // US Virgin Islands
+};
 
-  // Middle East & Africa
-  {
-    code: 'DXB',
-    city: 'Dubai',
-    country: 'UAE',
-    name: 'Dubai International Airport',
-  },
-  {
-    code: 'DOH',
-    city: 'Doha',
-    country: 'Qatar',
-    name: 'Hamad International Airport',
-  },
-  {
-    code: 'CAI',
-    city: 'Cairo',
-    country: 'Egypt',
-    name: 'Cairo International Airport',
-  },
-  {
-    code: 'JNB',
-    city: 'Johannesburg',
-    country: 'South Africa',
-    name: 'O.R. Tambo International Airport',
-  },
-
-  // South America
-  {
-    code: 'GRU',
-    city: 'São Paulo',
-    country: 'Brazil',
-    name: 'São Paulo/Guarulhos International Airport',
-  },
-  {
-    code: 'GIG',
-    city: 'Rio de Janeiro',
-    country: 'Brazil',
-    name: 'Rio de Janeiro/Galeão International Airport',
-  },
-  {
-    code: 'EZE',
-    city: 'Buenos Aires',
-    country: 'Argentina',
-    name: 'Ezeiza International Airport',
-  },
-  {
-    code: 'LIM',
-    city: 'Lima',
-    country: 'Peru',
-    name: 'Jorge Chávez International Airport',
-  },
-
+// International province/state mapping for major airports
+const INTL_AIRPORT_REGIONS: Record<string, string> = {
   // Canada
-  {
-    code: 'YYZ',
-    city: 'Toronto',
-    country: 'Canada',
-    name: 'Toronto Pearson International Airport',
-  },
-  {
-    code: 'YVR',
-    city: 'Vancouver',
-    country: 'Canada',
-    name: 'Vancouver International Airport',
-  },
-  {
-    code: 'YUL',
-    city: 'Montreal',
-    country: 'Canada',
-    name: 'Montréal-Pierre Elliott Trudeau International Airport',
-  },
-];
+  'YYZ': 'ON', 'YTZ': 'ON', 'YHM': 'ON', 'YOW': 'ON', 'YKF': 'ON',
+  'YVR': 'BC', 'YKA': 'BC', 'YXC': 'BC', 'YCD': 'BC',
+  'YUL': 'QC', 'YQB': 'QC', 'YBG': 'QC', 'YMQ': 'QC',
+  'YYC': 'AB', 'YEG': 'AB', 'YMM': 'AB', 'YQL': 'AB',
+  'YWG': 'MB', 'YBR': 'MB',
+  'YQR': 'SK', 'YXE': 'SK',
+  'YHZ': 'NS', 'YSJ': 'NB', 'YYT': 'NL', 'YQX': 'NB',
+  
+  // Australia - states
+  'SYD': 'NSW', 'MEL': 'VIC', 'BNE': 'QLD', 'PER': 'WA', 'ADL': 'SA', 'HBA': 'TAS', 'DRW': 'NT', 'CBR': 'ACT',
+  
+  // India - major states (simplified)
+  'DEL': 'Delhi', 'BOM': 'Maharashtra', 'MAA': 'Tamil Nadu', 'BLR': 'Karnataka', 'HYD': 'Telangana', 'CCU': 'West Bengal',
+  
+  // Germany - states (Länder)
+  'FRA': 'Hesse', 'MUC': 'Bavaria', 'DUS': 'North Rhine-Westphalia', 'TXL': 'Berlin', 'HAM': 'Hamburg', 'STR': 'Baden-Württemberg',
+};
+
+// Function to get state/province for an airport
+function getAirportState(airport: any): string | undefined {
+  if (airport.country === 'United States') {
+    return US_AIRPORT_STATES[airport.iata];
+  } else {
+    return INTL_AIRPORT_REGIONS[airport.iata];
+  }
+}
+
+// Function to format display location with state/province
+function formatDisplayLocation(airport: any): string {
+  const state = getAirportState(airport);
+  
+  if (airport.country === 'United States' && state) {
+    return `${airport.city}, ${state}, USA`;
+  } else if (state) {
+    // For international locations with states/provinces
+    return `${airport.city}, ${state}, ${airport.country}`;
+  } else {
+    // Default format without state
+    return `${airport.city}, ${airport.country}`;
+  }
+}
+
+// State/Province full name mappings for search
+const US_STATE_NAMES: Record<string, string> = {
+  'AL': 'Alabama', 'AK': 'Alaska', 'AZ': 'Arizona', 'AR': 'Arkansas', 'CA': 'California',
+  'CO': 'Colorado', 'CT': 'Connecticut', 'DE': 'Delaware', 'FL': 'Florida', 'GA': 'Georgia',
+  'HI': 'Hawaii', 'ID': 'Idaho', 'IL': 'Illinois', 'IN': 'Indiana', 'IA': 'Iowa',
+  'KS': 'Kansas', 'KY': 'Kentucky', 'LA': 'Louisiana', 'ME': 'Maine', 'MD': 'Maryland',
+  'MA': 'Massachusetts', 'MI': 'Michigan', 'MN': 'Minnesota', 'MS': 'Mississippi', 'MO': 'Missouri',
+  'MT': 'Montana', 'NE': 'Nebraska', 'NV': 'Nevada', 'NH': 'New Hampshire', 'NJ': 'New Jersey',
+  'NM': 'New Mexico', 'NY': 'New York', 'NC': 'North Carolina', 'ND': 'North Dakota', 'OH': 'Ohio',
+  'OK': 'Oklahoma', 'OR': 'Oregon', 'PA': 'Pennsylvania', 'RI': 'Rhode Island', 'SC': 'South Carolina',
+  'SD': 'South Dakota', 'TN': 'Tennessee', 'TX': 'Texas', 'UT': 'Utah', 'VT': 'Vermont',
+  'VA': 'Virginia', 'WA': 'Washington', 'WV': 'West Virginia', 'WI': 'Wisconsin', 'WY': 'Wyoming',
+  'PR': 'Puerto Rico', 'VI': 'Virgin Islands', 'GU': 'Guam'
+};
+
+const CANADIAN_PROVINCE_NAMES: Record<string, string> = {
+  'AB': 'Alberta', 'BC': 'British Columbia', 'MB': 'Manitoba', 'NB': 'New Brunswick',
+  'NL': 'Newfoundland and Labrador', 'NS': 'Nova Scotia', 'ON': 'Ontario', 'PE': 'Prince Edward Island',
+  'QC': 'Quebec', 'SK': 'Saskatchewan', 'NT': 'Northwest Territories', 'NU': 'Nunavut', 'YT': 'Yukon'
+};
+
+const AUSTRALIAN_STATE_NAMES: Record<string, string> = {
+  'NSW': 'New South Wales', 'VIC': 'Victoria', 'QLD': 'Queensland', 'WA': 'Western Australia',
+  'SA': 'South Australia', 'TAS': 'Tasmania', 'NT': 'Northern Territory', 'ACT': 'Australian Capital Territory'
+};
+
+// Function to check if search term matches state/province
+function matchesStateOrProvince(airport: any, searchTerm: string): boolean {
+  const state = getAirportState(airport);
+  if (!state) return false;
+  
+  // Check state abbreviation (case-insensitive)
+  if (state.toLowerCase() === searchTerm) return true;
+  
+  // Check full state name for US states - more precise matching
+  if (airport.country === 'United States') {
+    const fullStateName = US_STATE_NAMES[state];
+    if (fullStateName?.toLowerCase() === searchTerm || 
+        (searchTerm.length > 3 && fullStateName?.toLowerCase().startsWith(searchTerm))) {
+      return true;
+    }
+  }
+  
+  // Check full province name for Canada - more precise matching
+  if (airport.country === 'Canada') {
+    const fullProvinceName = CANADIAN_PROVINCE_NAMES[state];
+    if (fullProvinceName?.toLowerCase() === searchTerm || 
+        (searchTerm.length > 3 && fullProvinceName?.toLowerCase().startsWith(searchTerm))) {
+      return true;
+    }
+  }
+  
+  // Check full state name for Australia - more precise matching
+  if (airport.country === 'Australia') {
+    const fullStateName = AUSTRALIAN_STATE_NAMES[state];
+    if (fullStateName?.toLowerCase() === searchTerm || 
+        (searchTerm.length > 3 && fullStateName?.toLowerCase().startsWith(searchTerm))) {
+      return true;
+    }
+  }
+  
+  // For other countries, check if state/region name matches exactly or starts with search term
+  if (state.toLowerCase() === searchTerm || 
+      (searchTerm.length > 3 && state.toLowerCase().startsWith(searchTerm))) {
+    return true;
+  }
+  
+  return false;
+}
+
+// Search function using openflights-cached
+function searchAirports(query: string): AirportData[] {
+  if (!query || query.length < 2) return [];
+  
+  const searchTerm = query.toLowerCase();
+  
+  try {
+    // Separate state matches from other matches for proper prioritization
+    const stateMatches: any[] = [];
+    const otherMatches: any[] = [];
+    
+    openflights.array.forEach((airport: any) => {
+      // Only include airports with IATA codes for better UX
+      if (!airport.iata || airport.iata === '\\N') return;
+      
+      // Check if this is a state/province search
+      const isStateMatch = matchesStateOrProvince(airport, searchTerm);
+      
+      if (isStateMatch) {
+        stateMatches.push(airport);
+        return;
+      }
+      
+      // For short queries (2-3 chars), be more restrictive to avoid false positives
+      if (searchTerm.length <= 3) {
+        if (
+          airport.city?.toLowerCase().startsWith(searchTerm) ||
+          airport.iata?.toLowerCase() === searchTerm ||
+          airport.country?.toLowerCase().startsWith(searchTerm)
+        ) {
+          otherMatches.push(airport);
+        }
+      } else {
+        // For longer queries, use inclusive search
+        if (
+          airport.city?.toLowerCase().includes(searchTerm) ||
+          airport.name?.toLowerCase().includes(searchTerm) ||
+          airport.country?.toLowerCase().includes(searchTerm) ||
+          airport.iata?.toLowerCase().includes(searchTerm)
+        ) {
+          otherMatches.push(airport);
+        }
+      }
+    });
+    
+    // Combine results with state matches first, then other matches
+    const allMatches = [...stateMatches, ...otherMatches]
+      .slice(0, 8) // Limit to 8 results for performance
+      .map((airport: any) => {
+        const state = getAirportState(airport);
+        return {
+          iata: airport.iata,
+          icao: airport.icao || '',
+          name: airport.name,
+          city: airport.city,
+          country: airport.country,
+          state,
+          displayLocation: formatDisplayLocation(airport)
+        };
+      });
+    
+    return allMatches;
+  } catch (error) {
+    console.error('Error searching airports:', error);
+    return [];
+  }
+}
 
 interface TravelInputFormProps {
   onSubmit: (details: TravelDetails) => void;
@@ -390,16 +296,10 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isTravelersOpen, setIsTravelersOpen] = useState(false);
 
-  const [departureSuggestions, setDepartureSuggestions] = useState<
-    typeof airportData
-  >([]);
-  const [destinationSuggestions, setDestinationSuggestions] = useState<
-    typeof airportData
-  >([]);
-  const [showDepartureSuggestions, setShowDepartureSuggestions] =
-    useState(false);
-  const [showDestinationSuggestions, setShowDestinationSuggestions] =
-    useState(false);
+  const [departureSuggestions, setDepartureSuggestions] = useState<AirportData[]>([]);
+  const [destinationSuggestions, setDestinationSuggestions] = useState<AirportData[]>([]);
+  const [showDepartureSuggestions, setShowDepartureSuggestions] = useState(false);
+  const [showDestinationSuggestions, setShowDestinationSuggestions] = useState(false);
 
   const router = useRouter();
 
@@ -444,17 +344,9 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
   const handleDepartureChange = (value: string) => {
     setDepartureLocation(value);
-    if (value.length > 0) {
-      const filtered = airportData
-        .filter(
-          (airport) =>
-            airport.city.toLowerCase().includes(value.toLowerCase()) ||
-            airport.code.toLowerCase().includes(value.toLowerCase()) ||
-            airport.name.toLowerCase().includes(value.toLowerCase()) ||
-            airport.country.toLowerCase().includes(value.toLowerCase())
-        )
-        .slice(0, 8); // Limit to 8 results
-      setDepartureSuggestions(filtered);
+    if (value.length > 1) {
+      const results = searchAirports(value);
+      setDepartureSuggestions(results);
       setShowDepartureSuggestions(true);
     } else {
       setShowDepartureSuggestions(false);
@@ -463,32 +355,24 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
   const handleDestinationChange = (value: string) => {
     setDestination(value);
-    if (value.length > 0) {
-      const filtered = airportData
-        .filter(
-          (airport) =>
-            airport.city.toLowerCase().includes(value.toLowerCase()) ||
-            airport.code.toLowerCase().includes(value.toLowerCase()) ||
-            airport.name.toLowerCase().includes(value.toLowerCase()) ||
-            airport.country.toLowerCase().includes(value.toLowerCase())
-        )
-        .slice(0, 8); // Limit to 8 results
-      setDestinationSuggestions(filtered);
+    if (value.length > 1) {
+      const results = searchAirports(value);
+      setDestinationSuggestions(results);
       setShowDestinationSuggestions(true);
     } else {
       setShowDestinationSuggestions(false);
     }
   };
 
-  const selectDepartureCity = (airport: (typeof airportData)[0]) => {
+  const selectDepartureCity = (airport: AirportData) => {
     setDepartureLocation(
-      `${airport.city}, ${airport.country} (${airport.code})`
+      `${airport.displayLocation} (${airport.iata})`
     );
     setShowDepartureSuggestions(false);
   };
 
-  const selectDestinationCity = (airport: (typeof airportData)[0]) => {
-    setDestination(`${airport.city}, ${airport.country} (${airport.code})`);
+  const selectDestinationCity = (airport: AirportData) => {
+    setDestination(`${airport.displayLocation} (${airport.iata})`);
     setShowDestinationSuggestions(false);
   };
 
@@ -509,7 +393,12 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     if (!selectedDate) return;
 
     console.log('Date selected:', selectedDate);
-    console.log('Current state - firstDate:', firstDate, 'secondDate:', secondDate);
+    console.log(
+      'Current state - firstDate:',
+      firstDate,
+      'secondDate:',
+      secondDate
+    );
 
     if (!firstDate) {
       // First click: select first date
@@ -535,7 +424,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
   const getDisplayRange = () => {
     if (!firstDate) return undefined;
-    
+
     if (secondDate) {
       // Both dates selected - show actual range
       const range = {
@@ -545,7 +434,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       console.log('Display range (both dates):', range);
       return range;
     }
-    
+
     if (hoveredDate && firstDate) {
       // Show hover preview between first date and hovered date
       const range = {
@@ -555,8 +444,11 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       console.log('Display range (hover):', range);
       return range;
     }
-    
-    console.log('Display range (single date):', { from: firstDate, to: undefined });
+
+    console.log('Display range (single date):', {
+      from: firstDate,
+      to: undefined,
+    });
     return { from: firstDate, to: undefined }; // Only first date selected
   };
 
@@ -566,7 +458,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       // Determine start and end dates based on chronological order
       const startDate = firstDate < secondDate ? firstDate : secondDate;
       const endDate = firstDate < secondDate ? secondDate : firstDate;
-      
+
       onSubmit({
         departureLocation,
         destination,
@@ -580,7 +472,8 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     }
   };
 
-  const isFormValid = departureLocation && destination && firstDate && secondDate;
+  const isFormValid =
+    departureLocation && destination && firstDate && secondDate;
 
   if (isMobile) {
     return (
@@ -664,7 +557,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   value={departureLocation}
                   onChange={(e) => handleDepartureChange(e.target.value)}
                   onFocus={() =>
-                    departureLocation.length > 0 &&
+                    departureLocation.length > 1 &&
                     setShowDepartureSuggestions(true)
                   }
                   className="text-base"
@@ -678,17 +571,17 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           className="cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 hover:bg-gray-100"
                           onClick={() => selectDepartureCity(airport)}
                         >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="text-sm font-medium">
-                                {airport.city}, {airport.country}
+                          <div className="flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium">
+                                {airport.displayLocation}
                               </div>
-                              <div className="truncate text-xs text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 {airport.name}
                               </div>
                             </div>
-                            <div className="ml-2 flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-                              {airport.code}
+                            <div className="flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
+                              {airport.iata}
                             </div>
                           </div>
                         </div>
@@ -712,7 +605,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   value={destination}
                   onChange={(e) => handleDestinationChange(e.target.value)}
                   onFocus={() =>
-                    destination.length > 0 &&
+                    destination.length > 1 &&
                     setShowDestinationSuggestions(true)
                   }
                   className="text-base"
@@ -726,17 +619,17 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           className="cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 hover:bg-gray-100"
                           onClick={() => selectDestinationCity(airport)}
                         >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="text-sm font-medium">
-                                {airport.city}, {airport.country}
+                          <div className="flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium">
+                                {airport.displayLocation}
                               </div>
-                              <div className="truncate text-xs text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 {airport.name}
                               </div>
                             </div>
-                            <div className="ml-2 flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-                              {airport.code}
+                            <div className="flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
+                              {airport.iata}
                             </div>
                           </div>
                         </div>
@@ -798,25 +691,25 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         range_middle: (() => {
                           const range = getDisplayRange();
                           console.log('Calculating range_middle for:', range);
-                          
+
                           if (!range?.from || !range?.to) return [];
-                          
+
                           const days = [];
                           const start = new Date(range.from);
                           const end = new Date(range.to);
-                          
+
                           // Make sure we're comparing dates correctly
                           start.setHours(0, 0, 0, 0);
                           end.setHours(0, 0, 0, 0);
-                          
+
                           const current = new Date(start);
                           current.setDate(current.getDate() + 1); // Start from day after start
-                          
+
                           while (current < end) {
                             days.push(new Date(current));
                             current.setDate(current.getDate() + 1);
                           }
-                          
+
                           console.log('Range middle days:', days);
                           return days;
                         })(),
@@ -1069,7 +962,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   value={departureLocation}
                   onChange={(e) => handleDepartureChange(e.target.value)}
                   onFocus={() =>
-                    departureLocation.length > 0 &&
+                    departureLocation.length > 1 &&
                     setShowDepartureSuggestions(true)
                   }
                   className="h-12 w-full"
@@ -1083,17 +976,17 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           className="cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 hover:bg-gray-100"
                           onClick={() => selectDepartureCity(airport)}
                         >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="text-sm font-medium">
-                                {airport.city}, {airport.country}
+                          <div className="flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium">
+                                {airport.displayLocation}
                               </div>
-                              <div className="truncate text-xs text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 {airport.name}
                               </div>
                             </div>
-                            <div className="ml-2 flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-                              {airport.code}
+                            <div className="flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
+                              {airport.iata}
                             </div>
                           </div>
                         </div>
@@ -1122,7 +1015,7 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   value={destination}
                   onChange={(e) => handleDestinationChange(e.target.value)}
                   onFocus={() =>
-                    destination.length > 0 &&
+                    destination.length > 1 &&
                     setShowDestinationSuggestions(true)
                   }
                   className="h-12 w-full"
@@ -1136,17 +1029,17 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           className="cursor-pointer border-b border-gray-100 px-3 py-3 last:border-b-0 hover:bg-gray-100"
                           onClick={() => selectDestinationCity(airport)}
                         >
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="text-sm font-medium">
-                                {airport.city}, {airport.country}
+                          <div className="flex items-start gap-3">
+                            <div className="min-w-0 flex-1">
+                              <div className="truncate text-sm font-medium">
+                                {airport.displayLocation}
                               </div>
-                              <div className="truncate text-xs text-gray-500">
+                              <div className="text-xs text-gray-500">
                                 {airport.name}
                               </div>
                             </div>
-                            <div className="ml-2 flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
-                              {airport.code}
+                            <div className="flex-shrink-0 rounded bg-gray-100 px-2 py-1 font-mono text-sm text-gray-700">
+                              {airport.iata}
                             </div>
                           </div>
                         </div>
@@ -1206,26 +1099,29 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         range_end: secondDate ? [secondDate] : [],
                         range_middle: (() => {
                           const range = getDisplayRange();
-                          console.log('Calculating range_middle for desktop:', range);
-                          
+                          console.log(
+                            'Calculating range_middle for desktop:',
+                            range
+                          );
+
                           if (!range?.from || !range?.to) return [];
-                          
+
                           const days = [];
                           const start = new Date(range.from);
                           const end = new Date(range.to);
-                          
+
                           // Make sure we're comparing dates correctly
                           start.setHours(0, 0, 0, 0);
                           end.setHours(0, 0, 0, 0);
-                          
+
                           const current = new Date(start);
                           current.setDate(current.getDate() + 1); // Start from day after start
-                          
+
                           while (current < end) {
                             days.push(new Date(current));
                             current.setDate(current.getDate() + 1);
                           }
-                          
+
                           console.log('Range middle days (desktop):', days);
                           return days;
                         })(),

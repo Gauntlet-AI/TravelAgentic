@@ -7,7 +7,7 @@ export interface LangflowRunRequest {
   input_value: string | object;
   tweaks?: Record<string, any>;
   stream?: boolean;
-  input_type?: "chat" | "text" | "json";
+  input_type?: 'chat' | 'text' | 'json';
 }
 
 export interface LangflowMessage {
@@ -69,27 +69,29 @@ export class LangflowClient {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
-          'User-Agent': 'TravelAgentic/1.0'
+          ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
+          'User-Agent': 'TravelAgentic/1.0',
         },
         body: JSON.stringify({
           ...request,
-          input_type: request.input_type || "text"
+          input_type: request.input_type || 'text',
         }),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error(`Langflow request failed: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Langflow request failed: ${response.status} ${response.statusText}`
+        );
       }
 
       const result = await response.json();
       return result;
     } catch (error) {
       clearTimeout(timeoutId);
-      
+
       if (error instanceof Error) {
         if (error.name === 'AbortError') {
           throw new Error('Langflow request timed out');
@@ -111,8 +113,8 @@ export class LangflowClient {
     request: LangflowRunRequest
   ): Promise<LangflowRunResponse> {
     const flows = await this.getFlows();
-    const flow = flows.find(f => f.name === flowName);
-    
+    const flow = flows.find((f) => f.name === flowName);
+
     if (!flow) {
       throw new Error(`Flow "${flowName}" not found`);
     }
@@ -128,13 +130,15 @@ export class LangflowClient {
     try {
       const response = await fetch(`${this.baseUrl}/api/v1/flows`, {
         headers: {
-          ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
-          'User-Agent': 'TravelAgentic/1.0'
-        }
+          ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
+          'User-Agent': 'TravelAgentic/1.0',
+        },
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to get flows: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to get flows: ${response.status} ${response.statusText}`
+        );
       }
 
       const result = await response.json();
@@ -154,16 +158,18 @@ export class LangflowClient {
     try {
       const response = await fetch(`${this.baseUrl}/api/v1/flows/${flowId}`, {
         headers: {
-          ...(this.apiKey && { 'Authorization': `Bearer ${this.apiKey}` }),
-          'User-Agent': 'TravelAgentic/1.0'
-        }
+          ...(this.apiKey && { Authorization: `Bearer ${this.apiKey}` }),
+          'User-Agent': 'TravelAgentic/1.0',
+        },
       });
 
       if (!response.ok) {
         if (response.status === 404) {
           return null;
         }
-        throw new Error(`Failed to get flow: ${response.status} ${response.statusText}`);
+        throw new Error(
+          `Failed to get flow: ${response.status} ${response.statusText}`
+        );
       }
 
       return response.json();
@@ -185,8 +191,8 @@ export class LangflowClient {
       const response = await fetch(`${this.baseUrl}/health`, {
         signal: controller.signal,
         headers: {
-          'User-Agent': 'TravelAgentic/1.0'
-        }
+          'User-Agent': 'TravelAgentic/1.0',
+        },
       });
 
       clearTimeout(timeoutId);
@@ -205,8 +211,8 @@ export class LangflowClient {
     try {
       const response = await fetch(`${this.baseUrl}/api/v1/version`, {
         headers: {
-          'User-Agent': 'TravelAgentic/1.0'
-        }
+          'User-Agent': 'TravelAgentic/1.0',
+        },
       });
 
       if (!response.ok) {
@@ -216,7 +222,10 @@ export class LangflowClient {
       return response.json();
     } catch (error) {
       console.error('Failed to get Langflow status:', error);
-      return { available: false, error: error instanceof Error ? error.message : 'Unknown error' };
+      return {
+        available: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
     }
   }
 
@@ -265,4 +274,4 @@ export class LangflowClient {
 }
 
 // Singleton instance
-export const langflowClient = new LangflowClient(); 
+export const langflowClient = new LangflowClient();

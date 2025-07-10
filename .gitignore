@@ -34,10 +34,8 @@ yarn-error.log*
 lerna-debug.log*
 
 # local env files
-.env*.local
-.env
-.env.development
-.env.production
+.env*
+!.env.example
 
 # vercel
 .vercel
