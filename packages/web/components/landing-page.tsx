@@ -36,6 +36,7 @@ export function LandingPage() {
   const { user, loading } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showForm, setShowForm] = useState(false);
+  const [formAnimating, setFormAnimating] = useState(false);
   const [formMode, setFormMode] = useState<'signup' | 'login'>('signup');
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
@@ -108,6 +109,19 @@ export function LandingPage() {
     setErrors({});
     setSuccessMessage('');
   }, [formMode]);
+
+  // Handle form animation staging
+  useEffect(() => {
+    if (showForm) {
+      // Small delay before starting the form animation
+      const timer = setTimeout(() => {
+        setFormAnimating(true);
+      }, 50);
+      return () => clearTimeout(timer);
+    } else {
+      setFormAnimating(false);
+    }
+  }, [showForm]);
 
   const handleInputChange = (field: keyof FormData, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -227,6 +241,14 @@ export function LandingPage() {
     setShowForm(true);
   };
 
+  const handleBackToFeatures = () => {
+    setFormAnimating(false);
+    // Wait for animation to complete before hiding form
+    setTimeout(() => {
+      setShowForm(false);
+    }, 300);
+  };
+
   // Show loading state while checking authentication
   if (loading) {
     return (
@@ -264,7 +286,8 @@ export function LandingPage() {
       <header className="relative z-20 flex items-center justify-between p-6">
         <div className="flex items-center gap-2">
           <span
-            className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}
+            className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium cursor-pointer hover:text-blue-200 transition-colors duration-200`}
+            onClick={showForm ? handleBackToFeatures : undefined}
           >
             TravelAgentic
           </span>
@@ -302,10 +325,6 @@ export function LandingPage() {
                   <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
                   <span className="text-lg">Best deals and booking assistance</span>
                 </div>
-                <div className="flex items-center gap-3 justify-center lg:justify-start">
-                  <div className="w-2 h-2 bg-blue-400 rounded-full"></div>
-                  <span className="text-lg">24/7 travel support</span>
-                </div>
               </div>
 
               {/* CTA Buttons */}
@@ -332,20 +351,32 @@ export function LandingPage() {
             {/* Right Side Content */}
             {!user && showForm ? (
               /* Auth Forms - Show when user clicks Get Started or Sign In */
-              <div className="w-full max-w-md mx-auto transition-all duration-500 ease-in-out animate-in fade-in slide-in-from-right-4">
-                <Card className="bg-white/10 backdrop-blur-sm border-white/20 text-white transition-all duration-300 ease-in-out">
+              <div className={`w-full max-w-md mx-auto transition-all duration-700 ease-in-out ${
+                formAnimating 
+                  ? 'opacity-100 transform translate-x-0 scale-100' 
+                  : 'opacity-0 transform translate-x-8 scale-95'
+              }`}>
+                <Card className={`bg-white/10 backdrop-blur-sm border-white/20 text-white transition-all duration-500 ease-in-out ${
+                  formAnimating ? 'shadow-2xl shadow-black/30' : 'shadow-lg shadow-black/20'
+                }`}>
                   <CardHeader className="text-center pb-6">
-                    <CardTitle className="text-2xl font-bold text-white transition-all duration-300 ease-in-out">
+                    <CardTitle className={`text-2xl font-bold text-white transition-all duration-500 ease-in-out ${
+                      formAnimating ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+                    }`}>
                       {formMode === 'signup' ? 'Create your account' : 'Welcome back'}
                     </CardTitle>
-                    <p className="text-white/90 mt-2 transition-all duration-300 ease-in-out">
+                    <p className={`text-white/90 mt-2 transition-all duration-500 ease-in-out delay-100 ${
+                      formAnimating ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+                    }`}>
                       {formMode === 'signup' 
                         ? 'Join TravelAgentic to start planning your perfect vacation'
                         : 'Sign in to your TravelAgentic account'
                       }
                     </p>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className={`transition-all duration-500 ease-in-out delay-200 ${
+                    formAnimating ? 'opacity-100 transform translate-y-0' : 'opacity-0 transform translate-y-4'
+                  }`}>
                     <form onSubmit={handleSubmit} className="space-y-4">
                       <div className="transition-all duration-300 ease-in-out">
                         {formMode === 'signup' && (
