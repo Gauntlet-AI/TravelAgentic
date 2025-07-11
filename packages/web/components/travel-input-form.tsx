@@ -27,7 +27,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
-import { Switch } from '@/components/ui/switch';
 
 import type { TravelDetails } from '@/lib/mock-data';
 import { useAuth } from '@/lib/auth/auth-context';
@@ -289,7 +288,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
-  const [travelingWithPets, setTravelingWithPets] = useState(false);
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isTravelersOpen, setIsTravelersOpen] = useState(false);
 
@@ -380,9 +378,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
     if (children > 0) {
       parts.push(`${children} child${children !== 1 ? 'ren' : ''}`);
     }
-    if (travelingWithPets) {
-      parts.push('Pets');
-    }
     parts.push(`${rooms} room${rooms !== 1 ? 's' : ''}`);
     return parts.join(' • ');
   };
@@ -465,7 +460,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         travelers: adults + children, // Total travelers for backward compatibility
         adults,
         children,
-        travelingWithPets,
       });
     }
   };
@@ -480,29 +474,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         <div className="absolute inset-0 z-0">
           {backgroundImages.map((image, index) => {
             const isActive = index === currentImageIndex;
-            const isPrevious =
-              index ===
-              (currentImageIndex - 1 + backgroundImages.length) %
-                backgroundImages.length;
-
             return (
               <div
                 key={index}
-                className={`duration-[3000ms] absolute inset-0 bg-cover bg-center transition-opacity ease-in-out ${
-                  isActive
-                    ? 'opacity-50'
-                    : isPrevious
-                      ? 'opacity-0'
-                      : 'opacity-0'
+                className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+                  isActive ? 'opacity-50' : 'opacity-0'
                 }`}
                 style={{
                   backgroundImage: `url(${image.url})`,
-                  zIndex: isActive ? 2 : 1,
                 }}
               />
             );
           })}
-          <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
+          <div className="absolute inset-0 bg-black bg-opacity-10 z-10" />
         </div>
 
         {/* Mobile Logo and Auth */}
@@ -686,7 +670,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           setHoveredDate(undefined);
                         }
                       }}
-                      disabled={(d) => d < new Date()}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const compareDate = new Date(d);
+                        compareDate.setHours(0, 0, 0, 0);
+                        return compareDate < today;
+                      }}
                       numberOfMonths={1}
                       initialFocus
                       modifiers={{
@@ -717,11 +707,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           console.log('Range middle days:', days);
                           return days;
                         })(),
+                        past: (date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const compareDate = new Date(date);
+                          compareDate.setHours(0, 0, 0, 0);
+                          return compareDate < today;
+                        },
                       }}
                       modifiersClassNames={{
                         range_start: 'bg-primary text-primary-foreground',
                         range_end: 'bg-primary text-primary-foreground',
                         range_middle: 'bg-accent text-accent-foreground',
+                        past: 'text-muted-foreground opacity-30 cursor-not-allowed bg-gray-100',
                       }}
                     />
                   </PopoverContent>
@@ -828,25 +826,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         </div>
                       </div>
 
-                      {/* Pets */}
-                      <div className="space-y-3 border-t pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">
-                            Traveling with pets?
-                          </Label>
-                          <Switch
-                            checked={travelingWithPets}
-                            onCheckedChange={setTravelingWithPets}
-                          />
-                        </div>
-                        <div className="text-sm text-gray-600">
-                          <p>Assistance animals aren't considered pets.</p>
-                          <a href="#" className="text-blue-600 hover:underline">
-                            Read more about traveling with assistance animals
-                          </a>
-                        </div>
-                      </div>
-
                       <Button
                         onClick={() => setIsTravelersOpen(false)}
                         className="w-full bg-blue-600 hover:bg-blue-700"
@@ -889,25 +868,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       <div className="absolute inset-0 z-0">
         {backgroundImages.map((image, index) => {
           const isActive = index === currentImageIndex;
-          const isPrevious =
-            index ===
-            (currentImageIndex - 1 + backgroundImages.length) %
-              backgroundImages.length;
-
           return (
             <div
               key={index}
-              className={`duration-[3000ms] absolute inset-0 bg-cover bg-center transition-opacity ease-in-out ${
-                isActive ? 'opacity-60' : isPrevious ? 'opacity-0' : 'opacity-0'
+              className={`absolute inset-0 bg-cover bg-center transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-60' : 'opacity-0'
               }`}
               style={{
                 backgroundImage: `url(${image.url})`,
-                zIndex: isActive ? 2 : 1,
               }}
             />
           );
         })}
-        <div className="z-3 absolute inset-0 bg-black bg-opacity-10" />
+        <div className="absolute inset-0 bg-black bg-opacity-10 z-10" />
       </div>
 
       {/* Logo and Auth */}
@@ -1101,7 +1074,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           setHoveredDate(undefined);
                         }
                       }}
-                      disabled={(d) => d < new Date()}
+                      disabled={(d) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const compareDate = new Date(d);
+                        compareDate.setHours(0, 0, 0, 0);
+                        return compareDate < today;
+                      }}
                       numberOfMonths={2}
                       initialFocus
                       modifiers={{
@@ -1135,11 +1114,19 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           console.log('Range middle days (desktop):', days);
                           return days;
                         })(),
+                        past: (date) => {
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const compareDate = new Date(date);
+                          compareDate.setHours(0, 0, 0, 0);
+                          return compareDate < today;
+                        },
                       }}
                       modifiersClassNames={{
                         range_start: 'bg-primary text-primary-foreground',
                         range_end: 'bg-primary text-primary-foreground',
                         range_middle: 'bg-accent text-accent-foreground',
+                        past: 'text-muted-foreground opacity-30 cursor-not-allowed bg-gray-100',
                       }}
                     />
                   </PopoverContent>
@@ -1245,19 +1232,6 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                           >
                             <Plus size={16} />
                           </Button>
-                        </div>
-                      </div>
-
-                      {/* Pets */}
-                      <div className="space-y-3 border-t pt-2">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-base font-medium">
-                            Traveling with pets?
-                          </Label>
-                          <Switch
-                            checked={travelingWithPets}
-                            onCheckedChange={setTravelingWithPets}
-                          />
                         </div>
                       </div>
 

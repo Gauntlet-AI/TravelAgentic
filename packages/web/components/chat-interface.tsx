@@ -46,8 +46,7 @@ export function ChatInterface({
       startDate, 
       endDate, 
       adults, 
-      children, 
-      travelingWithPets 
+      children 
     } = travelDetails;
     
     let context = "CURRENT USER SELECTIONS:\n";
@@ -73,9 +72,7 @@ export function ChatInterface({
       context += `- Travelers: ${travelerInfo.join(', ')}\n`;
     }
     
-    if (travelingWithPets) {
-      context += `- Traveling with pets: Yes\n`;
-    }
+
     
     context += "\nIMPORTANT: Use these existing selections when making recommendations. If the user asks to search for something and relevant details are already selected, use them automatically without asking again.";
     

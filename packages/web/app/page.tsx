@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 
 import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth/auth-context';
+import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 
 import { ActivityCard } from '@/components/activity-card';
 import { ActivityTypeCardComponent } from '@/components/activity-type-card';
@@ -73,6 +76,8 @@ export default function VacationPlanner() {
 
   // Add active tab state management
   const [activeTab, setActiveTab] = useState<string>('activities');
+  const { user } = useAuth();
+  const router = useRouter();
 
   // Function for AI to control tabs
   const handleTabChange = (tabValue: string) => {
@@ -493,10 +498,33 @@ export default function VacationPlanner() {
       {/* Mobile Header */}
       <div className="bg-white p-4 shadow-sm">
         <div className="mb-2 flex items-center justify-between">
-          <h1 className="text-xl font-bold">Vacation Planner</h1>
-          <Button variant="outline" size="sm" onClick={resetAll}>
-            <RotateCcw size={16} />
-          </Button>
+          <h1 className="text-xl font-bold">TravelAgentic</h1>
+          <div className="flex items-center gap-2">
+            {user ? (
+              <UserProfileDropdown />
+            ) : (
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-sm text-gray-900"
+                  onClick={() => router.push('/login')}
+                >
+                  Log in
+                </Button>
+                <Button
+                  size="sm"
+                  className="bg-blue-600 text-sm hover:bg-blue-700"
+                  onClick={() => router.push('/signup')}
+                >
+                  Sign up
+                </Button>
+              </>
+            )}
+            <Button variant="outline" size="sm" onClick={resetAll}>
+              <RotateCcw size={16} />
+            </Button>
+          </div>
         </div>
         {travelDetails && (
           <div className="mb-2 text-sm text-gray-600">
@@ -507,10 +535,9 @@ export default function VacationPlanner() {
                 {format(travelDetails.endDate, 'MMM d')} ({nights} nights) •{' '}
                 {travelDetails.adults} adult
                 {travelDetails.adults !== 1 ? 's' : ''}
-                {travelDetails.children > 0
-                  ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
-                  : ''}
-                {travelDetails.travelingWithPets ? ' • with pets' : ''}
+                                  {travelDetails.children > 0
+                    ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
+                    : ''}
               </div>
             )}
           </div>
@@ -728,10 +755,30 @@ export default function VacationPlanner() {
         <div className="mb-6">
           <div className="mb-4 flex items-center justify-between">
             <h1 className="text-3xl font-bold">TravelAgentic</h1>
-            <Button variant="outline" onClick={resetAll}>
-              <RotateCcw size={16} className="mr-2" />
-              Start Over
-            </Button>
+            <div className="flex items-center gap-3">
+              {user ? (
+                <UserProfileDropdown />
+              ) : (
+                <>
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push('/login')}
+                  >
+                    Log in
+                  </Button>
+                  <Button
+                    className="bg-blue-600 hover:bg-blue-700"
+                    onClick={() => router.push('/signup')}
+                  >
+                    Sign up
+                  </Button>
+                </>
+              )}
+              <Button variant="outline" onClick={resetAll}>
+                <RotateCcw size={16} className="mr-2" />
+                Start Over
+              </Button>
+            </div>
           </div>
           {travelDetails && (
             <div className="mb-4 text-center text-gray-600">
@@ -748,7 +795,6 @@ export default function VacationPlanner() {
                   {travelDetails.children > 0
                     ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
                     : ''}
-                  {travelDetails.travelingWithPets ? ' • with pets' : ''}
                 </div>
               )}
             </div>
