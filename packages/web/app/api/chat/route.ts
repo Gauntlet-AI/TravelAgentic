@@ -295,6 +295,48 @@ Remember: You're not just giving advice - you're actively helping users find and
             };
           },
         }),
+
+        updateTripInfo: tool({
+          description: 'Update the trip information with collected user preferences. Call this when you have gathered all required trip details.',
+          parameters: z.object({
+            departureLocation: z.string().describe('Where the user is departing from (city, airport)'),
+            destination: z.string().describe('Where the user wants to go (city, country)'),
+            flightType: z.enum(['economy', 'premium economy', 'business', 'first class']).describe('Flight class preference'),
+            hotelType: z.enum(['budget', 'mid-range', 'luxury', 'boutique']).describe('Hotel category preference'),
+            returnFlight: z.boolean().describe('Whether user wants round trip (true) or one-way (false)'),
+            duration: z.string().describe('Trip duration (e.g., "5 days", "1 week", "10 days")'),
+            activities: z.string().describe('Activity preferences (e.g., "adventure, culture", "relaxation, food", "nightlife, shopping")'),
+            travelers: z.number().describe('Total number of travelers (adults + children)'),
+          }),
+          execute: async ({ 
+            departureLocation, 
+            destination, 
+            flightType, 
+            hotelType, 
+            returnFlight, 
+            duration, 
+            activities, 
+            travelers 
+          }) => {
+            console.log(`🤖 AI is updating trip info: ${departureLocation} → ${destination}`);
+            
+            // Frontend will handle the actual trip info update via useEffect watching tool calls
+            return {
+              success: true,
+              message: 'Trip information updated successfully! You can now proceed to itinerary planning.',
+              tripInfo: {
+                departureLocation,
+                destination,
+                flightType,
+                hotelType,
+                returnFlight,
+                duration,
+                activities,
+                travelers,
+              },
+            };
+          },
+        }),
       },
       toolChoice: 'auto',
     });

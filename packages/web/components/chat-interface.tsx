@@ -27,6 +27,7 @@ interface ChatInterfaceProps {
   initialMessage?: string; // Add initial message support
   clearHistory?: boolean; // Add clear history trigger
   onTripInfoUpdate?: (info: any) => void; // Add trip info update handler
+  tripInfoComplete?: boolean; // Add trip info complete flag to hide tool displays
 }
 
 export function ChatInterface({
@@ -44,6 +45,7 @@ export function ChatInterface({
   initialMessage,
   clearHistory,
   onTripInfoUpdate,
+  tripInfoComplete,
 }: ChatInterfaceProps) {
   // Create context message with current travel selections
   // Track processed tool calls to prevent re-execution
@@ -154,6 +156,42 @@ export function ChatInterface({
     });
   }, [messages, onTabChange]);
 
+  // Effect to handle trip info updates from tool calls
+  useEffect(() => {
+    // Find all updateTripInfo tool calls across all messages
+    const allUpdateTripInfoToolCalls = messages.flatMap((msg) => 
+      msg.toolInvocations?.filter(tool => tool.toolName === 'updateTripInfo') || []
+    );
+
+    // Process only new tool calls that haven't been processed yet
+    allUpdateTripInfoToolCalls.forEach((toolCall) => {
+      const toolCallId = toolCall.toolCallId;
+      
+      // Skip if already processed
+      if (processedToolCallsRef.current.has(toolCallId)) {
+        return;
+      }
+      
+      // Execute the trip info update for new tool calls
+      if ('args' in toolCall && toolCall.args) {
+        const args = toolCall.args as {
+          departureLocation: string;
+          destination: string;
+          flightType: string;
+          hotelType: string;
+          returnFlight: boolean;
+          duration: string;
+          activities: string;
+          travelers: number;
+        };
+        onTripInfoUpdate?.(args);
+        
+        // Mark as processed
+        processedToolCallsRef.current.add(toolCallId);
+      }
+    });
+  }, [messages, onTripInfoUpdate]);
+
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
   const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
 
@@ -244,8 +282,9 @@ export function ChatInterface({
                 >
                   {message.content}
 
-                  {/* Show tool calls if they exist */}
-                  {message.toolInvocations &&
+                  {/* Show tool calls if they exist and trip info is not complete */}
+                  {!tripInfoComplete && 
+                    message.toolInvocations &&
                     message.toolInvocations.length > 0 && (
                       <div className="mt-3 space-y-2">
                         {message.toolInvocations.map((tool, index) => (
@@ -257,6 +296,7 @@ export function ChatInterface({
                               {tool.toolName === 'searchFlights' && '✈️ Searching flights...'}
                               {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}
                               {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
+                              {tool.toolName === 'updateTripInfo' && '✅ Saving trip information...'}
                             </div>
                             {'result' in tool && tool.result && (
                               <div className="mt-1 text-xs text-gray-600">
