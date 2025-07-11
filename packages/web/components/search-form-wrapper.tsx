@@ -23,7 +23,9 @@ export function SearchFormWrapper() {
       passengers: details.travelers.toString(),
       cabin: 'economy',
       // Add flag to indicate this should use AI research
-      useAI: 'true'
+      useAI: 'true',
+      // Add round-trip flag
+      roundTrip: details.isRoundTrip ? 'true' : 'false'
     });
     
     // Use Next.js router for navigation

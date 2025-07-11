@@ -32,16 +32,10 @@ export default function AccountManagementPage() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  // Redirect if not authenticated
-  if (!user) {
-    router.push('/login');
-    return null;
-  }
+  const displayName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'User';
+  const userEmail = user?.email || '';
 
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  const userEmail = user.email || '';
-
-  // Mock profile data
+  // Mock profile data - initialize with defaults
   const [profile, setProfile] = useState({
     firstName: displayName.split(' ')[0] || '',
     lastName: displayName.split(' ')[1] || '',
@@ -51,6 +45,12 @@ export default function AccountManagementPage() {
     address: '123 Main St, San Francisco, CA 94102',
     emergencyContact: 'Jane Doe - +1 (555) 987-6543'
   });
+
+  // Redirect if not authenticated
+  if (!user) {
+    router.push('/login');
+    return null;
+  }
 
   const handleSaveProfile = () => {
     // TODO: Save profile changes to backend

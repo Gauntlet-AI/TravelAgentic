@@ -178,7 +178,8 @@ export default function VacationPlanner() {
           details.destination,
           details.startDate,
           details.endDate,
-          details.travelers
+          details.travelers,
+          details.isRoundTrip !== false // Default to true if not specified
         );
         
         // Generate AI-informed hotels
@@ -283,7 +284,8 @@ export default function VacationPlanner() {
     destination: string,
     startDate: Date,
     endDate: Date,
-    travelers: number
+    travelers: number,
+    isRoundTrip: boolean = true
   ): Flight[] => {
     const departureAirport = departureLocation.match(/\(([A-Z]{3})\)/)?.[1] || 'ATL';
     const destinationAirport = destination.match(/\(([A-Z]{3})\)/)?.[1] || 'JFK';
@@ -298,13 +300,14 @@ export default function VacationPlanner() {
     const cabinClass = preferences.cabinClass === 'business' ? 'Business' : 
                       preferences.cabinClass === 'premium' ? 'Premium Economy' : 'Economy';
     
-    return airlines.slice(0, 3).map((airline: string, index: number) => {
+    // Generate outbound flights
+    const outboundFlights = airlines.slice(0, 3).map((airline: string, index: number) => {
       const departureTime = index === 0 ? '8:30 AM' : index === 1 ? '2:15 PM' : '6:45 PM';
       const arrivalTime = index === 0 ? '12:30 PM' : index === 1 ? '6:15 PM' : '10:45 PM';
       const stops = preferences.stopPreference === 'direct' ? 0 : Math.floor(Math.random() * 2);
       
       return {
-        id: `ai-flight-${index}`,
+        id: `ai-flight-outbound-${index}`,
         airline,
         flightNumber: `${airline.substr(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
         departure: {
@@ -327,6 +330,45 @@ export default function VacationPlanner() {
         source: 'ai' as const,
       };
     });
+
+    let allFlights = [...outboundFlights];
+
+    // Generate return flights if round trip
+    if (isRoundTrip) {
+      const returnFlights = airlines.slice(0, 3).map((airline: string, index: number) => {
+        const departureTime = index === 0 ? '9:15 AM' : index === 1 ? '3:30 PM' : '7:20 PM';
+        const arrivalTime = index === 0 ? '1:15 PM' : index === 1 ? '7:30 PM' : '11:20 PM';
+        const stops = preferences.stopPreference === 'direct' ? 0 : Math.floor(Math.random() * 2);
+        
+        return {
+          id: `ai-flight-return-${index}`,
+          airline,
+          flightNumber: `${airline.substr(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
+          departure: {
+            airport: destinationAirport,
+            city: destinationCity,
+            time: departureTime,
+            date: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          },
+          arrival: {
+            airport: departureAirport,
+            city: departureCity,
+            time: arrivalTime,
+            date: endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+          },
+          duration: stops === 0 ? '4h 0m' : '6h 30m',
+          price: basePrice + Math.floor(Math.random() * 200),
+          stops,
+          class: cabinClass,
+          aircraft: aircraftTypes[index % aircraftTypes.length],
+          source: 'ai' as const,
+        };
+      });
+
+      allFlights = [...allFlights, ...returnFlights];
+    }
+
+    return allFlights;
   };
 
   // Helper function to generate AI-informed hotels
@@ -498,23 +540,24 @@ export default function VacationPlanner() {
             <RotateCcw size={16} />
           </Button>
         </div>
-        {travelDetails && (
-          <div className="mb-2 text-sm text-gray-600">
-            {travelDetails.departureLocation} → {travelDetails.destination}
-            {travelDetails.startDate && travelDetails.endDate && (
-              <div>
-                {format(travelDetails.startDate, 'MMM d')} -{' '}
-                {format(travelDetails.endDate, 'MMM d')} ({nights} nights) •{' '}
-                {travelDetails.adults} adult
-                {travelDetails.adults !== 1 ? 's' : ''}
-                {travelDetails.children > 0
-                  ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
-                  : ''}
-                {travelDetails.travelingWithPets ? ' • with pets' : ''}
+                    {travelDetails && (
+              <div className="mb-2 text-sm text-gray-600">
+                {travelDetails.departureLocation} → {travelDetails.destination}
+                {travelDetails.startDate && travelDetails.endDate && (
+                  <div>
+                    {format(travelDetails.startDate, 'MMM d')} -{' '}
+                    {format(travelDetails.endDate, 'MMM d')} ({nights} nights) •{' '}
+                    {travelDetails.adults} adult
+                    {travelDetails.adults !== 1 ? 's' : ''}
+                    {travelDetails.children > 0
+                      ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
+                      : ''}
+                    {travelDetails.travelingWithPets ? ' • with pets' : ''}
+                    {travelDetails.isRoundTrip === false ? ' • one-way' : ''}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
       </div>
 
       {/* Mobile Content */}
@@ -749,6 +792,7 @@ export default function VacationPlanner() {
                     ? `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`
                     : ''}
                   {travelDetails.travelingWithPets ? ' • with pets' : ''}
+                  {travelDetails.isRoundTrip === false ? ' • one-way' : ''}
                 </div>
               )}
             </div>

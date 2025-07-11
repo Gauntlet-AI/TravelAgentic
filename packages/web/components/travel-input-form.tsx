@@ -290,6 +290,8 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const [children, setChildren] = useState(0);
   const [rooms, setRooms] = useState(1);
   const [travelingWithPets, setTravelingWithPets] = useState(false);
+  const [isRoundTrip, setIsRoundTrip] = useState(true);
+  const [isArriveByDate, setIsArriveByDate] = useState(false); // For one-way trips: false = depart by, true = arrive by
   const [isStartDateOpen, setIsStartDateOpen] = useState(false);
   const [isTravelersOpen, setIsTravelersOpen] = useState(false);
 
@@ -404,19 +406,28 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
       setFirstDate(selectedDate);
       setSecondDate(undefined);
       setHoveredDate(undefined);
-    } else if (!secondDate) {
-      // Second click: select second date and close picker
+      
+      // For one-way trips, close the picker after selecting the first date
+      if (!isRoundTrip) {
+        setIsStartDateOpen(false);
+      }
+    } else if (!secondDate && isRoundTrip) {
+      // Second click: select second date and close picker (only for round trips)
       console.log('Setting second date');
       setSecondDate(selectedDate);
       setHoveredDate(undefined);
       setIsStartDateOpen(false);
     } else {
-      // Third click: reset to new first date, clear second date
+      // Third click or one-way trip: reset to new first date, clear second date
       console.log('Resetting to new first date');
       setFirstDate(selectedDate);
       setSecondDate(undefined);
       setHoveredDate(undefined);
-      // Keep picker open for selecting second date
+      
+      // For one-way trips, close the picker after selecting the date
+      if (!isRoundTrip) {
+        setIsStartDateOpen(false);
+      }
     }
   };
 
@@ -452,10 +463,13 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (departureLocation && destination && firstDate && secondDate) {
-      // Determine start and end dates based on chronological order
-      const startDate = firstDate < secondDate ? firstDate : secondDate;
-      const endDate = firstDate < secondDate ? secondDate : firstDate;
+    if (departureLocation && destination && firstDate && (isRoundTrip ? secondDate : true)) {
+      // For round-trip, determine start and end dates based on chronological order
+      // For one-way, use firstDate as both start and end date
+      const startDate = isRoundTrip && secondDate ? 
+        (firstDate < secondDate ? firstDate : secondDate) : firstDate;
+      const endDate = isRoundTrip && secondDate ? 
+        (firstDate < secondDate ? secondDate : firstDate) : firstDate;
 
       onSubmit({
         departureLocation,
@@ -466,12 +480,14 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
         adults,
         children,
         travelingWithPets,
+        isRoundTrip,
+        isArriveByDate: !isRoundTrip ? isArriveByDate : false, // Only relevant for one-way trips
       });
     }
   };
 
   const isFormValid =
-    departureLocation && destination && firstDate && secondDate;
+    departureLocation && destination && firstDate && (isRoundTrip ? secondDate : true);
 
   if (isMobile) {
     return (
@@ -642,11 +658,49 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   )}
               </div>
 
+              {/* Trip Type */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  <ArrowLeftRight size={16} />
+                  Trip Type
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={isRoundTrip}
+                    onCheckedChange={(checked) => {
+                      setIsRoundTrip(checked);
+                      // Reset arrive by date when switching to round trip
+                      if (checked) {
+                        setIsArriveByDate(false);
+                      }
+                    }}
+                    id="round-trip-mobile"
+                  />
+                  <Label htmlFor="round-trip-mobile" className="text-sm">
+                    {isRoundTrip ? 'Round trip' : 'One way'}
+                  </Label>
+                </div>
+                
+                {/* Arrive by Date Toggle - Only shown for one-way trips */}
+                {!isRoundTrip && (
+                  <div className="flex items-center space-x-2 pl-4">
+                    <Switch
+                      checked={isArriveByDate}
+                      onCheckedChange={setIsArriveByDate}
+                      id="arrive-by-mobile"
+                    />
+                    <Label htmlFor="arrive-by-mobile" className="text-sm">
+                      {isArriveByDate ? 'Arrive by date' : 'Depart by date'}
+                    </Label>
+                  </div>
+                )}
+              </div>
+
               {/* Travel Dates */}
               <div className="space-y-4">
                 <Label className="flex items-center gap-2">
                   <CalendarIcon size={16} />
-                  Travel dates
+                  {isRoundTrip ? 'Travel dates' : (isArriveByDate ? 'Arrival date' : 'Departure date')}
                 </Label>
 
                 <Popover
@@ -665,8 +719,10 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                               firstDate < secondDate ? secondDate : firstDate,
                               'PPP'
                             )}`
-                          : `${format(firstDate, 'PPP')} - Select end date`
-                        : 'Select travel dates'}
+                          : isRoundTrip
+                            ? `${format(firstDate, 'PPP')} - Select end date`
+                            : format(firstDate, 'PPP')
+                        : isRoundTrip ? 'Select travel dates' : (isArriveByDate ? 'Select arrival date' : 'Select departure date')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -677,12 +733,12 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         handleDateSelect(selectedDate);
                       }}
                       onDayMouseEnter={(day) => {
-                        if (firstDate && !secondDate) {
+                        if (firstDate && !secondDate && isRoundTrip) {
                           setHoveredDate(day);
                         }
                       }}
                       onDayMouseLeave={() => {
-                        if (firstDate && !secondDate) {
+                        if (firstDate && !secondDate && isRoundTrip) {
                           setHoveredDate(undefined);
                         }
                       }}
@@ -1058,11 +1114,49 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                   )}
               </div>
 
+              {/* Trip Type */}
+              <div className="min-w-[140px] flex-shrink-0 space-y-2">
+                <Label className="flex items-center gap-2 text-sm font-medium">
+                  <ArrowLeftRight size={16} />
+                  Trip Type
+                </Label>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    checked={isRoundTrip}
+                    onCheckedChange={(checked) => {
+                      setIsRoundTrip(checked);
+                      // Reset arrive by date when switching to round trip
+                      if (checked) {
+                        setIsArriveByDate(false);
+                      }
+                    }}
+                    id="round-trip-desktop"
+                  />
+                  <Label htmlFor="round-trip-desktop" className="text-sm">
+                    {isRoundTrip ? 'Round trip' : 'One way'}
+                  </Label>
+                </div>
+                
+                {/* Arrive by Date Toggle - Only shown for one-way trips */}
+                {!isRoundTrip && (
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={isArriveByDate}
+                      onCheckedChange={setIsArriveByDate}
+                      id="arrive-by-desktop"
+                    />
+                    <Label htmlFor="arrive-by-desktop" className="text-xs">
+                      {isArriveByDate ? 'Arrive by' : 'Depart by'}
+                    </Label>
+                  </div>
+                )}
+              </div>
+
               {/* Travel Dates */}
               <div className="min-w-[200px] flex-shrink-0 space-y-2">
                 <Label className="flex items-center gap-2 text-sm font-medium">
                   <CalendarIcon size={16} />
-                  Travel dates
+                  {isRoundTrip ? 'Travel dates' : (isArriveByDate ? 'Arrival date' : 'Departure date')}
                 </Label>
                 <Popover
                   open={isStartDateOpen}
@@ -1080,8 +1174,10 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                               firstDate < secondDate ? secondDate : firstDate,
                               'MMM d'
                             )}`
-                          : `${format(firstDate, 'MMM d')} - Select end date`
-                        : 'Select travel dates'}
+                          : isRoundTrip
+                            ? `${format(firstDate, 'MMM d')} - Select end date`
+                            : format(firstDate, 'MMM d')
+                        : isRoundTrip ? 'Select travel dates' : (isArriveByDate ? 'Select arrival date' : 'Select departure date')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="z-50 w-auto p-0" align="start">
@@ -1092,12 +1188,12 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
                         handleDateSelect(selectedDate);
                       }}
                       onDayMouseEnter={(day) => {
-                        if (firstDate && !secondDate) {
+                        if (firstDate && !secondDate && isRoundTrip) {
                           setHoveredDate(day);
                         }
                       }}
                       onDayMouseLeave={() => {
-                        if (firstDate && !secondDate) {
+                        if (firstDate && !secondDate && isRoundTrip) {
                           setHoveredDate(undefined);
                         }
                       }}

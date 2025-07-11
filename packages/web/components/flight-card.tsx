@@ -40,6 +40,7 @@ export function FlightCard({ flight, travelers }: FlightCardProps) {
         <div className="mb-4 flex items-center justify-between">
           <div className="text-center">
             <div className="text-xl font-bold">{flight.departure.time}</div>
+            <div className="text-sm font-medium text-blue-600">{flight.departure.date}</div>
             <div className="text-sm text-gray-500">
               {flight.departure.airport}
             </div>
@@ -67,6 +68,7 @@ export function FlightCard({ flight, travelers }: FlightCardProps) {
 
           <div className="text-center">
             <div className="text-xl font-bold">{flight.arrival.time}</div>
+            <div className="text-sm font-medium text-blue-600">{flight.arrival.date}</div>
             <div className="text-sm text-gray-500">
               {flight.arrival.airport}
             </div>

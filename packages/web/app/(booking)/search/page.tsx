@@ -18,6 +18,7 @@ interface SearchPageProps {
     passengers?: string;
     cabin?: string;
     useAI?: string;
+    roundTrip?: string;
   }>;
 }
 
@@ -64,20 +65,7 @@ async function searchWithAI(params: any) {
       return {
         flights: generateAIFlights(researchData.flightPreferences, params),
         hotels: generateAIHotels(researchData.hotelPreferences, params),
-        activities: researchData.activityRecommendations.map((activity: any, index: number) => ({
-          id: `ai-activity-${index}`,
-          name: activity.name,
-          location: parseLocation(params.destination).city,
-          category: Array.isArray(activity.category) ? activity.category : [activity.category],
-          duration: activity.duration,
-          rating: Math.round((4.0 + Math.random() * 1.0) * 10) / 10,
-          reviewCount: Math.floor(Math.random() * 500) + 100,
-          price: activity.estimatedCost,
-          currency: 'USD',
-          image: '/placeholder.jpg',
-          description: activity.description,
-          source: 'ai' as const,
-        })),
+        activities: generateAIActivities(researchData.activityRecommendations, params),
       };
     }
   } catch (error) {
@@ -88,11 +76,103 @@ async function searchWithAI(params: any) {
 }
 
 /**
+ * Helper function to calculate flight likelihood score
+ */
+function calculateFlightLikelihood(flight: any, preferences: any, index: number): number {
+  let score = 100;
+  
+  // Price factor (30% weight)
+  const priceRange = preferences.cabinClass === 'business' ? 1200 : 
+                    preferences.cabinClass === 'premium' ? 600 : 400;
+  const priceScore = Math.max(0, 100 - (flight.price / priceRange) * 100);
+  score -= (100 - priceScore) * 0.3;
+  
+  // Stops factor (25% weight)
+  const stopsScore = flight.stops === 0 ? 100 : flight.stops === 1 ? 70 : 40;
+  score -= (100 - stopsScore) * 0.25;
+  
+  // Time preference factor (25% weight)
+  const timeScores = { morning: 80, afternoon: 100, evening: 60 };
+  const timeOfDay = index === 0 ? 'morning' : index === 1 ? 'afternoon' : 'evening';
+  const timeScore = timeScores[timeOfDay as keyof typeof timeScores];
+  score -= (100 - timeScore) * 0.25;
+  
+  // Airline preference factor (15% weight)
+  const preferredAirlines = preferences.preferredAirlines || [];
+  const airlineScore = preferredAirlines.includes(flight.airline) ? 100 : 70;
+  score -= (100 - airlineScore) * 0.15;
+  
+  // Duration bonus (5% weight)
+  const durationHours = parseFloat(flight.duration.match(/(\d+)h/)?.[1] || '4');
+  const durationScore = Math.max(0, 100 - (durationHours - 3) * 10);
+  score -= (100 - durationScore) * 0.05;
+  
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Helper function to calculate hotel likelihood score
+ */
+function calculateHotelLikelihood(hotel: any, preferences: any): number {
+  let score = 100;
+  
+  // Value for money factor (40% weight)
+  const valueScore = (hotel.rating / hotel.pricePerNight) * 1000;
+  const normalizedValue = Math.min(100, valueScore * 20);
+  score -= (100 - normalizedValue) * 0.4;
+  
+  // Rating factor (25% weight)
+  const ratingScore = (hotel.rating / 5) * 100;
+  score -= (100 - ratingScore) * 0.25;
+  
+  // Price range match factor (20% weight)
+  const expectedPrice = preferences.priceRange === 'luxury' ? 400 : 
+                       preferences.priceRange === 'mid-range' ? 200 : 100;
+  const priceMatchScore = Math.max(0, 100 - Math.abs(hotel.pricePerNight - expectedPrice) / expectedPrice * 100);
+  score -= (100 - priceMatchScore) * 0.2;
+  
+  // Hotel type preference factor (15% weight)
+  const preferredTypes = preferences.preferredTypes || [];
+  const typeScore = preferredTypes.some((type: string) => hotel.name.toLowerCase().includes(type.toLowerCase())) ? 100 : 70;
+  score -= (100 - typeScore) * 0.15;
+  
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Helper function to calculate activity likelihood score
+ */
+function calculateActivityLikelihood(activity: any, preferences: any): number {
+  let score = 100;
+  
+  // AI Priority factor (40% weight)
+  const priorityScore = preferences.interests?.includes(activity.category) ? 100 : 70;
+  score -= (100 - priorityScore) * 0.4;
+  
+  // Price factor (30% weight)
+  const expectedPrice = 75;
+  const priceScore = Math.max(0, 100 - Math.abs(activity.price - expectedPrice) / expectedPrice * 100);
+  score -= (100 - priceScore) * 0.3;
+  
+  // Duration factor (20% weight)
+  const durationHours = parseFloat(activity.duration.match(/(\d+)/)?.[0] || '2');
+  const durationScore = (durationHours >= 2 && durationHours <= 4) ? 100 : 70;
+  score -= (100 - durationScore) * 0.2;
+  
+  // Variety factor (10% weight)
+  const varietyScore = 70 + Math.random() * 30;
+  score -= (100 - varietyScore) * 0.1;
+  
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
  * Helper function to generate AI-informed flights
  */
 function generateAIFlights(preferences: any, params: any) {
   const originInfo = parseLocation(params.origin);
   const destinationInfo = parseLocation(params.destination);
+  const isRoundTrip = params.roundTrip === 'true';
   
   const airlines = preferences.preferredAirlines || ['Delta Air Lines', 'American Airlines', 'United Airlines'];
   const basePrice = preferences.cabinClass === 'business' ? 800 : 
@@ -102,13 +182,14 @@ function generateAIFlights(preferences: any, params: any) {
   const cabinClass = preferences.cabinClass === 'business' ? 'Business' : 
                     preferences.cabinClass === 'premium' ? 'Premium Economy' : 'Economy';
   
-  return airlines.slice(0, 3).map((airline: string, index: number) => {
+  // Generate outbound flights
+  const outboundFlights = airlines.slice(0, 3).map((airline: string, index: number) => {
     const departureTime = index === 0 ? '8:30 AM' : index === 1 ? '2:15 PM' : '6:45 PM';
     const arrivalTime = index === 0 ? '12:30 PM' : index === 1 ? '6:15 PM' : '10:45 PM';
     const stops = preferences.stopPreference === 'direct' ? 0 : Math.floor(Math.random() * 2);
     
     return {
-      id: `ai-flight-${index}`,
+      id: `ai-flight-outbound-${index}`,
       airline,
       flightNumber: `${airline.substr(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
       departure: {
@@ -129,8 +210,58 @@ function generateAIFlights(preferences: any, params: any) {
       class: cabinClass,
       aircraft: aircraftTypes[index % aircraftTypes.length],
       source: 'ai' as const,
+      direction: 'outbound' as const,
     };
   });
+
+  let flights = [...outboundFlights];
+
+  // Generate return flights if round trip
+  if (isRoundTrip && params.returnDate) {
+    const returnFlights = airlines.slice(0, 3).map((airline: string, index: number) => {
+      const departureTime = index === 0 ? '9:15 AM' : index === 1 ? '3:30 PM' : '7:20 PM';
+      const arrivalTime = index === 0 ? '1:15 PM' : index === 1 ? '7:30 PM' : '11:20 PM';
+      const stops = preferences.stopPreference === 'direct' ? 0 : Math.floor(Math.random() * 2);
+      
+      return {
+        id: `ai-flight-return-${index}`,
+        airline,
+        flightNumber: `${airline.substr(0, 2).toUpperCase()}${Math.floor(Math.random() * 9000) + 1000}`,
+        departure: {
+          airport: destinationInfo.code,
+          city: destinationInfo.city,
+          time: departureTime,
+          date: new Date(params.returnDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        },
+        arrival: {
+          airport: originInfo.code,
+          city: originInfo.city,
+          time: arrivalTime,
+          date: new Date(params.returnDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+        },
+        duration: stops === 0 ? '4h 0m' : '6h 30m',
+        price: basePrice + Math.floor(Math.random() * 200),
+        stops,
+        class: cabinClass,
+        aircraft: aircraftTypes[index % aircraftTypes.length],
+        source: 'ai' as const,
+        direction: 'return' as const,
+      };
+    });
+
+    flights = [...flights, ...returnFlights];
+  }
+
+  // Calculate likelihood scores and sort by most likely choice
+  const flightsWithScores = flights.map((flight: any) => ({
+    ...flight,
+    likelihoodScore: calculateFlightLikelihood(flight, preferences, flights.indexOf(flight))
+  }));
+
+  // Sort by likelihood score (highest first) and remove the score
+  return flightsWithScores
+    .sort((a: any, b: any) => b.likelihoodScore - a.likelihoodScore)
+    .map(({ likelihoodScore, ...flight }: any) => flight);
 }
 
 /**
@@ -149,7 +280,7 @@ function generateAIHotels(preferences: any, params: any) {
     'family-friendly': 'Comfortable family hotel with amenities for all ages'
   };
   
-  return hotelTypes.slice(0, 3).map((type: string, index: number) => ({
+  const hotels = hotelTypes.slice(0, 3).map((type: string, index: number) => ({
     id: `ai-hotel-${index}`,
     name: `${type.charAt(0).toUpperCase() + type.slice(1)} ${destinationInfo.city} Hotel`,
     location: `${destinationInfo.city}, ${preferences.locationPreference || 'city center'}`,
@@ -160,6 +291,51 @@ function generateAIHotels(preferences: any, params: any) {
     description: descriptions[type as keyof typeof descriptions] || 'Quality accommodation with modern amenities',
     source: 'ai' as const,
   }));
+
+  // Calculate likelihood scores and sort by most likely choice
+  const hotelsWithScores = hotels.map((hotel: any) => ({
+    ...hotel,
+    likelihoodScore: calculateHotelLikelihood(hotel, preferences)
+  }));
+
+  // Sort by likelihood score (highest first) and remove the score
+  return hotelsWithScores
+    .sort((a: any, b: any) => b.likelihoodScore - a.likelihoodScore)
+    .map(({ likelihoodScore, ...hotel }: any) => hotel);
+}
+
+/**
+ * Helper function to generate AI-informed activities
+ */
+function generateAIActivities(preferences: any, params: any) {
+  const destinationInfo = parseLocation(params.destination);
+  const activityTypes = preferences.interests || ['sightseeing', 'culture', 'outdoor'];
+  
+  const activities = activityTypes.slice(0, 3).map((type: string, index: number) => ({
+    id: `ai-activity-${index}`,
+    name: `${type.charAt(0).toUpperCase() + type.slice(1)} Experience in ${destinationInfo.city}`,
+    location: `${destinationInfo.city}, ${preferences.locationPreference || 'city center'}`,
+    category: [type],
+    duration: ['2-3 hours', '3-4 hours', '4-5 hours'][index],
+    rating: Math.round((4.0 + Math.random() * 1.0) * 10) / 10,
+    reviewCount: Math.floor(Math.random() * 500) + 50,
+    price: Math.floor(Math.random() * 100) + 30,
+    currency: 'USD',
+    image: '/placeholder.jpg',
+    description: `Experience the best of ${type} activities in ${destinationInfo.city}`,
+    source: 'ai' as const,
+  }));
+
+  // Calculate likelihood scores and sort by most likely choice
+  const activitiesWithScores = activities.map((activity: any) => ({
+    ...activity,
+    likelihoodScore: calculateActivityLikelihood(activity, preferences)
+  }));
+
+  // Sort by likelihood score (highest first) and remove the score
+  return activitiesWithScores
+    .sort((a: any, b: any) => b.likelihoodScore - a.likelihoodScore)
+    .map(({ likelihoodScore, ...activity }: any) => activity);
 }
 
 /**

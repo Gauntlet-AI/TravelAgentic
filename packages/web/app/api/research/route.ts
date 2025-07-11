@@ -50,11 +50,24 @@ export async function POST(req: Request) {
     // Parse the JSON response
     let structuredData;
     try {
+      // Try parsing directly first
       structuredData = JSON.parse(result.text);
     } catch (parseError) {
-      console.error('Failed to parse AI response as JSON:', parseError);
-      // Fallback to text response if JSON parsing fails
-      return Response.json({ research: result.text, structured: false });
+      try {
+        // If direct parsing fails, try extracting JSON from markdown code blocks
+        const jsonMatch = result.text.match(/```(?:json)?\s*\n([\s\S]*?)\n```/);
+        if (jsonMatch && jsonMatch[1]) {
+          structuredData = JSON.parse(jsonMatch[1]);
+        } else {
+          throw new Error('No JSON found in response');
+        }
+      } catch (secondParseError) {
+        console.error('Failed to parse AI response as JSON:', parseError);
+        console.error('Also failed to extract from markdown:', secondParseError);
+        console.error('Raw response:', result.text);
+        // Fallback to text response if JSON parsing fails
+        return Response.json({ research: result.text, structured: false });
+      }
     }
 
     return Response.json({ 

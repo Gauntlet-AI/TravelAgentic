@@ -7,6 +7,8 @@ export interface TravelDetails {
   adults: number;
   children: number;
   travelingWithPets?: boolean;
+  isRoundTrip?: boolean;
+  isArriveByDate?: boolean; // For one-way trips: false = depart by date, true = arrive by date
 }
 
 export interface Hotel {
@@ -70,6 +72,7 @@ export interface Flight {
   price: number;
   class: string;
   aircraft: string;
+  direction?: 'outbound' | 'return';
 }
 
 export const activityTypes: ActivityTypeCard[] = [

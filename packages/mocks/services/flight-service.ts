@@ -18,33 +18,258 @@ import { getAirportByCode, searchAirports } from '../data/airports';
  * Airlines data for generating realistic flight results
  */
 const airlines = [
-  { code: 'AA', name: 'American Airlines', alliance: 'oneworld' },
-  { code: 'DL', name: 'Delta Air Lines', alliance: 'skyteam' },
-  { code: 'UA', name: 'United Airlines', alliance: 'star' },
-  { code: 'WN', name: 'Southwest Airlines', alliance: 'none' },
-  { code: 'B6', name: 'JetBlue Airways', alliance: 'none' },
-  { code: 'AS', name: 'Alaska Airlines', alliance: 'oneworld' },
-  { code: 'F9', name: 'Frontier Airlines', alliance: 'none' },
-  { code: 'NK', name: 'Spirit Airlines', alliance: 'none' },
-  { code: 'BA', name: 'British Airways', alliance: 'oneworld' },
-  { code: 'LH', name: 'Lufthansa', alliance: 'star' },
-  { code: 'AF', name: 'Air France', alliance: 'skyteam' },
-  { code: 'KL', name: 'KLM', alliance: 'skyteam' },
-  { code: 'EK', name: 'Emirates', alliance: 'none' },
-  { code: 'SQ', name: 'Singapore Airlines', alliance: 'star' },
-  { code: 'CX', name: 'Cathay Pacific', alliance: 'oneworld' },
-  { code: 'JL', name: 'Japan Airlines', alliance: 'oneworld' },
-  { code: 'NH', name: 'ANA', alliance: 'star' }
+  // US Airlines
+  { code: 'AA', name: 'American Airlines', alliance: 'oneworld', region: 'US' },
+  { code: 'DL', name: 'Delta Air Lines', alliance: 'skyteam', region: 'US' },
+  { code: 'UA', name: 'United Airlines', alliance: 'star', region: 'US' },
+  { code: 'WN', name: 'Southwest Airlines', alliance: 'none', region: 'US' },
+  { code: 'B6', name: 'JetBlue Airways', alliance: 'none', region: 'US' },
+  { code: 'AS', name: 'Alaska Airlines', alliance: 'oneworld', region: 'US' },
+  { code: 'F9', name: 'Frontier Airlines', alliance: 'none', region: 'US' },
+  { code: 'NK', name: 'Spirit Airlines', alliance: 'none', region: 'US' },
+  { code: 'G4', name: 'Allegiant Air', alliance: 'none', region: 'US' },
+  { code: 'SY', name: 'Sun Country Airlines', alliance: 'none', region: 'US' },
+  
+  // European Airlines
+  { code: 'BA', name: 'British Airways', alliance: 'oneworld', region: 'Europe' },
+  { code: 'LH', name: 'Lufthansa', alliance: 'star', region: 'Europe' },
+  { code: 'AF', name: 'Air France', alliance: 'skyteam', region: 'Europe' },
+  { code: 'KL', name: 'KLM', alliance: 'skyteam', region: 'Europe' },
+  { code: 'IB', name: 'Iberia', alliance: 'oneworld', region: 'Europe' },
+  { code: 'LX', name: 'Swiss International Air Lines', alliance: 'star', region: 'Europe' },
+  { code: 'OS', name: 'Austrian Airlines', alliance: 'star', region: 'Europe' },
+  { code: 'SN', name: 'Brussels Airlines', alliance: 'star', region: 'Europe' },
+  { code: 'AY', name: 'Finnair', alliance: 'oneworld', region: 'Europe' },
+  { code: 'SK', name: 'SAS Scandinavian Airlines', alliance: 'star', region: 'Europe' },
+  { code: 'DY', name: 'Norwegian Air', alliance: 'none', region: 'Europe' },
+  { code: 'FR', name: 'Ryanair', alliance: 'none', region: 'Europe' },
+  { code: 'U2', name: 'easyJet', alliance: 'none', region: 'Europe' },
+  { code: 'WF', name: 'Widerøe', alliance: 'none', region: 'Europe' },
+  { code: 'VY', name: 'Vueling', alliance: 'none', region: 'Europe' },
+  { code: 'EI', name: 'Aer Lingus', alliance: 'none', region: 'Europe' },
+  { code: 'TP', name: 'TAP Air Portugal', alliance: 'star', region: 'Europe' },
+  { code: 'A3', name: 'Aegean Airlines', alliance: 'star', region: 'Europe' },
+  { code: 'TK', name: 'Turkish Airlines', alliance: 'star', region: 'Europe' },
+  { code: 'AZ', name: 'Alitalia', alliance: 'skyteam', region: 'Europe' },
+  { code: 'SU', name: 'Aeroflot', alliance: 'skyteam', region: 'Europe' },
+  { code: 'RO', name: 'Tarom', alliance: 'skyteam', region: 'Europe' },
+  { code: 'OK', name: 'Czech Airlines', alliance: 'skyteam', region: 'Europe' },
+  { code: 'LO', name: 'LOT Polish Airlines', alliance: 'star', region: 'Europe' },
+  
+  // Asian Airlines
+  { code: 'JL', name: 'Japan Airlines', alliance: 'oneworld', region: 'Asia' },
+  { code: 'NH', name: 'ANA', alliance: 'star', region: 'Asia' },
+  { code: 'CX', name: 'Cathay Pacific', alliance: 'oneworld', region: 'Asia' },
+  { code: 'SQ', name: 'Singapore Airlines', alliance: 'star', region: 'Asia' },
+  { code: 'KE', name: 'Korean Air', alliance: 'skyteam', region: 'Asia' },
+  { code: 'OZ', name: 'Asiana Airlines', alliance: 'star', region: 'Asia' },
+  { code: 'TG', name: 'Thai Airways', alliance: 'star', region: 'Asia' },
+  { code: 'MH', name: 'Malaysia Airlines', alliance: 'oneworld', region: 'Asia' },
+  { code: 'GA', name: 'Garuda Indonesia', alliance: 'skyteam', region: 'Asia' },
+  { code: 'PR', name: 'Philippine Airlines', alliance: 'none', region: 'Asia' },
+  { code: 'VN', name: 'Vietnam Airlines', alliance: 'skyteam', region: 'Asia' },
+  { code: 'AI', name: 'Air India', alliance: 'star', region: 'Asia' },
+  { code: '6E', name: 'IndiGo', alliance: 'none', region: 'Asia' },
+  { code: 'SG', name: 'SpiceJet', alliance: 'none', region: 'Asia' },
+  { code: 'CA', name: 'Air China', alliance: 'star', region: 'Asia' },
+  { code: 'MU', name: 'China Eastern Airlines', alliance: 'skyteam', region: 'Asia' },
+  { code: 'CZ', name: 'China Southern Airlines', alliance: 'skyteam', region: 'Asia' },
+  { code: 'HU', name: 'Hainan Airlines', alliance: 'none', region: 'Asia' },
+  { code: 'CI', name: 'China Airlines', alliance: 'skyteam', region: 'Asia' },
+  { code: 'BR', name: 'EVA Air', alliance: 'star', region: 'Asia' },
+  { code: 'HX', name: 'Hong Kong Airlines', alliance: 'none', region: 'Asia' },
+  { code: 'UO', name: 'HK Express', alliance: 'none', region: 'Asia' },
+  { code: 'TR', name: 'Scoot', alliance: 'none', region: 'Asia' },
+  { code: 'FD', name: 'Thai AirAsia', alliance: 'none', region: 'Asia' },
+  { code: 'AK', name: 'AirAsia', alliance: 'none', region: 'Asia' },
+  { code: 'JT', name: 'Lion Air', alliance: 'none', region: 'Asia' },
+  { code: 'QG', name: 'Citilink', alliance: 'none', region: 'Asia' },
+  { code: 'VJ', name: 'VietJet Air', alliance: 'none', region: 'Asia' },
+  { code: 'BL', name: 'Jetstar Pacific', alliance: 'none', region: 'Asia' },
+  { code: 'JQ', name: 'Jetstar Airways', alliance: 'none', region: 'Asia' },
+  { code: 'IT', name: 'Tigerair Taiwan', alliance: 'none', region: 'Asia' },
+  { code: 'MM', name: 'Peach Aviation', alliance: 'none', region: 'Asia' },
+  { code: 'GK', name: 'Jetstar Japan', alliance: 'none', region: 'Asia' },
+  { code: 'BC', name: 'Skymark Airlines', alliance: 'none', region: 'Asia' },
+  { code: 'APJ', name: 'Peach Aviation', alliance: 'none', region: 'Asia' },
+  { code: 'LJ', name: 'Jin Air', alliance: 'none', region: 'Asia' },
+  { code: 'TWB', name: "T'way Air", alliance: 'none', region: 'Asia' },
+  { code: 'AAR', name: 'Asiana Airlines', alliance: 'star', region: 'Asia' },
+  
+  // Middle Eastern Airlines
+  { code: 'EK', name: 'Emirates', alliance: 'none', region: 'MiddleEast' },
+  { code: 'QR', name: 'Qatar Airways', alliance: 'oneworld', region: 'MiddleEast' },
+  { code: 'EY', name: 'Etihad Airways', alliance: 'none', region: 'MiddleEast' },
+  { code: 'KU', name: 'Kuwait Airways', alliance: 'none', region: 'MiddleEast' },
+  { code: 'GF', name: 'Gulf Air', alliance: 'none', region: 'MiddleEast' },
+  { code: 'RJ', name: 'Royal Jordanian', alliance: 'oneworld', region: 'MiddleEast' },
+  { code: 'MS', name: 'EgyptAir', alliance: 'star', region: 'MiddleEast' },
+  { code: 'AT', name: 'Royal Air Maroc', alliance: 'oneworld', region: 'MiddleEast' },
+  { code: 'LY', name: 'El Al', alliance: 'none', region: 'MiddleEast' },
+  { code: 'WY', name: 'Oman Air', alliance: 'none', region: 'MiddleEast' },
+  { code: 'XY', name: 'Flynas', alliance: 'none', region: 'MiddleEast' },
+  { code: 'SV', name: 'Saudi Arabian Airlines', alliance: 'skyteam', region: 'MiddleEast' },
+  { code: 'PC', name: 'Pegasus Airlines', alliance: 'none', region: 'MiddleEast' },
+  { code: 'TU', name: 'Tunisair', alliance: 'none', region: 'MiddleEast' },
+  
+  // African Airlines
+  { code: 'SA', name: 'South African Airways', alliance: 'star', region: 'Africa' },
+  { code: 'ET', name: 'Ethiopian Airlines', alliance: 'star', region: 'Africa' },
+  { code: 'KQ', name: 'Kenya Airways', alliance: 'skyteam', region: 'Africa' },
+  { code: 'DT', name: 'TAAG Angola Airlines', alliance: 'none', region: 'Africa' },
+  { code: 'UU', name: 'Air Austral', alliance: 'none', region: 'Africa' },
+  { code: 'MD', name: 'Air Madagascar', alliance: 'none', region: 'Africa' },
+  { code: 'MK', name: 'Air Mauritius', alliance: 'none', region: 'Africa' },
+  { code: 'SW', name: 'Air Namibia', alliance: 'none', region: 'Africa' },
+  { code: 'BP', name: 'Air Botswana', alliance: 'none', region: 'Africa' },
+  { code: 'AH', name: 'Air Algérie', alliance: 'none', region: 'Africa' },
+  { code: 'HC', name: 'Air Senegal', alliance: 'none', region: 'Africa' },
+  { code: 'KP', name: 'ASKY Airlines', alliance: 'none', region: 'Africa' },
+  { code: 'FB', name: 'Bulgaria Air', alliance: 'none', region: 'Africa' },
+  { code: 'FL', name: 'AirLink', alliance: 'none', region: 'Africa' },
+  { code: 'MN', name: 'Kulula', alliance: 'none', region: 'Africa' },
+  { code: 'JE', name: 'Mango', alliance: 'none', region: 'Africa' },
+  { code: 'FA', name: 'Safair', alliance: 'none', region: 'Africa' },
+  
+  // Oceania Airlines
+  { code: 'QF', name: 'Qantas', alliance: 'oneworld', region: 'Oceania' },
+  { code: 'VA', name: 'Virgin Australia', alliance: 'none', region: 'Oceania' },
+  { code: 'JQ', name: 'Jetstar Airways', alliance: 'none', region: 'Oceania' },
+  { code: 'TT', name: 'Tigerair Australia', alliance: 'none', region: 'Oceania' },
+  { code: 'NZ', name: 'Air New Zealand', alliance: 'star', region: 'Oceania' },
+  { code: 'DJ', name: 'Virgin Blue', alliance: 'none', region: 'Oceania' },
+  { code: 'FJ', name: 'Fiji Airways', alliance: 'oneworld', region: 'Oceania' },
+  { code: 'SB', name: 'Air Caledonie', alliance: 'none', region: 'Oceania' },
+  { code: 'PX', name: 'Air Niugini', alliance: 'none', region: 'Oceania' },
+  { code: 'IE', name: 'Solomon Airlines', alliance: 'none', region: 'Oceania' },
+  { code: 'VU', name: 'Air Vanuatu', alliance: 'none', region: 'Oceania' },
+  { code: 'HM', name: 'Air Seychelles', alliance: 'none', region: 'Oceania' },
+  { code: 'UL', name: 'SriLankan Airlines', alliance: 'oneworld', region: 'Oceania' },
+  { code: 'BI', name: 'Royal Brunei Airlines', alliance: 'none', region: 'Oceania' },
+  { code: 'PG', name: 'Bangkok Airways', alliance: 'none', region: 'Oceania' },
+  { code: 'BG', name: 'Biman Bangladesh Airlines', alliance: 'none', region: 'Oceania' },
+  { code: 'KB', name: 'Drukair', alliance: 'none', region: 'Oceania' },
+  { code: 'RA', name: 'Nepal Airlines', alliance: 'none', region: 'Oceania' },
+  { code: 'QH', name: 'Bamboo Airways', alliance: 'none', region: 'Oceania' },
+  { code: 'H9', name: 'Pegasus Asia', alliance: 'none', region: 'Oceania' },
+  
+  // North American Airlines
+  { code: 'AC', name: 'Air Canada', alliance: 'star', region: 'NorthAmerica' },
+  { code: 'WS', name: 'WestJet', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'PD', name: 'Porter Airlines', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'TS', name: 'Air Transat', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'AM', name: 'Aeroméxico', alliance: 'skyteam', region: 'NorthAmerica' },
+  { code: 'VB', name: 'VivaAerobus', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'Y4', name: 'Volaris', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'VW', name: 'Aeromar', alliance: 'none', region: 'NorthAmerica' },
+  { code: '4O', name: 'Interjet', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'QA', name: 'Aeromexico Connect', alliance: 'skyteam', region: 'NorthAmerica' },
+  { code: 'VH', name: 'Viva Colombia', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'JA', name: 'JetSMART', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'LP', name: 'Jetstar Pacific', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'VE', name: 'Clic', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'MX', name: 'Mexicana', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'XE', name: 'JSX', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'QK', name: 'Jazz Aviation', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'WR', name: 'WestJet Encore', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'WG', name: 'Sunwing Airlines', alliance: 'none', region: 'NorthAmerica' },
+  { code: 'POE', name: 'Porter Airlines', alliance: 'none', region: 'NorthAmerica' },
+  
+  // South American Airlines
+  { code: 'LA', name: 'LATAM Airlines', alliance: 'oneworld', region: 'SouthAmerica' },
+  { code: 'G3', name: 'Gol Linhas Aéreas', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'AD', name: 'Azul Brazilian Airlines', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'AR', name: 'Aerolíneas Argentinas', alliance: 'skyteam', region: 'SouthAmerica' },
+  { code: 'AV', name: 'Avianca', alliance: 'star', region: 'SouthAmerica' },
+  { code: 'CM', name: 'Copa Airlines', alliance: 'star', region: 'SouthAmerica' },
+  { code: 'P5', name: 'Wingo', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'VH', name: 'Viva Air', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'WC', name: 'Centurion Air Cargo', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'WL', name: 'Aeroperú', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'LP', name: 'Aerolíneas Argentinas', alliance: 'skyteam', region: 'SouthAmerica' },
+  { code: 'XL', name: 'LATAM Airlines Ecuador', alliance: 'oneworld', region: 'SouthAmerica' },
+  { code: 'UC', name: 'LATAM Airlines Chile', alliance: 'oneworld', region: 'SouthAmerica' },
+  { code: 'JJ', name: 'TAM Airlines', alliance: 'oneworld', region: 'SouthAmerica' },
+  { code: 'O6', name: 'Avianca Brazil', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'PZ', name: 'LATAM Airlines Peru', alliance: 'oneworld', region: 'SouthAmerica' },
+  { code: 'H2', name: 'Sky Airline', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'JA', name: 'JetSMART', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'YW', name: 'Air Nostrum', alliance: 'none', region: 'SouthAmerica' },
+  { code: 'VE', name: 'Clic', alliance: 'none', region: 'SouthAmerica' },
+  
+  // Caribbean Airlines
+  { code: 'BW', name: 'Caribbean Airlines', alliance: 'none', region: 'Caribbean' },
+  { code: 'JY', name: 'Intercaribbean Airways', alliance: 'none', region: 'Caribbean' },
+  { code: 'CU', name: 'Cubana', alliance: 'none', region: 'Caribbean' },
+  { code: 'BB', name: 'Seaborne Airlines', alliance: 'none', region: 'Caribbean' },
+  { code: 'WM', name: 'Windward Islands Airways', alliance: 'none', region: 'Caribbean' },
+  { code: 'BF', name: 'French Bee', alliance: 'none', region: 'Caribbean' },
+  { code: 'TX', name: 'Air Caraïbes', alliance: 'none', region: 'Caribbean' },
+  { code: 'SX', name: 'Skyway Enterprises', alliance: 'none', region: 'Caribbean' },
+  { code: 'JU', name: 'Air Serbia', alliance: 'none', region: 'Caribbean' },
+  { code: 'DI', name: 'dba', alliance: 'none', region: 'Caribbean' },
+  { code: 'WG', name: 'Sunwing Airlines', alliance: 'none', region: 'Caribbean' },
+  { code: 'UP', name: 'Bahamasair', alliance: 'none', region: 'Caribbean' },
+  { code: 'WU', name: 'Wizz Air', alliance: 'none', region: 'Caribbean' },
+  { code: 'PJ', name: 'Air Saint-Pierre', alliance: 'none', region: 'Caribbean' },
+  { code: 'LI', name: 'LIAT', alliance: 'none', region: 'Caribbean' },
+  { code: 'JN', name: 'Joon', alliance: 'none', region: 'Caribbean' },
+  { code: 'WP', name: 'Island Air', alliance: 'none', region: 'Caribbean' },
+  { code: 'EW', name: 'Eurowings', alliance: 'none', region: 'Caribbean' },
+  { code: 'NU', name: 'Japan Transocean Air', alliance: 'none', region: 'Caribbean' },
+  { code: 'BT', name: 'Air Baltic', alliance: 'none', region: 'Caribbean' },
+  
+  // Central American Airlines
+  { code: 'TA', name: 'TACA', alliance: 'star', region: 'CentralAmerica' },
+  { code: 'LR', name: 'LACSA', alliance: 'star', region: 'CentralAmerica' },
+  { code: 'RZ', name: 'Sansa Regional', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'DG', name: 'Tikal Jets', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'GU', name: 'Aviateca', alliance: 'none', region: 'CentralAmerica' },
+  { code: '5U', name: 'Transportes Aéreos Guatemaltecos', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'HR', name: 'Hahn Air', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'TG', name: 'Thai Airways', alliance: 'star', region: 'CentralAmerica' },
+  { code: 'NI', name: 'Portugália', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'OH', name: 'Comair', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'LN', name: 'Libyan Airlines', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'QG', name: 'Citilink', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'RQ', name: 'Kam Air', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'ZK', name: 'Great Lakes Airlines', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'IS', name: 'Island Air', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'ZB', name: 'Monarch Airlines', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'WK', name: 'Edelweiss Air', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'XQ', name: 'SunExpress', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'WE', name: 'Thai Smile', alliance: 'none', region: 'CentralAmerica' },
+  { code: 'HV', name: 'Transavia', alliance: 'none', region: 'CentralAmerica' }
 ];
 
 /**
  * Aircraft types for realistic flight segments
  */
 const aircraftTypes = [
-  'Boeing 737-800', 'Boeing 737-900', 'Boeing 757-200', 'Boeing 767-300',
-  'Boeing 777-200', 'Boeing 777-300', 'Boeing 787-8', 'Boeing 787-9',
-  'Airbus A320', 'Airbus A321', 'Airbus A330-200', 'Airbus A330-300',
-  'Airbus A350-900', 'Airbus A380-800', 'Embraer E175', 'Embraer E190'
+  // Boeing Aircraft
+  'Boeing 737-700', 'Boeing 737-800', 'Boeing 737-900', 'Boeing 737 MAX 8', 'Boeing 737 MAX 9',
+  'Boeing 757-200', 'Boeing 757-300', 'Boeing 767-200', 'Boeing 767-300', 'Boeing 767-400',
+  'Boeing 777-200', 'Boeing 777-200ER', 'Boeing 777-300', 'Boeing 777-300ER', 'Boeing 777-8', 'Boeing 777-9',
+  'Boeing 787-8', 'Boeing 787-9', 'Boeing 787-10',
+  'Boeing 747-400', 'Boeing 747-8',
+  
+  // Airbus Aircraft
+  'Airbus A319', 'Airbus A320', 'Airbus A321', 'Airbus A321neo', 'Airbus A320neo',
+  'Airbus A330-200', 'Airbus A330-300', 'Airbus A330-800neo', 'Airbus A330-900neo',
+  'Airbus A340-200', 'Airbus A340-300', 'Airbus A340-500', 'Airbus A340-600',
+  'Airbus A350-900', 'Airbus A350-1000',
+  'Airbus A380-800',
+  
+  // Regional Aircraft
+  'Embraer E170', 'Embraer E175', 'Embraer E190', 'Embraer E195',
+  'Bombardier CRJ-200', 'Bombardier CRJ-700', 'Bombardier CRJ-900', 'Bombardier CRJ-1000',
+  'ATR 42', 'ATR 72',
+  'Saab 340', 'Dash 8-100', 'Dash 8-200', 'Dash 8-300', 'Dash 8-400',
+  
+  // Other Aircraft
+  'McDonnell Douglas MD-80', 'McDonnell Douglas MD-90', 'McDonnell Douglas MD-11',
+  'Lockheed L-1011', 'Concorde', 'Tupolev Tu-154', 'Sukhoi Superjet 100',
+  'Mitsubishi Regional Jet', 'Comac C919', 'Irkut MC-21'
 ];
 
 export class MockFlightService implements IFlightService {
@@ -151,8 +376,8 @@ export class MockFlightService implements IFlightService {
         throw new Error('Mock API failure for testing');
       }
 
-      // Simulate 85% availability rate
-      const isAvailable = Math.random() > 0.15;
+      // Simulate realistic availability scenarios
+      const isAvailable = this.simulateFlightAvailability(flightId);
 
       return {
         success: true,
@@ -169,6 +394,95 @@ export class MockFlightService implements IFlightService {
       };
     }
   }
+
+  /**
+   * Simulate realistic flight availability scenarios
+   */
+  private simulateFlightAvailability(flightId: string): boolean {
+    // Create deterministic but varied availability based on flight ID
+    const hash = this.hashString(flightId);
+    const availability = hash % 100;
+
+    // Different availability rates for different scenarios:
+    // 85% - Normal availability
+    // 10% - High demand/sold out
+    // 5% - Maintenance/cancellation
+    
+    if (availability < 85) {
+      return true; // Available
+    } else if (availability < 95) {
+      return false; // Sold out due to high demand
+    } else {
+      return false; // Cancelled due to maintenance or weather
+    }
+  }
+
+     /**
+    * Simple hash function for consistent pseudo-random behavior
+    */
+   private hashString(str: string): number {
+     let hash = 0;
+     for (let i = 0; i < str.length; i++) {
+       const char = str.charCodeAt(i);
+       hash = ((hash << 5) - hash) + char;
+       hash = hash & hash; // Convert to 32-bit integer
+     }
+     return Math.abs(hash);
+   }
+
+   /**
+    * Add edge case properties for testing scenarios
+    */
+   private addEdgeCaseProperties(flightId: string, airlineCode: string): any {
+     const hash = this.hashString(flightId);
+     const edgeCase = hash % 100;
+
+     const edgeProperties: any = {};
+
+     // Add edge case flags for testing
+     if (edgeCase < 5) {
+       // 5% chance of sold out flights
+       edgeProperties.availability = 'sold_out';
+       edgeProperties.availableSeats = 0;
+       edgeProperties.waitlistAvailable = true;
+     } else if (edgeCase < 8) {
+       // 3% chance of cancelled flights
+       edgeProperties.status = 'cancelled';
+       edgeProperties.cancellationReason = 'Weather conditions';
+       edgeProperties.rebookingOptions = true;
+     } else if (edgeCase < 12) {
+       // 4% chance of delayed flights
+       edgeProperties.status = 'delayed';
+       edgeProperties.delayMinutes = Math.floor(Math.random() * 120) + 30; // 30-150 minutes
+       edgeProperties.delayReason = ['Weather', 'Technical', 'Air traffic', 'Crew'][Math.floor(Math.random() * 4)];
+     } else if (edgeCase < 15) {
+       // 3% chance of very low availability
+       edgeProperties.availability = 'limited';
+       edgeProperties.availableSeats = Math.floor(Math.random() * 3) + 1; // 1-3 seats
+       edgeProperties.highDemand = true;
+     } else if (edgeCase < 18) {
+       // 3% chance of price alerts
+       edgeProperties.priceAlert = {
+         type: 'price_drop',
+         previousPrice: edgeProperties.price?.amount ? edgeProperties.price.amount * 1.2 : 500,
+         savingsAmount: Math.floor(Math.random() * 100) + 50
+       };
+     } else if (edgeCase < 20) {
+       // 2% chance of gate change
+       edgeProperties.gateChange = {
+         originalGate: 'A12',
+         newGate: 'B07',
+         changeTime: new Date(Date.now() - 30 * 60 * 1000).toISOString() // 30 minutes ago
+       };
+     }
+
+     // Add random seat availability for non-edge cases
+     if (!edgeProperties.availableSeats && !edgeProperties.status) {
+       edgeProperties.availableSeats = Math.floor(Math.random() * 200) + 50; // 50-250 seats
+     }
+
+     return edgeProperties;
+   }
 
   /**
    * Generate realistic flight results based on search parameters
@@ -191,8 +505,9 @@ export class MockFlightService implements IFlightService {
       // Calculate pricing based on various factors
       const price = this.calculatePrice(params, segments);
       
-      flights.push({
-        id: `flight-${i + 1}-${Date.now()}`,
+      const flightId = `flight-${i + 1}-${Date.now()}`;
+      const flightData = {
+        id: flightId,
         segments,
         price,
         totalDuration: this.calculateTotalDuration(segments),
@@ -202,8 +517,11 @@ export class MockFlightService implements IFlightService {
         cancellationPolicy: this.generateCancellationPolicy(airline.code),
         source: 'api',
         bookingUrl: `https://mock-booking.com/flight/${i + 1}`,
-        deepLink: `travelagentic://flight/${i + 1}`
-      });
+        deepLink: `travelagentic://flight/${i + 1}`,
+        ...this.addEdgeCaseProperties(flightId, airline.code)
+      };
+
+      flights.push(flightData);
     }
 
     // Sort by price by default
@@ -371,6 +689,21 @@ export class MockFlightService implements IFlightService {
       basePrice *= 1.2; // 20% increase
     }
 
+    // Seasonal pricing adjustments
+    const departureDate = new Date(params.departureDate);
+    const seasonMultiplier = this.getSeasonalPriceMultiplier(departureDate, segments[0].departure.airport, segments[segments.length - 1].arrival.airport);
+    basePrice *= seasonMultiplier;
+
+    // Day of week pricing (weekends more expensive)
+    const dayOfWeek = departureDate.getDay();
+    if (dayOfWeek === 5 || dayOfWeek === 6) { // Friday or Saturday
+      basePrice *= 1.15; // 15% weekend premium
+    }
+
+    // Holiday period adjustments
+    const holidayMultiplier = this.getHolidayPriceMultiplier(departureDate);
+    basePrice *= holidayMultiplier;
+
     // Add some randomness for price fluctuation
     if (this.config.enablePriceFluctuation) {
       const fluctuation = (Math.random() - 0.5) * 0.3; // ±15%
@@ -387,10 +720,122 @@ export class MockFlightService implements IFlightService {
   }
 
   /**
+   * Calculate seasonal price multipliers based on destination and time of year
+   */
+  private getSeasonalPriceMultiplier(date: Date, origin: any, destination: any): number {
+    const month = date.getMonth(); // 0-11
+    const isNorthernHemisphere = (destination.coordinates?.latitude || 0) > 0;
+    
+    // Summer months (June-August) vs Winter months (December-February)
+    const isSummer = month >= 5 && month <= 7;
+    const isWinter = month === 11 || month <= 1;
+    
+    // Tourist destination seasonal adjustments
+    const touristDestinations = ['Paris', 'London', 'Barcelona', 'Rome', 'Tokyo', 'New York', 'Sydney'];
+    const isTouristDestination = touristDestinations.some(city => 
+      destination.city.includes(city) || origin.city.includes(city)
+    );
+    
+    // Beach destination adjustments (higher in summer)
+    const beachDestinations = ['Miami', 'Los Angeles', 'Barcelona', 'Sydney', 'Dubai', 'Bangkok', 'Singapore'];
+    const isBeachDestination = beachDestinations.some(city => 
+      destination.city.includes(city) || origin.city.includes(city)
+    );
+    
+    // Ski destination adjustments (higher in winter)
+    const skiDestinations = ['Denver', 'Zurich', 'Munich', 'Oslo', 'Stockholm'];
+    const isSkiDestination = skiDestinations.some(city => 
+      destination.city.includes(city) || origin.city.includes(city)
+    );
+    
+    let multiplier = 1.0;
+    
+    if (isTouristDestination) {
+      if (isSummer) multiplier *= 1.3; // 30% summer premium
+      if (isWinter) multiplier *= 0.85; // 15% winter discount
+    }
+    
+    if (isBeachDestination && isSummer) {
+      multiplier *= 1.4; // 40% beach summer premium
+    }
+    
+    if (isSkiDestination && isWinter) {
+      multiplier *= 1.5; // 50% ski winter premium
+    }
+    
+    // Shoulder season adjustments (spring/fall)
+    const isShoulderSeason = (month >= 2 && month <= 4) || (month >= 8 && month <= 10);
+    if (isShoulderSeason && isTouristDestination) {
+      multiplier *= 1.1; // 10% shoulder season premium
+    }
+    
+    return multiplier;
+  }
+
+  /**
+   * Calculate holiday period price multipliers
+   */
+  private getHolidayPriceMultiplier(date: Date): number {
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    // Major holiday periods with higher demand
+    const holidayPeriods = [
+      // Christmas/New Year
+      { startMonth: 11, startDay: 15, endMonth: 0, endDay: 15, multiplier: 1.8 },
+      // Thanksgiving week (US)
+      { startMonth: 10, startDay: 20, endMonth: 10, endDay: 30, multiplier: 1.6 },
+      // Summer vacation (June-August)
+      { startMonth: 5, startDay: 15, endMonth: 7, endDay: 31, multiplier: 1.4 },
+      // Spring break (March)
+      { startMonth: 2, startDay: 1, endMonth: 2, endDay: 31, multiplier: 1.3 },
+      // Easter period (varies, but approximate)
+      { startMonth: 3, startDay: 1, endMonth: 3, endDay: 30, multiplier: 1.2 }
+    ];
+    
+    for (const period of holidayPeriods) {
+      const isInPeriod = this.isDateInPeriod(date, period);
+      if (isInPeriod) {
+        return period.multiplier;
+      }
+    }
+    
+    return 1.0; // No holiday adjustment
+  }
+
+  /**
+   * Check if a date falls within a holiday period
+   */
+  private isDateInPeriod(date: Date, period: any): boolean {
+    const month = date.getMonth();
+    const day = date.getDate();
+    
+    // Handle periods that cross year boundary
+    if (period.startMonth > period.endMonth) {
+      return (month === period.startMonth && day >= period.startDay) ||
+             (month === period.endMonth && day <= period.endDay) ||
+             (month > period.startMonth || month < period.endMonth);
+    } else {
+      return (month === period.startMonth && day >= period.startDay && 
+              (month < period.endMonth || (month === period.endMonth && day <= period.endDay))) ||
+             (month > period.startMonth && month < period.endMonth) ||
+             (month === period.endMonth && day <= period.endDay);
+    }
+  }
+
+  /**
    * Generate realistic baggage information
    */
   private generateBaggageInfo(airlineCode: string, cabin: string): { carry: string; checked: string } {
-    const budgetAirlines = ['WN', 'F9', 'NK'];
+    const budgetAirlines = [
+      'WN', 'F9', 'NK', 'G4', 'SY', // US Budget
+      'FR', 'U2', 'DY', 'VY', // European Budget
+      'AK', 'FD', 'TR', 'JT', 'QG', 'VJ', 'BL', 'JQ', 'IT', 'MM', 'GK', 'BC', 'LJ', // Asian Budget
+      'VB', 'Y4', '4O', 'VH', 'JA', 'VE', // North American Budget
+      'G3', 'AD', 'P5', 'VH', 'H2', 'JA', // South American Budget
+      'TT', 'DJ', // Oceania Budget
+      'PC', 'XY', 'FL', 'MN', 'JE', 'FA' // Other Regional Budget
+    ];
     const isBudget = budgetAirlines.includes(airlineCode);
     
     if (isBudget) {

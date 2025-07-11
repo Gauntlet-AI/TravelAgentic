@@ -354,6 +354,258 @@ export const activitiesByDestination: Record<string, Partial<ActivityResult>[]> 
       languages: ['French', 'English'],
       accessibility: ['Wheelchair accessible', 'Accessible restrooms']
     }
+  ],
+
+  'Barcelona': [
+    {
+      name: 'Sagrada Familia Skip-the-Line Tour',
+      description: 'Explore Gaudí\'s architectural masterpiece with an expert guide and skip long entrance lines.',
+      shortDescription: 'Expert-guided tour of Gaudí\'s iconic basilica',
+      categories: ['culture', 'sightseeing'],
+      duration: { value: 2, unit: 'hours', description: '2-hour guided tour' },
+      location: {
+        name: 'Sagrada Familia',
+        address: 'C/ de Mallorca, 401, 08013 Barcelona, Spain',
+        city: 'Barcelona',
+        coordinates: { latitude: 41.4036, longitude: 2.1744 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800',
+        'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800'
+      ],
+      highlights: ['Skip-the-line access', 'Gaudí architecture', 'UNESCO World Heritage', 'Expert guide'],
+      included: ['Skip-the-line tickets', 'Professional guide', 'Audio system', 'Small group'],
+      requirements: ['Valid ID required', 'Dress code applies'],
+      restrictions: ['No large bags', 'No photography during mass'],
+      meetingPoint: 'Main entrance plaza',
+      cancellationPolicy: 'Free cancellation up to 24 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily at 9:00 AM, 11:00 AM, 2:00 PM, 4:00 PM'
+      },
+      groupSize: { min: 1, max: 20 },
+      languages: ['Spanish', 'English', 'French', 'German'],
+      accessibility: ['Wheelchair accessible', 'Audio guides available']
+    },
+    {
+      name: 'Park Güell and Gothic Quarter Walking Tour',
+      description: 'Discover Barcelona\'s architectural gems from medieval Gothic Quarter to modernist Park Güell.',
+      shortDescription: 'Combined tour of Gothic Quarter and Park Güell',
+      categories: ['culture', 'sightseeing', 'outdoor'],
+      duration: { value: 4, unit: 'hours', description: '4-hour walking tour with transport' },
+      location: {
+        name: 'Gothic Quarter & Park Güell',
+        address: 'Plaça de Catalunya, Barcelona, Spain',
+        city: 'Barcelona',
+        coordinates: { latitude: 41.3874, longitude: 2.1686 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=800',
+        'https://images.unsplash.com/photo-1558642452-9d2a7deb7f62?w=800'
+      ],
+      highlights: ['Gothic architecture', 'Gaudí mosaics', 'Medieval streets', 'Panoramic views'],
+      included: ['Professional guide', 'Park Güell entry', 'Transportation', 'Small group'],
+      requirements: ['Comfortable walking shoes', 'Weather-appropriate clothing'],
+      restrictions: ['Moderate walking required', 'Stairs at Park Güell'],
+      meetingPoint: 'Plaça de Catalunya tourist information',
+      cancellationPolicy: 'Free cancellation up to 24 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily at 9:00 AM and 2:30 PM'
+      },
+      groupSize: { min: 1, max: 15 },
+      languages: ['Spanish', 'English', 'Catalan'],
+      accessibility: ['Limited wheelchair access', 'Uneven surfaces']
+    }
+  ],
+
+  'Rome': [
+    {
+      name: 'Colosseum Underground and Ancient Rome Tour',
+      description: 'Explore the underground chambers of the Colosseum and discover ancient Roman history.',
+      shortDescription: 'Underground Colosseum tour with Roman Forum',
+      categories: ['culture', 'sightseeing'],
+      duration: { value: 3, unit: 'hours', description: '3-hour historical tour' },
+      location: {
+        name: 'Colosseum',
+        address: 'Piazza del Colosseo, 1, 00184 Roma RM, Italy',
+        city: 'Rome',
+        coordinates: { latitude: 41.8902, longitude: 12.4922 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=800',
+        'https://images.unsplash.com/photo-1515542622106-78bda8ba0e5b?w=800'
+      ],
+      highlights: ['Underground chambers', 'Gladiator history', 'Roman Forum', 'Palatine Hill'],
+      included: ['Skip-the-line tickets', 'Professional guide', 'Headsets', 'Small group'],
+      requirements: ['Valid ID required', 'Comfortable walking shoes'],
+      restrictions: ['No large bags', 'Security screening required'],
+      meetingPoint: 'Colosseum Metro station exit',
+      cancellationPolicy: 'Free cancellation up to 24 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily except Mondays at 8:30 AM, 10:30 AM, 2:00 PM'
+      },
+      groupSize: { min: 1, max: 25 },
+      languages: ['Italian', 'English', 'Spanish', 'French'],
+      accessibility: ['Limited wheelchair access', 'Ancient site with steps']
+    },
+    {
+      name: 'Vatican Museums and Sistine Chapel Tour',
+      description: 'Discover the world\'s greatest art collection and Michelangelo\'s masterpiece in the Sistine Chapel.',
+      shortDescription: 'Vatican Museums tour with Sistine Chapel',
+      categories: ['culture', 'sightseeing'],
+      duration: { value: 3, unit: 'hours', description: '3-hour art and history tour' },
+      location: {
+        name: 'Vatican Museums',
+        address: 'Viale Vaticano, 00165 Roma RM, Italy',
+        city: 'Rome',
+        coordinates: { latitude: 41.9065, longitude: 12.4536 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800',
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800'
+      ],
+      highlights: ['Sistine Chapel', 'Raphael Rooms', 'Gallery of Maps', 'Renaissance art'],
+      included: ['Skip-the-line tickets', 'Expert art guide', 'Headsets', 'Map'],
+      requirements: ['Dress code enforced', 'Valid ID required'],
+      restrictions: ['No photography in Sistine Chapel', 'Quiet zones'],
+      meetingPoint: 'Vatican Museums entrance',
+      cancellationPolicy: 'Free cancellation up to 48 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-17',
+        schedule: 'Monday-Saturday at 8:00 AM, 10:00 AM, 1:30 PM'
+      },
+      groupSize: { min: 1, max: 20 },
+      languages: ['Italian', 'English', 'Spanish', 'German'],
+      accessibility: ['Wheelchair accessible', 'Elevator access available']
+    }
+  ],
+
+  'Sydney': [
+    {
+      name: 'Sydney Harbour Bridge Climb',
+      description: 'Climb the iconic Sydney Harbour Bridge for breathtaking 360-degree views of the city and harbour.',
+      shortDescription: 'Guided climb to the top of Sydney Harbour Bridge',
+      categories: ['outdoor', 'sightseeing', 'adventure'],
+      duration: { value: 3.5, unit: 'hours', description: '3.5-hour climbing experience' },
+      location: {
+        name: 'Sydney Harbour Bridge',
+        address: '3 Cumberland St, The Rocks NSW 2000, Australia',
+        city: 'Sydney',
+        coordinates: { latitude: -33.8523, longitude: 151.2108 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+        'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800'
+      ],
+      highlights: ['360-degree views', 'Iconic bridge', 'Opera House views', 'Harbour panorama'],
+      included: ['Safety equipment', 'Professional guide', 'Certificate', 'Group photo'],
+      requirements: ['Age restrictions apply', 'Fitness level required', 'No personal items'],
+      restrictions: ['Weather dependent', 'Medical restrictions apply'],
+      meetingPoint: 'BridgeClimb base at The Rocks',
+      cancellationPolicy: 'Free cancellation up to 72 hours before climb',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily at dawn, day, twilight, and night sessions'
+      },
+      groupSize: { min: 1, max: 14 },
+      languages: ['English'],
+      accessibility: ['Physical fitness required', 'Medical clearance needed']
+    },
+    {
+      name: 'Blue Mountains Day Trip with Wildlife Park',
+      description: 'Escape Sydney for a day in the Blue Mountains with scenic railway, wildlife encounters, and bushwalking.',
+      shortDescription: 'Full-day Blue Mountains adventure with wildlife',
+      categories: ['outdoor', 'sightseeing', 'family'],
+      duration: { value: 10, unit: 'hours', description: '10-hour day trip from Sydney' },
+      location: {
+        name: 'Blue Mountains',
+        address: 'Katoomba NSW 2780, Australia',
+        city: 'Sydney',
+        coordinates: { latitude: -33.7122, longitude: 150.3111 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1454391304352-2bf4678b1a7a?w=800',
+        'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=800'
+      ],
+      highlights: ['Three Sisters rock formation', 'Scenic Railway', 'Wildlife encounters', 'Bushwalking'],
+      included: ['Transportation', 'Professional guide', 'Wildlife park entry', 'Lunch'],
+      requirements: ['Comfortable walking shoes', 'Weather-appropriate clothing'],
+      restrictions: ['Weather dependent', 'Moderate walking required'],
+      meetingPoint: 'Central Sydney pickup locations',
+      cancellationPolicy: 'Free cancellation up to 24 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily at 7:30 AM'
+      },
+      groupSize: { min: 1, max: 20 },
+      languages: ['English'],
+      accessibility: ['Some locations wheelchair accessible', 'Assistance available']
+    }
+  ],
+
+  'Dubai': [
+    {
+      name: 'Desert Safari with Camel Riding and BBQ Dinner',
+      description: 'Experience the Arabian desert with dune bashing, camel riding, and traditional Bedouin dinner.',
+      shortDescription: 'Desert adventure with dinner and entertainment',
+      categories: ['outdoor', 'adventure', 'culture'],
+      duration: { value: 6, unit: 'hours', description: '6-hour desert experience' },
+      location: {
+        name: 'Dubai Desert Conservation Reserve',
+        address: 'Dubai Desert, UAE',
+        city: 'Dubai',
+        coordinates: { latitude: 24.8607, longitude: 55.2094 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800',
+        'https://images.unsplash.com/photo-1519817650390-64a93db51149?w=800'
+      ],
+      highlights: ['Dune bashing', 'Camel riding', 'Sunset views', 'Cultural show'],
+      included: ['4WD transport', 'Camel ride', 'BBQ dinner', 'Entertainment show'],
+      requirements: ['Comfortable clothing', 'Closed shoes recommended'],
+      restrictions: ['Not suitable for pregnant women', 'Medical conditions'],
+      meetingPoint: 'Hotel pickup in Dubai',
+      cancellationPolicy: 'Free cancellation up to 24 hours before tour',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily at 3:00 PM'
+      },
+      groupSize: { min: 2, max: 30 },
+      languages: ['English', 'Arabic'],
+      accessibility: ['Limited accessibility', 'Assistance for mobility issues']
+    },
+    {
+      name: 'Burj Khalifa At The Top + Dubai Mall Aquarium',
+      description: 'Visit the world\'s tallest building and explore the massive aquarium at Dubai Mall.',
+      shortDescription: 'Burj Khalifa observation deck and aquarium combo',
+      categories: ['sightseeing', 'family'],
+      duration: { value: 4, unit: 'hours', description: '4-hour Dubai highlights tour' },
+      location: {
+        name: 'Burj Khalifa & Dubai Mall',
+        address: '1 Sheikh Mohammed bin Rashid Blvd, Dubai, UAE',
+        city: 'Dubai',
+        coordinates: { latitude: 25.1972, longitude: 55.2744 }
+      },
+      images: [
+        'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?w=800',
+        'https://images.unsplash.com/photo-1544427920-c49ccfb85579?w=800'
+      ],
+      highlights: ['World\'s tallest building', 'Panoramic views', 'Underwater tunnel', 'Shark encounters'],
+      included: ['Burj Khalifa tickets', 'Aquarium entry', 'Fast-track access', 'Guide'],
+      requirements: ['Advance booking essential', 'Valid ID required'],
+      restrictions: ['Time slots must be selected', 'Weather dependent views'],
+      meetingPoint: 'Dubai Mall main entrance',
+      cancellationPolicy: 'Free cancellation up to 24 hours before visit',
+      availability: {
+        nextAvailable: '2024-07-16',
+        schedule: 'Daily with multiple time slots'
+      },
+      groupSize: { min: 1, max: 10 },
+      languages: ['English', 'Arabic', 'Hindi'],
+      accessibility: ['Wheelchair accessible', 'Elevator access']
+    }
   ]
 };
 
