@@ -400,16 +400,6 @@ export default function WelcomePage() {
                 <Bot className="w-16 h-16 mx-auto mb-4 text-blue-500" />
                 <p className="text-lg font-medium mb-2">Ready to plan your perfect trip?</p>
                 <p className="text-sm">Select how you'd like to get started and I'll help you every step of the way!</p>
-                {isLoadingLocation && (
-                  <div className="mt-4 text-xs text-blue-600">
-                    <div className="animate-pulse">📍 Detecting your location...</div>
-                  </div>
-                )}
-                {userLocation && !isLoadingLocation && (
-                  <div className="mt-4 text-xs text-green-600">
-                    📍 Location detected: {formatLocationDisplay(userLocation)}
-                  </div>
-                )}
               </div>
             </CardContent>
           </Card>
