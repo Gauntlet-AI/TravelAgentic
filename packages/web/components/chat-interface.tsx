@@ -23,6 +23,7 @@ interface ChatInterfaceProps {
   customSystemPrompt?: string; // Add custom system prompt support
   customPlaceholder?: string; // Add custom placeholder support
   mode?: string; // Add mode support
+  customEmptyStateMessage?: string; // Add custom empty state message support
 }
 
 export function ChatInterface({
@@ -36,6 +37,7 @@ export function ChatInterface({
   customSystemPrompt,
   customPlaceholder,
   mode,
+  customEmptyStateMessage,
 }: ChatInterfaceProps) {
   // Create context message with current travel selections
   // Track processed tool calls to prevent re-execution
@@ -182,11 +184,11 @@ export function ChatInterface({
             className={`py-8 text-center text-muted-foreground ${hideCard ? 'sticky top-0 z-10 bg-white' : 'sticky top-16 z-10 bg-white'}`}
           >
             <MessageCircle className="mx-auto mb-2" size={32} />
-            <p>Ask me anything about your vacation plans!</p>
+            <p>{customEmptyStateMessage || "Ask me anything about your vacation plans!"}</p>
             {travelDetails ? (
               <p className="text-sm text-blue-600">I can see your current selections and will use them in my recommendations.</p>
             ) : (
-              <p className="text-sm">Fill out your travel details and I'll help with personalized suggestions.</p>
+              <p className="text-sm"></p>
             )}
           </div>
         )}

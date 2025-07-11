@@ -298,6 +298,7 @@ export default function WelcomePage() {
             key={chatKey}
             customSystemPrompt={chatModeConfig[selectedMode].systemPrompt}
             customPlaceholder={getPlaceholder(selectedMode)}
+            customEmptyStateMessage={getEmptyStateMessage(selectedMode)}
             mode={selectedMode}
             className="h-full"
           />
@@ -326,12 +327,25 @@ export default function WelcomePage() {
 function getPlaceholder(mode: ChatMode): string {
   switch (mode) {
     case 'conversation':
-      return 'Tell me about your travel plans... e.g., "I want to go to Japan in March"';
+      return 'I want to go to Japan in March';
     case 'quiz':
-      return 'Ready to discover your perfect trip? Say "start the quiz" to begin!';
+      return 'Start the quiz';
     case 'autonomous':
-      return 'Just tell me your budget and travel dates, and I\'ll plan everything for you!';
+      return 'Plan my trip';
     default:
       return 'How can I help you plan your trip?';
+  }
+}
+
+function getEmptyStateMessage(mode: ChatMode): string {
+  switch (mode) {
+    case 'conversation':
+      return 'Tell me about your travel ideas and I\'ll help you plan the perfect trip!';
+    case 'quiz':
+      return 'I\'ll ask you questions to discover your ideal destination and travel style.';
+    case 'autonomous':
+      return 'Give me your budget and dates, and I\'ll create a complete itinerary for you!';
+    default:
+      return 'Ask me anything about your vacation plans!';
   }
 } 
