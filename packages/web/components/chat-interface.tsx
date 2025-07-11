@@ -26,6 +26,7 @@ interface ChatInterfaceProps {
   customEmptyStateMessage?: string; // Add custom empty state message support
   initialMessage?: string; // Add initial message support
   clearHistory?: boolean; // Add clear history trigger
+  onTripInfoUpdate?: (info: any) => void; // Add trip info update handler
 }
 
 export function ChatInterface({
@@ -42,6 +43,7 @@ export function ChatInterface({
   customEmptyStateMessage,
   initialMessage,
   clearHistory,
+  onTripInfoUpdate,
 }: ChatInterfaceProps) {
   // Create context message with current travel selections
   // Track processed tool calls to prevent re-execution
