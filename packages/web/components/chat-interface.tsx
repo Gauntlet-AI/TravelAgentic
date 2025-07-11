@@ -20,6 +20,9 @@ interface ChatInterfaceProps {
   hideCard?: boolean;
   travelDetails?: TravelDetails | null; // Add travel details prop
   onTabChange?: (tabValue: string) => void; // Add tab change handler
+  customSystemPrompt?: string; // Add custom system prompt support
+  customPlaceholder?: string; // Add custom placeholder support
+  mode?: string; // Add mode support
 }
 
 export function ChatInterface({
@@ -30,6 +33,9 @@ export function ChatInterface({
   hideCard,
   travelDetails,
   onTabChange,
+  customSystemPrompt,
+  customPlaceholder,
+  mode,
 }: ChatInterfaceProps) {
   // Create context message with current travel selections
   // Track processed tool calls to prevent re-execution
@@ -84,6 +90,8 @@ export function ChatInterface({
       api: '/api/chat',
       body: {
         travelContext: getTravelContext(), // Include travel context in API calls
+        ...(customSystemPrompt && { systemPrompt: customSystemPrompt }),
+        ...(mode && { mode }),
       },
     });
 
@@ -254,9 +262,11 @@ export function ChatInterface({
               value={input}
               onChange={handleInputChange}
               placeholder={
-                travelDetails 
-                  ? "e.g., 'Find flights' or 'Search budget hotels' or 'Show me outdoor activities'"
-                  : "e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
+                customPlaceholder || (
+                  travelDetails 
+                    ? "e.g., 'Find flights' or 'Search budget hotels' or 'Show me outdoor activities'"
+                    : "e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
+                )
               }
               className="flex-1"
             />
