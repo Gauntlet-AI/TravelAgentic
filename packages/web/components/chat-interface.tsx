@@ -24,6 +24,8 @@ interface ChatInterfaceProps {
   customPlaceholder?: string; // Add custom placeholder support
   mode?: string; // Add mode support
   customEmptyStateMessage?: string; // Add custom empty state message support
+  initialMessage?: string; // Add initial message support
+  clearHistory?: boolean; // Add clear history trigger
 }
 
 export function ChatInterface({
@@ -38,10 +40,13 @@ export function ChatInterface({
   customPlaceholder,
   mode,
   customEmptyStateMessage,
+  initialMessage,
+  clearHistory,
 }: ChatInterfaceProps) {
   // Create context message with current travel selections
   // Track processed tool calls to prevent re-execution
   const processedToolCallsRef = useRef<Set<string>>(new Set());
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getTravelContext = () => {
     if (!travelDetails) {
@@ -87,7 +92,7 @@ export function ChatInterface({
     return context;
   };
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages } =
     useChat({
       api: '/api/chat',
       body: {
@@ -96,6 +101,29 @@ export function ChatInterface({
         ...(mode && { mode }),
       },
     });
+
+  // Clear chat history when requested
+  useEffect(() => {
+    if (clearHistory) {
+      setMessages([]);
+    }
+  }, [clearHistory, setMessages]);
+
+  // Auto-scroll to bottom when messages change
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isLoading]);
+
+  // Send initial message when provided
+  useEffect(() => {
+    if (initialMessage && messages.length === 0) {
+      append({ role: 'user', content: initialMessage });
+    }
+  }, [initialMessage, append, messages.length]);
 
   // Effect to handle tab changes from tool calls
   useEffect(() => {
@@ -255,6 +283,7 @@ export function ChatInterface({
               </div>
             </div>
           )}
+          <div ref={messagesEndRef} />
         </ScrollArea>
 
         {/* Input Form */}
