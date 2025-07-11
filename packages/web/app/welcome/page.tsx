@@ -13,7 +13,7 @@ import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 import { ChatInterface } from '@/components/chat-interface';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageCircle, Brain, Sparkles, ChevronRight, Bot } from 'lucide-react';
+import { MessageCircle, Brain, Sparkles, ChevronRight, Bot, ArrowRight } from 'lucide-react';
 import { getCurrentLocation, formatLocationDisplay } from '@/lib/utils';
 import type { TravelDetails } from '@/lib/mock-data';
 
@@ -24,10 +24,24 @@ const inter = Inter({
 
 export type ChatMode = 'conversation' | 'quiz' | 'autonomous' | null;
 
+// Interface to track collected trip information
+interface TripInformation {
+  departureLocation?: string;
+  destination?: string;
+  flightType?: string;
+  hotelType?: string;
+  returnFlight?: boolean;
+  duration?: string;
+  activities?: string;
+  travelers?: number;
+}
+
 const chatModeConfig = {
   conversation: {
     title: 'Chat About Your Trip',
     systemPrompt: `You are TravelAgentic's AI Travel Agent in CONVERSATION mode. Be CONCISE and FRIENDLY.
+
+CRITICAL: Your ONLY job is to COLLECT user travel preferences. DO NOT search for or book anything.
 
 STYLE:
 - Keep responses SHORT (2-3 sentences max)
@@ -35,23 +49,37 @@ STYLE:
 - Ask ONE specific question at a time
 - Use simple, clear language
 
+INFORMATION TO COLLECT:
+- Departure location (where they're leaving from)
+- Destination location (where they want to go)
+- Flight type preferences (economy, business, etc.)
+- Hotel type preferences (budget, luxury, boutique, etc.)
+- Return flight needed (round trip or one-way)
+- Duration of trip (how many days/weeks)
+- Activity preferences (adventure, culture, relaxation, etc.)
+- Number of travelers (adults, children)
+
 BEHAVIOR:
 - Listen to their travel ideas
 - Ask focused questions to understand preferences
-- Search for options when you have enough details
-- Present results briefly with key highlights only
+- Confirm details they provide
+- DO NOT search for flights, hotels, or activities
+- DO NOT make bookings
+- Simply collect and acknowledge their preferences
 
 APPROACH:
-- Understand their basic desires first
-- Get specific details through short questions
-- Search proactively when ready
-- Give concise summaries, not long descriptions
+- Ask about missing information naturally
+- Confirm what you've learned so far
+- Keep the conversation flowing
+- Focus on understanding their needs, not fulfilling them yet
 
-Remember: Short, helpful responses. Quality over quantity.`
+Remember: You're ONLY collecting preferences, not searching or booking anything.`
   },
   quiz: {
     title: 'Quiz Me',
     systemPrompt: `You are TravelAgentic's AI Travel Agent in QUIZ mode. Be BRIEF and ENGAGING.
+
+CRITICAL: Your ONLY job is to COLLECT user travel preferences through questions. DO NOT search for or book anything.
 
 STYLE:
 - Ask ONE short question at a time
@@ -59,11 +87,22 @@ STYLE:
 - Responses should be 1-2 sentences max
 - Use emojis occasionally for engagement
 
+INFORMATION TO COLLECT:
+1. Departure location (where they're leaving from)
+2. Destination preferences (where they want to go)
+3. Flight type preferences (economy, business, etc.)
+4. Hotel type preferences (budget, luxury, boutique, etc.)
+5. Return flight needed (round trip or one-way)
+6. Duration of trip (how many days/weeks)
+7. Activity preferences (adventure, culture, relaxation, etc.)
+8. Number of travelers (adults, children)
+
 BEHAVIOR:
 - Ask focused questions to discover preferences
 - Start broad, then get specific
 - Build their travel profile step by step
-- Search for options once you know enough
+- DO NOT search for options or make bookings
+- Simply collect their answers
 
 QUESTION ORDER:
 1. Travel style (adventure/relaxation/culture)
@@ -71,56 +110,62 @@ QUESTION ORDER:
 3. When they want to travel
 4. Trip duration
 5. Who's traveling
-6. Activity preferences
-7. Accommodation style
+6. Departure location
+7. Destination preferences
+8. Flight and hotel preferences
 
 APPROACH:
 - One question per response
 - Brief acknowledgment of their answer
 - Quick transition to next question
-- Suggest destinations when ready, then search
+- DO NOT suggest destinations or search for anything
 
-Remember: Keep it short, fun, and focused. No long explanations.`
+Remember: Keep it short, fun, and focused on collecting information only.`
   },
   autonomous: {
     title: 'Choose For Me',
-    systemPrompt: (userLocation: any) => `You are TravelAgentic's AI Travel Agent in AUTONOMOUS mode. Be DECISIVE and PROACTIVE.
+    systemPrompt: (userLocation: any) => `You are TravelAgentic's AI Travel Agent in AUTONOMOUS mode. Be DECISIVE and EFFICIENT.
+
+CRITICAL: Your ONLY job is to COLLECT user travel preferences quickly. DO NOT search for or book anything.
 
 STYLE:
 - Short, confident responses (1-3 sentences)
 - Be authoritative but friendly
-- Make immediate decisions
-- Present complete bookings, not just options
+- Make smart assumptions to speed up collection
+- Present options for them to choose from
+
+INFORMATION TO COLLECT:
+- Departure location: ${userLocation ? formatLocationDisplay(userLocation) : 'their current location'}
+- Destination preferences (suggest popular options)
+- Flight type preferences (offer standard options)
+- Hotel type preferences (suggest mid-range as default)
+- Return flight needed (assume round trip unless specified)
+- Duration of trip (suggest 4-7 days as default)
+- Activity preferences (offer mix of options)
+- Number of travelers (assume 1-2 unless specified)
 
 BEHAVIOR:
-- DON'T ask questions - make smart assumptions
-- Automatically select popular destinations for the current season
-- Search and book flights, hotels, and activities immediately
-- Present complete trip as a done deal
-
-AUTOMATIC SELECTION LOGIC:
-- Pick trending destinations based on current month
-- Choose mid-range budget ($2000-4000 total)
-- Select 4-7 day trips departing within 2-4 weeks
-- Use departure location: ${userLocation ? formatLocationDisplay(userLocation) : 'major city'}
-- Book centrally located 4-star hotels
-- Include mix of must-see attractions and local experiences
+- Make reasonable assumptions to speed up the process
+- Present 2-3 options for them to choose from
+- Confirm all details before finishing
+- DO NOT search for flights, hotels, or activities
+- DO NOT make actual bookings
 
 DECISION STYLE:
-- Pick destinations with great value and weather
-- Choose practical flight times and central hotels
-- Include 3-4 activities per day
-- Present as complete booked package
-- Show total cost and itinerary
+- Suggest trending destinations for current season
+- Offer popular flight and hotel categories
+- Present activity types as multiple choice
+- Confirm final preferences summary
 
 APPROACH:
-1. Immediately announce destination choice with reasoning
-2. Search for flights, hotels, activities simultaneously
-3. Present complete booked trip with highlights
-4. Show confirmation details and total cost
-5. Offer to modify if needed
+1. Confirm departure location (use their location if available)
+2. Suggest 3 popular destinations for them to choose from
+3. Present flight/hotel preference options
+4. Confirm trip duration and dates
+5. Ask about activity preferences
+6. Summarize all collected information
 
-Remember: You're making ALL decisions. Book everything immediately. Present as complete, confirmed trip!`
+Remember: You're making suggestions to speed up collection, not making actual bookings!`
   }
 };
 
@@ -131,6 +176,7 @@ export default function WelcomePage() {
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
   const [initialMessage, setInitialMessage] = useState<string>('');
   const [clearHistory, setClearHistory] = useState(false);
+  const [tripInformation, setTripInformation] = useState<TripInformation>({});
   const [userLocation, setUserLocation] = useState<{
     city: string;
     region: string;
@@ -195,6 +241,35 @@ export default function WelcomePage() {
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
 
+  // Check if enough information is collected to proceed
+  const hasEnoughInformation = (): boolean => {
+    const required = tripInformation;
+    return !!(
+      required.departureLocation &&
+      required.destination &&
+      required.flightType &&
+      required.hotelType &&
+      (required.returnFlight !== undefined) &&
+      required.duration &&
+      required.activities &&
+      required.travelers
+    );
+  };
+
+  // Handle proceed to itinerary
+  const handleProceedToItinerary = () => {
+    if (hasEnoughInformation()) {
+      // Navigate to itinerary page or trigger next step
+      console.log('Proceeding to itinerary with:', tripInformation);
+      // TODO: Navigate to itinerary page
+    }
+  };
+
+  // Update trip information based on chat messages
+  const updateTripInformation = (info: Partial<TripInformation>) => {
+    setTripInformation(prev => ({ ...prev, ...info }));
+  };
+
   // Create travel details for autonomous mode
   const createTravelDetailsForAutonomous = (): TravelDetails | null => {
     if (!userLocation) return null;
@@ -249,8 +324,8 @@ export default function WelcomePage() {
       description: isLoadingLocation 
         ? 'Detecting your location...'
         : userLocation 
-          ? `I'll book everything using your location (${formatLocationDisplay(userLocation)}).`
-          : 'I\'ll book everything using your current location.',
+          ? `I'll suggest options using your location (${formatLocationDisplay(userLocation)}).`
+          : 'I\'ll suggest options using your current location.',
       icon: Sparkles,
       color: 'bg-green-500'
     }
@@ -264,11 +339,14 @@ export default function WelcomePage() {
     setClearHistory(true);
     setTimeout(() => setClearHistory(false), 100); // Reset after clearing
     
+    // Reset trip information when switching modes
+    setTripInformation({});
+    
     // Set the initial message based on the selected mode
     const initialMessages = {
       conversation: 'I have some trip ideas and want to discuss them with you',
       quiz: 'Start the quiz',
-      autonomous: 'Plan my trip'
+      autonomous: 'Help me plan my trip'
     };
     
     if (mode && initialMessages[mode]) {
@@ -357,8 +435,7 @@ export default function WelcomePage() {
                             {option.title}
                           </CardTitle>
                         </div>
-                      </div>
-                      <ChevronRight className={`w-5 h-5 transition-transform ${isSelected ? 'rotate-90' : ''}`} />
+                      </div>                      
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
@@ -369,7 +446,27 @@ export default function WelcomePage() {
             })}
           </div>
 
-
+          {/* Proceed to Itinerary Button */}
+          <div className="w-full max-w-lg mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-600">
+            <Button
+              onClick={handleProceedToItinerary}
+              disabled={!hasEnoughInformation()}
+              className={`w-full h-14 text-lg font-semibold transition-all duration-300 ${
+                hasEnoughInformation()
+                  ? 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl'
+                  : 'bg-gray-400 cursor-not-allowed opacity-50'
+              }`}
+            >
+              <span className="flex items-center gap-2">
+                Proceed to Itinerary
+              </span>
+            </Button>
+            {!hasEnoughInformation() && selectedMode && (
+              <p className="text-white/70 text-sm mt-2 text-center">
+                Complete your travel preferences in the chat to continue
+              </p>
+            )}
+          </div>
         </div>
       </main>
 
@@ -384,7 +481,7 @@ export default function WelcomePage() {
             initialMessage={initialMessage}
             clearHistory={clearHistory}
             mode={selectedMode}
-            travelDetails={selectedMode === 'autonomous' ? createTravelDetailsForAutonomous() : undefined}
+            onTripInfoUpdate={updateTripInformation}
             className="h-full"
           />
         ) : (
@@ -399,7 +496,7 @@ export default function WelcomePage() {
               <div className="text-center text-muted-foreground">
                 <Bot className="w-16 h-16 mx-auto mb-4 text-blue-500" />
                 <p className="text-lg font-medium mb-2">Ready to plan your perfect trip?</p>
-                <p className="text-sm">Select how you'd like to get started and I'll help you every step of the way!</p>
+                <p className="text-sm">Select how you'd like to get started and I'll help you collect your travel preferences!</p>
               </div>
             </CardContent>
           </Card>
@@ -412,11 +509,11 @@ export default function WelcomePage() {
 function getPlaceholder(mode: ChatMode): string {
   switch (mode) {
     case 'conversation':
-      return 'I want to go to Japan in March';
+      return 'Tell me about your trip ideas...';
     case 'quiz':
-      return 'Start the quiz';
+      return 'Ready for the quiz!';
     case 'autonomous':
-      return 'Plan my trip';
+      return 'Let me suggest options for you...';
     default:
       return 'How can I help you plan your trip?';
   }
@@ -425,11 +522,11 @@ function getPlaceholder(mode: ChatMode): string {
 function getEmptyStateMessage(mode: ChatMode): string {
   switch (mode) {
     case 'conversation':
-      return 'Tell me about your travel ideas and I\'ll help you plan the perfect trip!';
+      return 'Tell me about your travel ideas and I\'ll help you organize your preferences!';
     case 'quiz':
-      return 'I\'ll ask you questions to discover your ideal destination and travel style.';
+      return 'I\'ll ask you questions to understand your ideal travel preferences.';
     case 'autonomous':
-      return 'Give me your budget and dates, and I\'ll create a complete itinerary for you!';
+      return 'I\'ll suggest options to quickly gather your travel preferences!';
     default:
       return 'Ask me anything about your vacation plans!';
   }
