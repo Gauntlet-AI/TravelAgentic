@@ -95,7 +95,7 @@ export function LandingPage() {
             <Link href="/login">
               <Button
                 variant="ghost"
-                className="text-white hover:text-white hover:bg-white/10 backdrop-blur-sm"
+                className="!text-white hover:!text-white hover:bg-white/10 backdrop-blur-sm border-0 bg-transparent"
               >
                 Sign In
               </Button>
@@ -184,7 +184,7 @@ export function LandingPage() {
                     <Button
                       size="lg"
                       variant="outline"
-                      className="text-white border-white hover:bg-white/10 backdrop-blur-sm font-medium px-8 py-4 text-lg"
+                      className="!text-white border-white hover:bg-white/10 backdrop-blur-sm font-medium px-8 py-4 text-lg !bg-transparent hover:!text-white"
                     >
                       Sign In
                     </Button>
