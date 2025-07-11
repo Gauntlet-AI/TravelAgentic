@@ -226,7 +226,6 @@ export function LandingPage() {
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between p-6">
         <div className="flex items-center gap-2">
-          <Sparkles className="h-8 w-8 text-white" />
           <span
             className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}
           >
@@ -234,25 +233,7 @@ export function LandingPage() {
           </span>
         </div>
         
-        {user ? (
-          <UserProfileDropdown />
-        ) : (
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              className="!text-white hover:!text-white hover:bg-white/10 backdrop-blur-sm border-0 bg-transparent"
-              onClick={handleSignIn}
-            >
-              Sign In
-            </Button>
-            <Button
-              className="bg-white text-black hover:bg-white/90 font-medium"
-              onClick={handleGetStarted}
-            >
-              Sign Up
-            </Button>
-          </div>
-        )}
+        {user && <UserProfileDropdown />}
       </header>
 
       {/* Main Content */}
