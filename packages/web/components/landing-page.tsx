@@ -51,6 +51,7 @@ export function LandingPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Background slideshow images (same as travel input form)
   const backgroundImages = [
@@ -83,6 +84,7 @@ export function LandingPage() {
   // Redirect authenticated users to welcome page
   useEffect(() => {
     if (!loading && user) {
+      setIsRedirecting(true);
       window.location.href = '/welcome';
     }
   }, [user, loading]);
@@ -195,8 +197,10 @@ export function LandingPage() {
                 updated_at: new Date().toISOString(),
               });
           }
+          setIsRedirecting(true);
           setSuccessMessage('Account created successfully!');
-          // The auth context will handle the redirect
+          // Redirect immediately
+          window.location.href = '/welcome';
         }
       } else {
         // Use client-side signin
@@ -219,8 +223,10 @@ export function LandingPage() {
                 updated_at: new Date().toISOString(),
               });
           }
+          setIsRedirecting(true);
           setSuccessMessage('Signed in successfully!');
-          // The auth context will handle the redirect
+          // Redirect immediately
+          window.location.href = '/welcome';
         }
       }
     } catch (error) {
@@ -249,13 +255,15 @@ export function LandingPage() {
     }, 300);
   };
 
-  // Show loading state while checking authentication
-  if (loading) {
+  // Show loading state while checking authentication or redirecting
+  if (loading || isRedirecting) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
-          <p className="mt-4 text-white">Loading...</p>
+          <p className="mt-4 text-white">
+            {isRedirecting ? 'Redirecting...' : 'Loading...'}
+          </p>
         </div>
       </div>
     );
