@@ -13,8 +13,9 @@ import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 import { ChatInterface } from '@/components/chat-interface';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { MessageCircle, Brain, Sparkles, ChevronRight, Bot } from 'lucide-react';
+import { getCurrentLocation, formatLocationDisplay } from '@/lib/utils';
+import type { TravelDetails } from '@/lib/mock-data';
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -83,40 +84,43 @@ Remember: Keep it short, fun, and focused. No long explanations.`
   },
   autonomous: {
     title: 'Choose For Me',
-    systemPrompt: `You are TravelAgentic's AI Travel Agent in AUTONOMOUS mode. Be DECISIVE and BRIEF.
+    systemPrompt: (userLocation: any) => `You are TravelAgentic's AI Travel Agent in AUTONOMOUS mode. Be DECISIVE and PROACTIVE.
 
 STYLE:
 - Short, confident responses (1-3 sentences)
 - Be authoritative but friendly
-- Make quick decisions
-- Present options clearly and concisely
+- Make immediate decisions
+- Present complete bookings, not just options
 
 BEHAVIOR:
-- Ask only essential questions: budget, dates, departure city
-- Make confident destination choices
-- Search and present complete options immediately
-- Be the expert - don't overthink or over-explain
+- DON'T ask questions - make smart assumptions
+- Automatically select popular destinations for the current season
+- Search and book flights, hotels, and activities immediately
+- Present complete trip as a done deal
 
-REQUIRED INFO (ask quickly):
-- Budget range
-- Travel dates
-- Departure location
-- Any must-haves or deal-breakers
-
-APPROACH:
-1. Get essentials in 2-3 quick questions
-2. Choose perfect destination based on their info
-3. Search for flights, hotels, activities immediately
-4. Present complete trip with brief highlights
-5. Ready to book or adjust if needed
+AUTOMATIC SELECTION LOGIC:
+- Pick trending destinations based on current month
+- Choose mid-range budget ($2000-4000 total)
+- Select 4-7 day trips departing within 2-4 weeks
+- Use departure location: ${userLocation ? formatLocationDisplay(userLocation) : 'major city'}
+- Book centrally located 4-star hotels
+- Include mix of must-see attractions and local experiences
 
 DECISION STYLE:
-- Pick great value destinations
-- Choose practical flights and central hotels
-- Include mix of popular and unique activities
-- Present as complete package
+- Pick destinations with great value and weather
+- Choose practical flight times and central hotels
+- Include 3-4 activities per day
+- Present as complete booked package
+- Show total cost and itinerary
 
-Remember: You're the expert. Be confident, quick, and decisive!`
+APPROACH:
+1. Immediately announce destination choice with reasoning
+2. Search for flights, hotels, activities simultaneously
+3. Present complete booked trip with highlights
+4. Show confirmation details and total cost
+5. Offer to modify if needed
+
+Remember: You're making ALL decisions. Book everything immediately. Present as complete, confirmed trip!`
   }
 };
 
@@ -127,6 +131,32 @@ export default function WelcomePage() {
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
   const [initialMessage, setInitialMessage] = useState<string>('');
   const [clearHistory, setClearHistory] = useState(false);
+  const [userLocation, setUserLocation] = useState<{
+    city: string;
+    region: string;
+    country: string;
+    latitude: number;
+    longitude: number;
+    timezone: string;
+  } | null>(null);
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  // Fetch user location on component mount
+  useEffect(() => {
+    const fetchLocation = async () => {
+      setIsLoadingLocation(true);
+      try {
+        const location = await getCurrentLocation();
+        setUserLocation(location);
+      } catch (error) {
+        console.error('Failed to get user location:', error);
+      } finally {
+        setIsLoadingLocation(false);
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   // Background slideshow images (same as landing page)
   const backgroundImages = [
@@ -165,33 +195,64 @@ export default function WelcomePage() {
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
 
+  // Create travel details for autonomous mode
+  const createTravelDetailsForAutonomous = (): TravelDetails | null => {
+    if (!userLocation) return null;
+    
+    const today = new Date();
+    const departureDate = new Date(today);
+    departureDate.setDate(today.getDate() + 14); // 2 weeks from now
+    
+    const returnDate = new Date(departureDate);
+    returnDate.setDate(departureDate.getDate() + 5); // 5-day trip
+    
+    return {
+      departureLocation: formatLocationDisplay(userLocation),
+      destination: '', // Will be chosen by AI
+      startDate: departureDate,
+      endDate: returnDate,
+      travelers: 1,
+      adults: 1,
+      children: 0,
+    };
+  };
+
+  // Get system prompt for selected mode
+  const getSystemPrompt = (mode: ChatMode): string => {
+    if (!mode) return '';
+    
+    const config = chatModeConfig[mode];
+    if (typeof config.systemPrompt === 'function') {
+      return config.systemPrompt(userLocation);
+    }
+    return config.systemPrompt;
+  };
+
   const chatModeOptions = [
     {
       id: 'conversation' as ChatMode,
       title: 'Chat about your trip',
-      description: 'You have some ideas and want to discuss them with me',
+      description: 'Perfect when you know roughly what you want.',
       icon: MessageCircle,
-      color: 'bg-blue-500',
-      badge: 'Collaborative',
-      details: 'Perfect when you know roughly what you want but need help refining your plans'
+      color: 'bg-blue-500'
     },
     {
       id: 'quiz' as ChatMode,
       title: 'Quiz me',
-      description: 'You\'re not sure what you want - let me ask questions to find out',
+      description: 'You\'re not sure what you want - I\'ll ask questions to find out.',
       icon: Brain,
-      color: 'bg-purple-500',
-      badge: 'Guided',
-      details: 'I\'ll ask you questions to discover your perfect destination and travel style'
+      color: 'bg-purple-500'
     },
     {
       id: 'autonomous' as ChatMode,
       title: 'Choose for me',
-      description: 'Just tell me your budget and dates - I\'ll plan everything',
+      description: isLoadingLocation 
+        ? 'Detecting your location...'
+        : userLocation 
+          ? `I'll book everything using your location (${formatLocationDisplay(userLocation)}).`
+          : 'I\'ll book everything using your current location.',
       icon: Sparkles,
-      color: 'bg-green-500',
-      badge: 'Autonomous',
-      details: 'Give me minimal info and I\'ll create a complete itinerary for you'
+      color: 'bg-green-500'
     }
   ];
 
@@ -262,7 +323,7 @@ export default function WelcomePage() {
             <p className="text-lg text-white/90 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
               {user && (
                 <span className="block mb-2">
-                  Welcome back, <span className="font-semibold text-blue-300">{user.email}</span>!
+                  Welcome back, <span className="font-semibold text-blue-300">{user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}</span>!
                 </span>
               )}
               Choose how you'd like to get started
@@ -295,9 +356,6 @@ export default function WelcomePage() {
                           <CardTitle className="text-lg font-semibold text-gray-900">
                             {option.title}
                           </CardTitle>
-                          <Badge variant="secondary" className="text-xs mt-1">
-                            {option.badge}
-                          </Badge>
                         </div>
                       </div>
                       <ChevronRight className={`w-5 h-5 transition-transform ${isSelected ? 'rotate-90' : ''}`} />
@@ -305,7 +363,6 @@ export default function WelcomePage() {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <p className="text-gray-700 text-sm mb-2">{option.description}</p>
-                    <p className="text-gray-500 text-xs">{option.details}</p>
                   </CardContent>
                 </Card>
               );
@@ -321,12 +378,13 @@ export default function WelcomePage() {
         {selectedMode ? (
           <ChatInterface
             key={chatKey}
-            customSystemPrompt={chatModeConfig[selectedMode].systemPrompt}
+            customSystemPrompt={getSystemPrompt(selectedMode)}
             customPlaceholder={getPlaceholder(selectedMode)}
             customEmptyStateMessage={getEmptyStateMessage(selectedMode)}
             initialMessage={initialMessage}
             clearHistory={clearHistory}
             mode={selectedMode}
+            travelDetails={selectedMode === 'autonomous' ? createTravelDetailsForAutonomous() : undefined}
             className="h-full"
           />
         ) : (
@@ -342,6 +400,16 @@ export default function WelcomePage() {
                 <Bot className="w-16 h-16 mx-auto mb-4 text-blue-500" />
                 <p className="text-lg font-medium mb-2">Ready to plan your perfect trip?</p>
                 <p className="text-sm">Select how you'd like to get started and I'll help you every step of the way!</p>
+                {isLoadingLocation && (
+                  <div className="mt-4 text-xs text-blue-600">
+                    <div className="animate-pulse">📍 Detecting your location...</div>
+                  </div>
+                )}
+                {userLocation && !isLoadingLocation && (
+                  <div className="mt-4 text-xs text-green-600">
+                    📍 Location detected: {formatLocationDisplay(userLocation)}
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
