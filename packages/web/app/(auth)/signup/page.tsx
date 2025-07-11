@@ -65,7 +65,7 @@ export default function SignupPage() {
           alert('Please check your email to confirm your account');
         } else {
           alert('Account created successfully! Welcome to TravelAgentic.');
-          window.location.href = '/';
+          window.location.href = '/welcome';
         }
       } else {
         if (data.details) {

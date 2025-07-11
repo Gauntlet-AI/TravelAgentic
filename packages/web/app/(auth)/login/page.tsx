@@ -39,8 +39,8 @@ export default function LoginPage() {
       const data = await response.json();
 
       if (data.success) {
-        // Redirect to dashboard or home page
-        window.location.href = '/';
+        // Redirect to welcome page
+        window.location.href = '/welcome';
       } else {
         alert(data.error || 'Sign in failed');
       }

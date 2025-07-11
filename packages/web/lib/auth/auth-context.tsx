@@ -54,13 +54,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Set up the listener for future changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+        // Listen for auth changes
+        const {
+          data: { subscription: authSubscription },
+        } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
+          setUser(session?.user ?? null);
+
+          // Handle redirect after sign in
+          if (event === 'SIGNED_IN' && session?.user) {
+            window.location.href = '/welcome';
+          }
+
+          // Handle redirect after sign out
+          if (event === 'SIGNED_OUT') {
+            window.location.href = '/';
+          }
+        });
+
+        subscription = authSubscription;
+      } catch (error) {
+        console.error('Error getting session:', error);
+      } finally {
+        setLoading(false);
+      }
+    }, 100);
 
     return () => {
       subscription.unsubscribe();
