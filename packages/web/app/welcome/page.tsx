@@ -215,20 +215,6 @@ export default function WelcomePage() {
           />
         </div>
       </main>
-
-      {/* Floating dots indicator for slideshow */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20">
-        <div className="flex space-x-2">
-          {backgroundImages.map((_, index) => (
-            <div
-              key={index}
-              className={`w-2 h-2 rounded-full transition-all duration-300 ${
-                index === currentImageIndex ? 'bg-white' : 'bg-white/40'
-              }`}
-            />
-          ))}
-        </div>
-      </div>
     </div>
   );
 } 
