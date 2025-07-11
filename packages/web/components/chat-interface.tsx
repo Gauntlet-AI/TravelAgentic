@@ -223,63 +223,71 @@ export function ChatInterface({
 
         {/* Scrollable Messages Area */}
         <ScrollArea className="flex-1 overflow-y-auto p-4">
-          {messages.map((message) => (
-            <div
-              key={message.id}
-              className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
-            >
+          {messages.map((message, index) => {
+            // Skip rendering the assistant's partial streaming message while loading
+            if (isLoading && index === messages.length - 1 && message.role === 'assistant') {
+              return null;
+            }
+            return (
               <div
-                className={`inline-block max-w-[80%] rounded-lg p-3 ${
-                  message.role === 'user'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
+                key={message.id}
+                className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
               >
-                {message.content}
+                <div
+                  className={`inline-block max-w-[80%] rounded-lg p-3 ${
+                    message.role === 'user'
+                      ? 'bg-blue-500 text-white'
+                      : 'bg-gray-100 text-gray-900'
+                  }`}
+                >
+                  {message.content}
 
-                {/* Show tool calls if they exist */}
-                {message.toolInvocations &&
-                  message.toolInvocations.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {message.toolInvocations.map((tool, index) => (
-                        <div
-                          key={index}
-                          className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
-                        >
-                          <div className="flex items-center gap-2 font-medium text-blue-700">
-                            {tool.toolName === 'searchFlights' &&
-                              '✈️ Searching flights...'}
-                            {tool.toolName === 'searchHotels' &&
-                              '🏨 Searching hotels...'}
-                            {tool.toolName === 'searchActivities' &&
-                              '🎯 Searching activities...'}
-                          </div>
-                          {'result' in tool && tool.result && (
-                            <div className="mt-1 text-xs text-gray-600">
-                              {(tool.result as any).success ? (
-                                <span className="text-green-600">
-                                  ✅ Found{' '}
-                                  {(tool.result as any).data?.length || 0}{' '}
-                                  options
-                                </span>
-                              ) : (
-                                <span className="text-red-600">
-                                  ❌ {(tool.result as any).message}
-                                </span>
-                              )}
+                  {/* Show tool calls if they exist */}
+                  {message.toolInvocations &&
+                    message.toolInvocations.length > 0 && (
+                      <div className="mt-3 space-y-2">
+                        {message.toolInvocations.map((tool, index) => (
+                          <div
+                            key={index}
+                            className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
+                          >
+                            <div className="flex items-center gap-2 font-medium text-blue-700">
+                              {tool.toolName === 'searchFlights' && '✈️ Searching flights...'}
+                              {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}
+                              {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
                             </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                            {'result' in tool && tool.result && (
+                              <div className="mt-1 text-xs text-gray-600">
+                                {(tool.result as any).success ? (
+                                  <span className="text-green-600">
+                                    ✅ Found {(tool.result as any).data?.length || 0} options
+                                  </span>
+                                ) : (
+                                  <span className="text-red-600">
+                                    ❌ {(tool.result as any).message}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {isLoading && (
             <div className="text-left">
               <div className="inline-block rounded-lg bg-gray-100 p-3 text-gray-900">
-                AI is thinking...
+                <div className="flex items-center gap-2">
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  </div>
+                  <span className="text-sm text-gray-600">Thinking...</span>
+                </div>
               </div>
             </div>
           )}
