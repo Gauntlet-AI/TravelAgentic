@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useAuth } from '@/lib/auth/auth-context';
 import { UserProfileDropdown } from '@/components/user-profile-dropdown';
+import { supabase } from '@/lib/supabase/client';
 
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
@@ -32,7 +33,7 @@ interface FormErrors {
 }
 
 export function LandingPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [formMode, setFormMode] = useState<'signup' | 'login'>('signup');
@@ -77,6 +78,13 @@ export function LandingPage() {
       alt: 'Northern Lights',
     },
   ];
+
+  // Redirect authenticated users to welcome page
+  useEffect(() => {
+    if (!loading && user) {
+      window.location.href = '/welcome';
+    }
+  }, [user, loading]);
 
   // Slideshow effect with proper crossfade
   useEffect(() => {
@@ -145,43 +153,60 @@ export function LandingPage() {
     setSuccessMessage('');
 
     try {
-      const endpoint = formMode === 'signup' ? '/api/auth/signup' : '/api/auth/signin';
-      const payload = formMode === 'signup' 
-        ? {
-            firstName: formData.firstName,
-            lastName: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-          }
-        : {
-            email: formData.email,
-            password: formData.password,
-          };
+      if (formMode === 'signup') {
+        // Use client-side signup
+        const { data, error } = await supabase.auth.signUp({
+          email: formData.email,
+          password: formData.password,
+          options: {
+            data: {
+              full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+            },
+          },
+        });
 
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        if (formMode === 'signup' && result.requiresConfirmation) {
+        if (error) {
+          setErrors({ general: error.message });
+        } else if (!data.session) {
           setSuccessMessage('Please check your email to confirm your account.');
         } else {
-          setSuccessMessage(result.message || 'Success!');
+          // Create user profile after successful signup
+          if (data.user) {
+            await supabase
+              .from('users')
+              .upsert({
+                id: data.user.id,
+                full_name: `${formData.firstName} ${formData.lastName}`.trim(),
+                avatar_url: data.user.user_metadata?.avatar_url || null,
+                updated_at: new Date().toISOString(),
+              });
+          }
+          setSuccessMessage('Account created successfully!');
           // The auth context will handle the redirect
         }
       } else {
-        if (result.details) {
-          const fieldErrors: FormErrors = {};
-          result.details.forEach((detail: { field: string; message: string }) => {
-            fieldErrors[detail.field] = detail.message;
-          });
-          setErrors(fieldErrors);
+        // Use client-side signin
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: formData.email,
+          password: formData.password,
+        });
+
+        if (error) {
+          setErrors({ general: error.message });
         } else {
-          setErrors({ general: result.error || 'An error occurred' });
+          // Update user profile after successful signin
+          if (data.user) {
+            await supabase
+              .from('users')
+              .upsert({
+                id: data.user.id,
+                full_name: data.user.user_metadata?.full_name || data.user.email?.split('@')[0] || null,
+                avatar_url: data.user.user_metadata?.avatar_url || null,
+                updated_at: new Date().toISOString(),
+              });
+          }
+          setSuccessMessage('Signed in successfully!');
+          // The auth context will handle the redirect
         }
       }
     } catch (error) {
@@ -201,6 +226,18 @@ export function LandingPage() {
     setFormMode('login');
     setShowForm(true);
   };
+
+  // Show loading state while checking authentication
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-400 mx-auto"></div>
+          <p className="mt-4 text-white">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -272,48 +309,24 @@ export function LandingPage() {
               </div>
 
               {/* CTA Buttons */}
-              {user ? (
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Link href="/plan">
-                    <Button
-                      size="lg"
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-4 text-lg"
-                    >
-                      <Plane className="mr-2 h-5 w-5" />
-                      Start Planning
-                    </Button>
-                  </Link>
-                  <Link href="/account">
-                    <Button
-                      size="lg"
-                      variant="outline"
-                      className="text-white border-white hover:bg-white/10 backdrop-blur-sm font-medium px-8 py-4 text-lg"
-                    >
-                      <Users className="mr-2 h-5 w-5" />
-                      My Account
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                  <Button
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-4 text-lg"
-                    onClick={handleGetStarted}
-                  >
-                    <Sparkles className="mr-2 h-5 w-5" />
-                    Get Started
-                  </Button>
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="!text-white border-white hover:bg-white/10 backdrop-blur-sm font-medium px-8 py-4 text-lg !bg-transparent hover:!text-white"
-                    onClick={handleSignIn}
-                  >
-                    Sign In
-                  </Button>
-                </div>
-              )}
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                <Button
+                  size="lg"
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-8 py-4 text-lg"
+                  onClick={handleGetStarted}
+                >
+                  <Sparkles className="mr-2 h-5 w-5" />
+                  Get Started
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="!text-white border-white hover:bg-white/10 backdrop-blur-sm font-medium px-8 py-4 text-lg !bg-transparent hover:!text-white"
+                  onClick={handleSignIn}
+                >
+                  Sign In
+                </Button>
+              </div>
             </div>
 
             {/* Right Side Content */}

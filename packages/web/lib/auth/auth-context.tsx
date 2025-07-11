@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Handle redirect after sign in
           if (event === 'SIGNED_IN' && session?.user) {
-            window.location.href = '/';
+            window.location.href = '/welcome';
           }
 
           // Handle redirect after sign out
