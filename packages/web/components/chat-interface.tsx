@@ -53,8 +53,10 @@ export function ChatInterface({
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const getTravelContext = () => {
+    const todayISO = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+
     if (!travelDetails) {
-      return "The user hasn't made any travel selections yet.";
+      return `TODAY_IS: ${todayISO}\n\nThe user hasn't made any travel selections yet.`;
     }
     
     const { 
@@ -66,7 +68,7 @@ export function ChatInterface({
       children 
     } = travelDetails;
     
-    let context = "CURRENT USER SELECTIONS:\n";
+    let context = `TODAY_IS: ${todayISO}\n\nCURRENT USER SELECTIONS:\n`;
     
     if (departureLocation) {
       context += `- Departure: ${departureLocation}\n`;
@@ -193,6 +195,64 @@ export function ChatInterface({
     });
   }, [messages, onTripInfoUpdate]);
 
+  // Effect to handle trip status check tool calls
+  useEffect(() => {
+    // Find all checkTripStatus tool calls across all messages
+    const allCheckTripStatusToolCalls = messages.flatMap((msg) => 
+      msg.toolInvocations?.filter(tool => tool.toolName === 'checkTripStatus') || []
+    );
+
+    // Process only new tool calls that haven't been processed yet
+    allCheckTripStatusToolCalls.forEach((toolCall) => {
+      const toolCallId = toolCall.toolCallId;
+      
+      // Skip if already processed
+      if (processedToolCallsRef.current.has(toolCallId)) {
+        return;
+      }
+      
+      // Check localStorage state and provide feedback to AI
+      if (typeof window !== 'undefined') {
+        try {
+          const stored = localStorage.getItem('tripPreferences');
+          const tripInfo = stored ? JSON.parse(stored) : {};
+          
+          // Check if all required fields are present
+          const hasAllFields = !!(
+            tripInfo.departureLocation &&
+            tripInfo.destination &&
+            tripInfo.departureDate &&
+            tripInfo.flightType &&
+            tripInfo.hotelType &&
+            (tripInfo.returnFlight !== undefined) &&
+            tripInfo.duration &&
+            tripInfo.activities &&
+            tripInfo.travelers
+          );
+          
+          // Send a follow-up message to the AI with the actual status
+          const statusMessage = hasAllFields 
+            ? "✅ Trip status check complete: All required information is collected and the user can proceed to itinerary planning!"
+            : `❌ Trip status check: Missing required fields. Current state: ${JSON.stringify(tripInfo, null, 2)}`;
+          
+          // Add the status message to the conversation
+          setTimeout(() => {
+            append({
+              role: 'system',
+              content: statusMessage
+            });
+          }, 100);
+          
+        } catch (error) {
+          console.error('Error checking trip status:', error);
+        }
+      }
+      
+      // Mark as processed
+      processedToolCallsRef.current.add(toolCallId);
+    });
+  }, [messages, append]);
+
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
   const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
 
@@ -298,6 +358,7 @@ export function ChatInterface({
                               {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}
                               {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
                               {tool.toolName === 'updateTripInfo' && '✅ Saving trip information...'}
+                              {tool.toolName === 'checkTripStatus' && '🔍 Checking trip completion status...'}
                             </div>
                             {'result' in tool && tool.result && (
                               <div className="mt-1 text-xs text-gray-600">
