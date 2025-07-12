@@ -21,6 +21,7 @@ interface MobileChatBubbleProps {
   mode?: string;
   onTripInfoUpdate?: (info: any) => void;
   tripInfoComplete?: boolean;
+  defaultOpen?: boolean;
 }
 
 export function MobileChatBubble({
@@ -34,8 +35,9 @@ export function MobileChatBubble({
   mode,
   onTripInfoUpdate,
   tripInfoComplete,
+  defaultOpen,
 }: MobileChatBubbleProps) {
-  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(!!defaultOpen);
 
   return (
     <>

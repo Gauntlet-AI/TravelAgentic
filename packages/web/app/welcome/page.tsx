@@ -12,6 +12,7 @@ import { useAuth } from '@/lib/auth/auth-context';
 import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 import { ChatInterface } from '@/components/chat-interface';
 import { MobileChatBubble } from '@/components/mobile-chat-bubble';
+import { useIsMobile } from '@/hooks/use-mobile';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Brain, Sparkles, ChevronRight, Bot, ArrowRight } from 'lucide-react';
@@ -233,6 +234,7 @@ export default function WelcomePage() {
   const [selectedMode, setSelectedMode] = useState<ChatMode>(null);
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
   const [initialMessage, setInitialMessage] = useState<string>('');
+  const isMobile = useIsMobile();
   const [tripInformation, setTripInformation] = useState<TripInformation>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -596,6 +598,7 @@ export default function WelcomePage() {
             mode={selectedMode}
             onTripInfoUpdate={updateTripInformation}
             tripInfoComplete={hasEnoughInformation()}
+            defaultOpen={isMobile}
           />
         ) : (
           <Button
