@@ -405,11 +405,7 @@ export default function WelcomePage() {
     {
       id: 'autonomous' as ChatMode,
       title: 'Choose for me',
-      description: isLoadingLocation 
-        ? 'Detecting your location...'
-        : userLocation 
-          ? `I'll suggest options using your location (${formatLocationDisplay(userLocation)}).`
-          : 'I\'ll suggest options using your current location.',
+      description: 'I\'ll plan everything for you.',
       icon: Sparkles,
       color: 'bg-green-500'
     }
