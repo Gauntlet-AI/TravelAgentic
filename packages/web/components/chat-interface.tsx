@@ -402,7 +402,7 @@ export function ChatInterface({
         </ScrollArea>
 
         {/* Input Form - Always at bottom */}
-        <div className="mt-auto bg-white p-4">
+        <div className={`mt-auto bg-white p-4 ${isMobile ? 'pb-8' : ''}`}>
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}
