@@ -234,18 +234,9 @@ export function ChatInterface({
             tripInfo.travelers
           );
           
-          // Send a follow-up message to the AI with the actual status
-          const statusMessage = hasAllFields 
-            ? "✅ Trip status check complete: All required information is collected and the user can proceed to itinerary planning!"
-            : `❌ Trip status check: Missing required fields. Current state: ${JSON.stringify(tripInfo, null, 2)}`;
-          
-          // Add the status message to the conversation
-          setTimeout(() => {
-            append({
-              role: 'system',
-              content: statusMessage
-            });
-          }, 100);
+          // Previously we sent a follow-up system message with the trip status to the chat panel. 
+          // Per latest requirements, we no longer append this status message to avoid cluttering the UI.
+          // The tool invocation is still processed and marked as handled, but no additional chat message is displayed.
           
         } catch (error) {
           console.error('Error checking trip status:', error);
