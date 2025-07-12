@@ -43,7 +43,7 @@ import {
   type Flight,
   type Hotel,
   type TravelDetails,
-  activityTypes,
+  type ActivityTypeCard,
   mockFlights,
 } from '@/lib/mock-data';
 
@@ -62,6 +62,8 @@ export default function VacationPlanner() {
   const [isLoadingHotels, setIsLoadingHotels] = useState(false);
   const [isLoadingActivities, setIsLoadingActivities] = useState(false);
   const [activityResearch, setActivityResearch] = useState<string>('');
+  const [activityTypes, setActivityTypes] = useState<ActivityTypeCard[]>([]);
+  const [isLoadingActivityTypes, setIsLoadingActivityTypes] = useState(false);
 
   // Add new state variables for loading states
   const [isLoadingFlights, setIsLoadingFlights] = useState(false);
@@ -103,6 +105,28 @@ export default function VacationPlanner() {
       setFilteredActivities(filtered);
     }
   }, [allActivities, selectedActivityTypes]);
+
+  // Fetch activity types from API
+  useEffect(() => {
+    const fetchActivityTypes = async () => {
+      setIsLoadingActivityTypes(true);
+      try {
+        const response = await fetch('/api/activities/categories');
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setActivityTypes(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching activity types:', error);
+      } finally {
+        setIsLoadingActivityTypes(false);
+      }
+    };
+
+    fetchActivityTypes();
+  }, []);
 
   const handleTravelDetailsSubmit = async (details: TravelDetails) => {
     setTravelDetails(details);
@@ -250,10 +274,34 @@ export default function VacationPlanner() {
       fallbackToMockData();
     }
 
-    // Fallback function to use mock data
+    // Fallback function to use API data
     function fallbackToMockData() {
-      setTimeout(() => {
-        setFlights(mockFlights);
+      setTimeout(async () => {
+        try {
+          const response = await fetch('/api/flights/search', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              origin: details.departureLocation,
+              destination: details.destination,
+              departureDate: details.startDate ? format(details.startDate, 'yyyy-MM-dd') : '',
+              returnDate: details.endDate ? format(details.endDate, 'yyyy-MM-dd') : '',
+              passengers: details.travelers,
+              cabinClass: 'economy'
+            })
+          });
+          
+          if (response.ok) {
+            const result = await response.json();
+            if (result.success) {
+              setFlights(result.data);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching flights:', error);
+          // Use hardcoded fallback only if API fails
+          setFlights(mockFlights);
+        }
         setIsLoadingFlights(false);
         clearInterval(researchThinkingInterval);
         checkAllAgentsComplete();

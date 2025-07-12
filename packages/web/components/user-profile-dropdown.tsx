@@ -14,9 +14,12 @@ import {
   Sliders,
   MapPin,
   Calendar,
-  DollarSign
+  DollarSign,
+  Zap,
+  Star,
+  Clock
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/lib/auth/auth-context';
+import { useAutomationLevel } from '@/hooks/useAutomationLevel';
+import { AutomationUtils, type AutomationLevel, AUTOMATION_PACKAGES } from '@/lib/automation-levels';
 
 interface UserProfileDropdownProps {
   className?: string;
@@ -42,8 +47,10 @@ interface UserProfileDropdownProps {
 export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
   const { user, signOut } = useAuth();
   const router = useRouter();
-  const [automationLevel, setAutomationLevel] = useState([2]); // Default to level 2
+  const automation = useAutomationLevel();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [tripHistory, setTripHistory] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
   if (!user) return null;
 
@@ -51,44 +58,29 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
   const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
   const userEmail = user.email || '';
 
-  // Mock trip history data
-  const tripHistory = [
-    {
-      id: 1,
-      destination: 'Paris, France',
-      dates: 'Mar 15-22, 2024',
-      status: 'Completed',
-      total: '$2,840'
-    },
-    {
-      id: 2,
-      destination: 'Tokyo, Japan',
-      dates: 'Jan 10-18, 2024',
-      status: 'Completed',
-      total: '$3,220'
-    },
-    {
-      id: 3,
-      destination: 'Barcelona, Spain',
-      dates: 'Dec 20-27, 2023',
-      status: 'Completed',
-      total: '$1,950'
-    },
-    {
-      id: 4,
-      destination: 'Rome, Italy',
-      dates: 'Oct 5-12, 2023',
-      status: 'Completed',
-      total: '$2,100'
-    },
-    {
-      id: 5,
-      destination: 'New York, USA',
-      dates: 'Aug 20-25, 2023',
-      status: 'Completed',
-      total: '$1,680'
-    }
-  ];
+  // Fetch trip history from API
+  useEffect(() => {
+    const fetchTripHistory = async () => {
+      setIsLoadingHistory(true);
+      
+      try {
+        const response = await fetch(`/api/user/history?userId=${user.id}&limit=5`);
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success) {
+            setTripHistory(result.data);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch trip history:', error);
+        // Keep empty array as fallback
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    fetchTripHistory();
+  }, [user.id]);
 
   const handleSignOut = async () => {
     setIsSigningOut(true);
@@ -102,14 +94,9 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
     }
   };
 
-  const getAutomationDescription = (level: number) => {
-    switch (level) {
-      case 1: return 'No specific filtering, sorted by most likely';
-      case 2: return 'Auto-select but require confirmation to move on';
-      case 3: return 'One-shot but wait at checkout';
-      case 4: return 'One-shot checkout';
-      default: return 'Auto-select but require confirmation to move on';
-    }
+  const handleAutomationLevelChange = (value: number[]) => {
+    const newLevel = value[0] as AutomationLevel;
+    automation.setLevel(newLevel);
   };
 
   return (
@@ -177,28 +164,67 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
         <div className="p-4 space-y-3">
           <div className="flex items-center justify-between">
             <Label className="text-sm font-medium flex items-center gap-2">
-              <Sliders className="h-4 w-4" />
+              <Zap className="h-4 w-4" />
               Automation Level
             </Label>
             <Badge variant="outline" className="text-xs">
-              Level {automationLevel[0]}/4
+              Level {automation.level}/4
             </Badge>
           </div>
           
           <div className="space-y-2">
             <Slider
-              value={automationLevel}
-              onValueChange={setAutomationLevel}
+              value={[automation.level]}
+              onValueChange={handleAutomationLevelChange}
               max={4}
               min={1}
               step={1}
               className="w-full"
             />
             <div className="text-xs text-gray-500 text-center">
-              {getAutomationDescription(automationLevel[0])}
+              {automation.config.shortDescription}
             </div>
           </div>
         </div>
+
+        {/* Automation Package Selector */}
+        <>
+          <Separator />
+          <div className="p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Package
+              </Label>
+              <Badge variant="outline" className="text-xs">
+                {automation.automationPackageConfig?.name || 'Experience'}
+              </Badge>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="grid grid-cols-2 gap-1">
+                {Object.values(AUTOMATION_PACKAGES).map((pkg) => (
+                  <Button
+                    key={pkg.packageType}
+                    variant={automation.automationPackage === pkg.packageType ? "default" : "outline"}
+                    size="sm"
+                    className="text-xs h-8"
+                    onClick={() => automation.setAutomationPackage(pkg.packageType)}
+                  >
+                    {pkg.packageType === 'budget' && <DollarSign className="h-3 w-3 mr-1" />}
+                    {pkg.packageType === 'experience' && <Star className="h-3 w-3 mr-1" />}
+                    {pkg.packageType === 'time' && <Clock className="h-3 w-3 mr-1" />}
+                    {pkg.packageType === 'custom' && <Settings className="h-3 w-3 mr-1" />}
+                    {pkg.name.split(' ')[0]}
+                  </Button>
+                ))}
+              </div>
+              <div className="text-xs text-gray-500 text-center">
+                {automation.automationPackageConfig?.shortDescription}
+              </div>
+            </div>
+          </div>
+        </>
 
         <Separator />
 
@@ -210,28 +236,38 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
           </Label>
           
           <div className="max-h-48 overflow-y-auto space-y-2">
-            {tripHistory.map((trip) => (
-              <div key={trip.id} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">{trip.destination}</div>
-                    <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
-                      <Calendar className="h-3 w-3" />
-                      {trip.dates}
+            {isLoadingHistory ? (
+              <div className="flex items-center justify-center py-4">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              </div>
+            ) : tripHistory.length > 0 ? (
+              tripHistory.map((trip) => (
+                <div key={trip.id} className="p-3 border rounded-lg hover:bg-gray-50 cursor-pointer">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">{trip.destination}</div>
+                      <div className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                        <Calendar className="h-3 w-3" />
+                        {trip.dates}
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="font-medium text-sm flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      {trip.total.replace('$', '')}
+                    <div className="text-right">
+                      <div className="font-medium text-sm flex items-center gap-1">
+                        <DollarSign className="h-3 w-3" />
+                        {trip.total.replace('$', '')}
+                      </div>
+                      <Badge variant="secondary" className="text-xs mt-1">
+                        {trip.status}
+                      </Badge>
                     </div>
-                    <Badge variant="secondary" className="text-xs mt-1">
-                      {trip.status}
-                    </Badge>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))
+            ) : (
+              <p className="text-sm text-gray-500 text-center py-4">
+                No trip history available
+              </p>
+            )}
           </div>
         </div>
       </DropdownMenuContent>

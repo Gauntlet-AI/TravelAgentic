@@ -272,18 +272,21 @@ export class MockFlightService implements IFlightService {
     const duration = this.calculateFlightDuration(origin, destination);
     const arrTime = this.addMinutes(depTime, duration);
 
+    // Extract just the date part - handle both "2024-12-20" and "2024-12-20T00:00:00.000Z" formats
+    const departureDateStr = date.split('T')[0]; // Get just "2024-12-20"
+
     return {
       airline: airline.name,
       flightNumber,
       aircraft,
       departure: {
         airport: origin,
-        time: `${date}T${depTime}:00Z`,
+        time: `${departureDateStr}T${depTime}:00Z`,
         terminal: this.generateTerminal()
       },
       arrival: {
         airport: destination,
-        time: `${date}T${arrTime}:00Z`,
+        time: `${departureDateStr}T${arrTime}:00Z`,
         terminal: this.generateTerminal()
       },
       duration: this.formatDuration(duration),

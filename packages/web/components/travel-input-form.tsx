@@ -232,44 +232,39 @@ function matchesStateOrProvince(airport: any, searchTerm: string): boolean {
   return false;
 }
 
-// Simple airport search function using mock data
-function searchAirports(query: string): AirportData[] {
+// Airport search function using mock API service instead of hardcoded data
+async function searchAirports(query: string): Promise<AirportData[]> {
   if (!query || query.length < 2) return [];
   
-  const searchTerm = query.toLowerCase();
-  
   try {
-    const matches = mockAirports.filter((airport) => {
-      // For short queries (2-3 chars), be more restrictive
-      if (searchTerm.length <= 3) {
-        return (
-          airport.city?.toLowerCase().startsWith(searchTerm) ||
-          airport.iata?.toLowerCase() === searchTerm ||
-          airport.country?.toLowerCase().startsWith(searchTerm)
-        );
-      } else {
-        // For longer queries, use inclusive search
-        return (
-          airport.city?.toLowerCase().includes(searchTerm) ||
-          airport.name?.toLowerCase().includes(searchTerm) ||
-          airport.country?.toLowerCase().includes(searchTerm) ||
-          airport.iata?.toLowerCase().includes(searchTerm)
-        );
-      }
+    // Use the mock airport service instead of hardcoded data
+    const response = await fetch('/api/airports/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        query,
+        limit: 8 // Limit to 8 results for performance
+      })
     });
     
-    return matches
-      .slice(0, 8) // Limit to 8 results for performance
-      .map((airport) => ({
-        iata: airport.iata,
-        icao: airport.iata, // Use IATA as ICAO for simplicity
-        name: airport.name,
-        city: airport.city,
-        country: airport.country,
-        displayLocation: `${airport.city}, ${airport.country}`
-      }));
+    if (!response.ok) {
+      throw new Error('Failed to search airports');
+    }
+    
+    const { data: airports } = await response.json();
+    
+    return airports.map((airport: any) => ({
+      iata: airport.code,
+      icao: airport.code,
+      name: airport.name,
+      city: airport.city,
+      country: airport.country,
+      displayLocation: `${airport.city}, ${airport.country}`
+    }));
+    
   } catch (error) {
     console.error('Error searching airports:', error);
+    // Fallback to empty array instead of hardcoded data
     return [];
   }
 }
@@ -341,9 +336,14 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const handleDepartureChange = (value: string) => {
     setDepartureLocation(value);
     if (value.length > 1) {
-      const results = searchAirports(value);
-      setDepartureSuggestions(results);
-      setShowDepartureSuggestions(true);
+      // Use async function to search airports
+      searchAirports(value).then(results => {
+        setDepartureSuggestions(results);
+        setShowDepartureSuggestions(true);
+      }).catch(error => {
+        console.error('Error searching departure airports:', error);
+        setShowDepartureSuggestions(false);
+      });
     } else {
       setShowDepartureSuggestions(false);
     }
@@ -352,9 +352,14 @@ export function TravelInputForm({ onSubmit, isMobile }: TravelInputFormProps) {
   const handleDestinationChange = (value: string) => {
     setDestination(value);
     if (value.length > 1) {
-      const results = searchAirports(value);
-      setDestinationSuggestions(results);
-      setShowDestinationSuggestions(true);
+      // Use async function to search airports
+      searchAirports(value).then(results => {
+        setDestinationSuggestions(results);
+        setShowDestinationSuggestions(true);
+      }).catch(error => {
+        console.error('Error searching destination airports:', error);
+        setShowDestinationSuggestions(false);
+      });
     } else {
       setShowDestinationSuggestions(false);
     }
