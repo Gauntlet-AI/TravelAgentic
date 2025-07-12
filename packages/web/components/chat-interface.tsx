@@ -125,11 +125,15 @@ export function ChatInterface({
   }, [messages, isLoading]);
 
   // Send initial message when provided
+  const initialMessageSentRef = useRef(false);
+
+  // Send initial message only once (handles React StrictMode double mount)
   useEffect(() => {
-    if (initialMessage && messages.length === 0) {
+    if (initialMessage && !initialMessageSentRef.current) {
       append({ role: 'user', content: initialMessage });
+      initialMessageSentRef.current = true;
     }
-  }, [initialMessage, append, messages.length]);
+  }, [initialMessage, append]);
 
   // Effect to handle tab changes from tool calls
   useEffect(() => {
