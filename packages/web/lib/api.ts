@@ -1,29 +1,64 @@
 import type { Activity, Hotel, TravelDetails } from './mock-data';
-import { mockActivities, mockHotels } from './mock-data';
 
-// Mock hotel search API
+// Hotel search API using mock service
 export async function searchHotels(
   travelDetails: TravelDetails
 ): Promise<Hotel[]> {
-  // Simulate API delay
-  await new Promise((resolve) => setTimeout(resolve, 2000));
-
-  // Return mock hotels with price adjusted for number of travelers
-  return mockHotels.map((hotel) => ({
-    ...hotel,
-    pricePerNight: hotel.pricePerNight + (travelDetails.travelers - 1) * 20,
-  }));
+  try {
+    const response = await fetch('/api/hotels/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destination: travelDetails.destination,
+        checkIn: travelDetails.startDate ? travelDetails.startDate.toISOString().split('T')[0] : '',
+        checkOut: travelDetails.endDate ? travelDetails.endDate.toISOString().split('T')[0] : '',
+        guests: travelDetails.travelers,
+        rooms: 1
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        return result.data;
+      }
+    }
+    
+    throw new Error('Hotel search API failed');
+  } catch (error) {
+    console.error('Error searching hotels:', error);
+    throw error;
+  }
 }
 
-// Mock activity research function
+// Activity research function using mock service
 export async function researchActivities(
   travelDetails: TravelDetails
 ): Promise<Activity[]> {
-  // Simulate longer research delay
-  await new Promise((resolve) => setTimeout(resolve, 3000));
-
-  // Return mock activities (in real app, this would use LLM to research)
-  return mockActivities;
+  try {
+    const response = await fetch('/api/activities/search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        destination: travelDetails.destination,
+        startDate: travelDetails.startDate ? travelDetails.startDate.toISOString().split('T')[0] : '',
+        endDate: travelDetails.endDate ? travelDetails.endDate.toISOString().split('T')[0] : '',
+        travelers: travelDetails.travelers
+      })
+    });
+    
+    if (response.ok) {
+      const result = await response.json();
+      if (result.success) {
+        return result.data;
+      }
+    }
+    
+    throw new Error('Activity search API failed');
+  } catch (error) {
+    console.error('Error searching activities:', error);
+    throw error;
+  }
 }
 
 // Filter activities based on selected types
@@ -34,6 +69,6 @@ export function filterActivitiesByTypes(
   if (selectedTypes.length === 0) return activities;
 
   return activities.filter((activity) =>
-    activity.category.some((cat) => selectedTypes.includes(cat))
+    activity.category.some((cat: string) => selectedTypes.includes(cat))
   );
 }

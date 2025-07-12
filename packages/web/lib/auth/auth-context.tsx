@@ -39,63 +39,42 @@ export function useAuth() {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    let subscription: any;
+    setMounted(true);
+  }, []);
 
-    // Add a small delay to ensure hydration is complete
-    const timer = setTimeout(async () => {
-      try {
-        // Get initial session
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        setUser(session?.user ?? null);
+  useEffect(() => {
+    if (!mounted) return;
 
-        // Listen for auth changes
-        const {
-          data: { subscription: authSubscription },
-        } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-          setUser(session?.user ?? null);
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
-          // Handle redirect after sign in
-          if (event === 'SIGNED_IN' && session?.user) {
-            window.location.href = '/';
-          }
-
-          // Handle redirect after sign out
-          if (event === 'SIGNED_OUT') {
-            window.location.href = '/';
-          }
-        });
-
-        subscription = authSubscription;
-      } catch (error) {
-        console.error('Error getting session:', error);
-      } finally {
-        setLoading(false);
-      }
-    }, 100);
+    // Set up the listener for future changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      setLoading(false);
+    });
 
     return () => {
-      clearTimeout(timer);
-      if (subscription) {
-        subscription.unsubscribe();
-      }
+      subscription.unsubscribe();
     };
-  }, []);
+  }, [mounted]);
 
   const signOut = async () => {
     try {
-      // Call Supabase client-side signOut directly
       const { error } = await supabase.auth.signOut();
       
       if (error) {
         console.error('Error signing out:', error);
         throw error;
       }
-      
-      // The auth state change listener will handle the redirect
     } catch (error) {
       console.error('Error signing out:', error);
       throw error;
@@ -108,19 +87,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
   };
 
-  // Prevent hydration errors by showing loading state until auth is determined
-  if (loading) {
-    return (
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        backgroundColor: 'white'
-      }}>
-        <div>Loading...</div>
-      </div>
-    );
+  // Prevent hydration errors by not rendering anything until mounted
+  if (!mounted) {
+    return null;
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

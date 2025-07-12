@@ -71,6 +71,10 @@ export interface Flight {
   aircraft: string;
 }
 
+/**
+ * @deprecated Use /api/activities/categories instead
+ * These hardcoded activity types have been replaced with dynamic API calls
+ */
 export const activityTypes: ActivityTypeCard[] = [
   {
     id: 'outdoor',
@@ -146,6 +150,10 @@ export const activityTypes: ActivityTypeCard[] = [
   },
 ];
 
+/**
+ * @deprecated Use /api/hotels/search instead  
+ * These hardcoded hotels have been replaced with dynamic API calls
+ */
 // Mock hotel data
 export const mockHotels: Hotel[] = [
   {
@@ -238,6 +246,10 @@ export const mockHotels: Hotel[] = [
   },
 ];
 
+/**
+ * @deprecated Use /api/activities/search instead
+ * These hardcoded activities have been replaced with dynamic API calls  
+ */
 // Mock activities data
 export const mockActivities: Activity[] = [
   {
@@ -386,6 +398,10 @@ export const mockActivities: Activity[] = [
   },
 ];
 
+/**
+ * @deprecated Use /api/preferences/cards instead
+ * These hardcoded preference cards have been replaced with dynamic API calls
+ */
 export const mockPreferenceCards: PreferenceCard[] = [
   {
     id: 'card-1',
@@ -413,6 +429,10 @@ export const mockPreferenceCards: PreferenceCard[] = [
   },
 ];
 
+/**
+ * @deprecated Use /api/flights/search instead
+ * These hardcoded flights have been replaced with dynamic API calls
+ */
 export const mockFlights: Flight[] = [
   {
     id: 'flight-1',
@@ -504,4 +524,12 @@ export const mockFlights: Flight[] = [
   },
 ];
 
-export { mockPreferenceCards as preferenceCards };
+// Keep the existing array data for now to avoid breaking changes
+// Components should migrate to use the new API endpoints:
+// - /api/airports/search - for airport autocomplete  
+// - /api/activities/categories - for activity types
+// - /api/user/history - for user trip history
+// - /api/itinerary/generate - for dynamic itinerary building
+// - /api/hotels/search - for hotel search
+// - /api/activities/search - for activity search  
+// - /api/flights/search - for flight search

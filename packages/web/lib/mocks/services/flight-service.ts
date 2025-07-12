@@ -241,7 +241,7 @@ export class MockFlightService implements IFlightService {
       
       // Second segment (with appropriate layover time)
       const layoverTime = Math.floor(Math.random() * 180) + 60; // 1-4 hours
-      const secondSegmentTime = this.addMinutes(
+      const { time: secondSegmentTime } = this.addMinutes(
         this.parseTime(segments[0].arrival.time), 
         layoverTime
       );
@@ -256,7 +256,7 @@ export class MockFlightService implements IFlightService {
   }
 
   /**
-   * Create a single flight segment
+   * Create a flight segment with proper date handling
    */
   private createFlightSegment(
     origin: any, 
@@ -270,7 +270,19 @@ export class MockFlightService implements IFlightService {
     const flightNumber = `${airline.code}${Math.floor(Math.random() * 9000) + 1000}`;
     const depTime = departureTime || this.generateRandomTime();
     const duration = this.calculateFlightDuration(origin, destination);
-    const arrTime = this.addMinutes(depTime, duration);
+    const { time: arrTime, nextDay } = this.addMinutes(depTime, duration);
+
+    // Extract just the date part - handle both "2024-12-20" and "2024-12-20T00:00:00.000Z" formats
+    const departureDateStr = date.split('T')[0]; // Get just "2024-12-20"
+    
+    // Calculate arrival date (handle crossing midnight)
+    const departureDate = new Date(departureDateStr);
+    const arrivalDate = new Date(departureDate);
+    if (nextDay) {
+      arrivalDate.setDate(arrivalDate.getDate() + 1);
+    }
+
+    const arrivalDateStr = arrivalDate.toISOString().split('T')[0];
 
     return {
       airline: airline.name,
@@ -278,12 +290,12 @@ export class MockFlightService implements IFlightService {
       aircraft,
       departure: {
         airport: origin,
-        time: `${date}T${depTime}:00Z`,
+        time: `${departureDateStr}T${depTime}:00Z`,
         terminal: this.generateTerminal()
       },
       arrival: {
         airport: destination,
-        time: `${date}T${arrTime}:00Z`,
+        time: `${arrivalDateStr}T${arrTime}:00Z`,
         terminal: this.generateTerminal()
       },
       duration: this.formatDuration(duration),
@@ -439,12 +451,20 @@ export class MockFlightService implements IFlightService {
     return timeStr.split('T')[1].split(':').slice(0, 2).join(':');
   }
 
-  private addMinutes(time: string, minutes: number): string {
+  private addMinutes(time: string, minutes: number): { time: string; nextDay: boolean } {
     const [hours, mins] = time.split(':').map(Number);
     const totalMinutes = hours * 60 + mins + minutes;
-    const newHours = Math.floor(totalMinutes / 60) % 24;
+    const newHours = Math.floor(totalMinutes / 60);
     const newMins = totalMinutes % 60;
-    return `${newHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`;
+    
+    // Check if we've crossed into the next day
+    const nextDay = newHours >= 24;
+    const displayHours = newHours % 24;
+    
+    return {
+      time: `${displayHours.toString().padStart(2, '0')}:${newMins.toString().padStart(2, '0')}`,
+      nextDay
+    };
   }
 
   private formatDuration(minutes: number): string {
