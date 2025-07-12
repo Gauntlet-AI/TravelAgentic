@@ -301,6 +301,7 @@ Remember: You're not just giving advice - you're actively helping users find and
           parameters: z.object({
             departureLocation: z.string().describe('Where the user is departing from (city, airport)'),
             destination: z.string().describe('Where the user wants to go (city, country)'),
+            departureDate: z.string().describe('Departure date in YYYY-MM-DD format'),
             flightType: z.enum(['economy', 'premium economy', 'business', 'first class']).describe('Flight class preference'),
             hotelType: z.enum(['budget', 'mid-range', 'luxury', 'boutique']).describe('Hotel category preference'),
             returnFlight: z.boolean().describe('Whether user wants round trip (true) or one-way (false)'),
@@ -311,6 +312,7 @@ Remember: You're not just giving advice - you're actively helping users find and
           execute: async ({ 
             departureLocation, 
             destination, 
+            departureDate,
             flightType, 
             hotelType, 
             returnFlight, 
@@ -318,7 +320,7 @@ Remember: You're not just giving advice - you're actively helping users find and
             activities, 
             travelers 
           }) => {
-            console.log(`🤖 AI is updating trip info: ${departureLocation} → ${destination}`);
+            console.log(`🤖 AI is updating trip info: ${departureLocation} → ${destination} on ${departureDate}`);
             
             // Frontend will handle the actual trip info update via useEffect watching tool calls
             return {
@@ -327,6 +329,7 @@ Remember: You're not just giving advice - you're actively helping users find and
               tripInfo: {
                 departureLocation,
                 destination,
+                departureDate,
                 flightType,
                 hotelType,
                 returnFlight,

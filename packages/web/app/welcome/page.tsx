@@ -28,6 +28,7 @@ export type ChatMode = 'conversation' | 'quiz' | 'autonomous' | null;
 interface TripInformation {
   departureLocation?: string;
   destination?: string;
+  departureDate?: string;
   flightType?: string;
   hotelType?: string;
   returnFlight?: boolean;
@@ -55,27 +56,30 @@ PRESET DEFAULTS (use these automatically):
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
 
-REQUIRED FIELDS TO COLLECT (only ask for these 4):
+REQUIRED FIELDS TO COLLECT (only ask for these 5):
 1. departureLocation - Where they're leaving from (city, airport)
 2. destination - Where they want to go (city, country)
-3. duration - Trip length (number of days/weeks)
-4. travelers - Number of travelers (adults and children count)
+3. departureDate - When they want to leave (accept any date format like "July 18", "7/18/2025", "next Friday", etc.)
+4. duration - Trip length (number of days/weeks)
+5. travelers - Number of travelers (adults and children count)
 
 BEHAVIOR:
 - Use the preset defaults automatically - don't ask about flight class, hotel type, round trip, or activities
-- Only ask about the 4 required fields above
+- Only ask about the 5 required fields above
 - Keep conversation focused and brief
+- Accept flexible date formats (e.g., "July 18", "7/18/2025", "next Friday", "tomorrow", etc.)
 - If they give partial info, ask for clarification
 - DO NOT search for flights, hotels, or activities
 - DO NOT make bookings
 
 APPROACH:
 - Listen to their travel ideas first
-- Only ask about missing required fields (departure, destination, duration, travelers)
-- Once you have ALL 4 required fields, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
+- Only ask about missing required fields (departure, destination, departure date, duration, travelers)
+- When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
+- Once you have ALL 5 required fields, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
 - DO NOT ask for confirmation - just save it automatically
 
-IMPORTANT: Once you have the 4 required fields, immediately call updateTripInfo with: departureLocation, destination, duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
   },
   quiz: {
     title: 'Quiz Me',
@@ -95,34 +99,39 @@ PRESET DEFAULTS (use these automatically):
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
 
-REQUIRED FIELDS TO COLLECT (quiz through these 4 only):
+REQUIRED FIELDS TO COLLECT (quiz through these 5 only):
 1. departureLocation - Where they're leaving from
 2. destination - Where they want to go
-3. duration - How many days/weeks
-4. travelers - How many people traveling
+3. departureDate - When they want to leave (accept any date format like "July 18", "7/18/2025", "next Friday", etc.)
+4. duration - How many days/weeks
+5. travelers - How many people traveling
 
 BEHAVIOR:
-- Work through the quiz systematically for only 4 questions
+- Work through the quiz systematically but naturally
 - Use preset defaults automatically - don't ask about flights, hotels, or activities
 - Keep it short and fun
+- Accept flexible date formats (e.g., "July 18", "7/18/2025", "next Friday", "tomorrow", etc.)
 - Acknowledge their answers briefly then move to next question
+- Don't mention it's a quiz or reference question numbers
 - DO NOT search for options or make bookings
 
 QUIZ FLOW:
 1. Start with fun opener
 2. Ask about destination preferences
 3. Ask about departure location
-4. Ask about trip duration
-5. Ask about number of travelers
-6. Immediately save with preset defaults
+4. Ask about departure date
+5. Ask about trip duration
+6. Ask about number of travelers
+7. Immediately save with preset defaults
 
 APPROACH:
 - Keep questions short and engaging
-- Use numbers to show progress ("Question 2 of 4!")
-- Once you have ALL 4 answers, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
-- End with "Quiz complete! You're ready to proceed!"
+- Don't mention question numbers or progress tracking
+- When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
+- Once you have ALL 5 answers, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
+- End with "Perfect! You're all set to proceed!"
 
-IMPORTANT: Once you have the 4 required answers, immediately call updateTripInfo with: departureLocation, destination, duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
   },
   autonomous: {
     title: 'Choose For Me',
@@ -142,15 +151,17 @@ PRESET DEFAULTS (use these automatically):
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
 
-REQUIRED FIELDS TO FILL (make decisions for these 4):
+REQUIRED FIELDS TO FILL (make decisions for these 5):
 1. departureLocation - ${userLocation ? formatLocationDisplay(userLocation) : 'Use their current location or major nearby airport'}
 2. destination - Pick a trending destination based on season/preferences
-3. duration - Choose 5-7 days (perfect trip length)
-4. travelers - Assume 1-2 adults unless they specify otherwise
+3. departureDate - Choose a date 2-4 weeks from now (or use any date format the user provides)
+4. duration - Choose 5-7 days (perfect trip length)
+5. travelers - Assume 1-2 adults unless they specify otherwise
 
 BEHAVIOR:
 - Make ALL decisions for them quickly in 1-2 exchanges
 - Use preset defaults automatically - don't ask about flights, hotels, or activities
+- If user provides a date in any format, use that instead of choosing one
 - Explain your reasoning briefly
 - Present final summary and save immediately
 - DO NOT ask questions - MAKE CHOICES
@@ -159,14 +170,16 @@ BEHAVIOR:
 DECISION APPROACH:
 1. Confirm departure location (use their location)
 2. CHOOSE a great destination for them (consider season, weather, popular spots)
-3. SET trip duration (5-7 days)
-4. ASSUME 1-2 travelers unless specified
-5. Present complete plan and save immediately
+3. SET departure date (2-4 weeks from now)
+4. SET trip duration (5-7 days)
+5. ASSUME 1-2 travelers unless specified
+6. Present complete plan and save immediately
 
 EXAMPLE RESPONSE:
 "Perfect! I'm setting up your trip:
 - Departing from: [Location]
 - Destination: Barcelona, Spain (perfect weather this time of year!)
+- Departure date: March 15, 2025
 - Duration: 6 days round trip
 - Travelers: 2 adults
 - Flight: Premium economy (good comfort/value balance)
@@ -176,7 +189,7 @@ Let me save this information for you!"
 
 [Then IMMEDIATELY call updateTripInfo tool with all the information]
 
-IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
   }
 };
 
@@ -258,6 +271,7 @@ export default function WelcomePage() {
     return !!(
       required.departureLocation &&
       required.destination &&
+      required.departureDate &&
       required.flightType &&
       required.hotelType &&
       (required.returnFlight !== undefined) &&
