@@ -324,6 +324,16 @@ export function ChatInterface({
             if (isLoading && index === messages.length - 1 && message.role === 'assistant') {
               return null;
             }
+
+            // Determine if this message has content to display or tool invocations to show
+            const showToolInvocations = !tripInfoComplete && message.toolInvocations && message.toolInvocations.length > 0;
+            const hasTextContent = message.content && message.content.trim().length > 0;
+
+            // Skip rendering this message entirely if it has no text content and no visible tool invocations
+            if (!hasTextContent && !showToolInvocations) {
+              return null;
+            }
+
             return (
               <div
                 key={message.id}
@@ -339,39 +349,37 @@ export function ChatInterface({
                   {message.content}
 
                   {/* Show tool calls if they exist and trip info is not complete */}
-                  {!tripInfoComplete && 
-                    message.toolInvocations &&
-                    message.toolInvocations.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {message.toolInvocations.map((tool, index) => (
-                          <div
-                            key={index}
-                            className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
-                          >
-                            <div className="flex items-center gap-2 font-medium text-blue-700">
-                              {tool.toolName === 'searchFlights' && '✈️ Searching flights...'}
-                              {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}
-                              {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
-                              {tool.toolName === 'updateTripInfo' && '✅ Saving trip information...'}
-                              {tool.toolName === 'checkTripStatus' && '🔍 Checking trip completion status...'}
-                            </div>
-                            {'result' in tool && tool.result && (
-                              <div className="mt-1 text-xs text-gray-600">
-                                {(tool.result as any).success ? (
-                                  <span className="text-green-600">
-                                    ✅ Found {(tool.result as any).data?.length || 0} options
-                                  </span>
-                                ) : (
-                                  <span className="text-red-600">
-                                    ❌ {(tool.result as any).message}
-                                  </span>
-                                )}
-                              </div>
-                            )}
+                  {showToolInvocations && (
+                    <div className="mt-3 space-y-2">
+                      {message.toolInvocations!.map((tool, index) => (
+                        <div
+                          key={index}
+                          className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
+                        >
+                          <div className="flex items-center gap-2 font-medium text-blue-700">
+                            {tool.toolName === 'searchFlights' && '✈️ Searching flights...'}
+                            {tool.toolName === 'searchHotels' && '🏨 Searching hotels...'}
+                            {tool.toolName === 'searchActivities' && '🎯 Searching activities...'}
+                            {tool.toolName === 'updateTripInfo' && '✅ Saving trip information...'}
+                            {tool.toolName === 'checkTripStatus' && '🔍 Checking trip completion status...'}
                           </div>
-                        ))}
-                      </div>
-                    )}
+                          {'result' in tool && tool.result && (
+                            <div className="mt-1 text-xs text-gray-600">
+                              {(tool.result as any).success ? (
+                                <span className="text-green-600">
+                                  ✅ Found {(tool.result as any).data?.length || 0} options
+                                </span>
+                              ) : (
+                                <span className="text-red-600">
+                                  ❌ {(tool.result as any).message}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             );
