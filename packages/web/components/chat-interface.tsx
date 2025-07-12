@@ -258,7 +258,7 @@ export function ChatInterface({
   }, [messages, append]);
 
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
-  const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
+  const containerClasses = `${className ?? ''} flex flex-col overflow-hidden ${!isMobile ? 'sticky top-0 max-h-screen' : ''}`;
 
   // Legacy mobile collapsed view (no longer used with new bubble)
   if (isMobile && isCollapsed) {
@@ -310,7 +310,7 @@ export function ChatInterface({
         </CardHeader>
       )}
 
-      <CardContent className={hideCard ? 'flex h-full flex-col p-0' : ''}>
+      <CardContent className={hideCard ? 'flex h-full flex-col p-0' : 'flex h-full flex-col p-0'}>
         {/* Empty State Message */}
         {messages.length === 0 && (
           <div
@@ -402,8 +402,8 @@ export function ChatInterface({
           <div ref={messagesEndRef} />
         </ScrollArea>
 
-        {/* Input Form */}
-        <div className="sticky bottom-0 z-10 bg-white p-4">
+        {/* Input Form - Always at bottom */}
+        <div className="mt-auto bg-white p-4">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}
