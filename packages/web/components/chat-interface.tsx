@@ -248,6 +248,35 @@ export function ChatInterface({
     });
   }, [messages, append]);
 
+  const tripCompleteNotifiedRef = useRef(false);
+
+  /**
+   * Notify the user once when all required trip information has been collected.
+   * This triggers after the parent signals `tripInfoComplete` and ensures the
+   * message is sent only once per completed cycle.
+   */
+  useEffect(() => {
+    if (tripInfoComplete && !tripCompleteNotifiedRef.current) {
+      // Inject a local assistant message without triggering a new backend request
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          role: 'assistant' as const,
+          content:
+            "Fantastic — I've got everything I need. You can now press ‘Proceed to Itinerary’ to see your personalised plan!",
+        },
+      ]);
+
+      tripCompleteNotifiedRef.current = true;
+    }
+
+    // Reset the notification flag if trip info becomes incomplete again
+    if (!tripInfoComplete) {
+      tripCompleteNotifiedRef.current = false;
+    }
+  }, [tripInfoComplete, setMessages]);
+
   // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
   const containerClasses = `${className ?? ''} flex flex-col overflow-hidden ${!isMobile ? 'sticky top-0 max-h-screen' : ''}`;
 
@@ -403,6 +432,12 @@ export function ChatInterface({
 
         {/* Input Form - Always at bottom */}
         <div className={`mt-auto bg-white p-4 ${isMobile ? 'pb-8' : ''}`}>
+          {/* Mobile completion banner */}
+          {tripInfoComplete && (
+            <div className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+              🎉 All set! Tap <strong>Proceed to Itinerary</strong> to view your trip plan.
+            </div>
+          )}
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}

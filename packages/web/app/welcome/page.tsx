@@ -99,7 +99,7 @@ APPROACH:
 - When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
 - Once you have ALL 5 required fields, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
 - DO NOT ask for confirmation - just save it automatically
-- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed
+- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).
 
 IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
 Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
@@ -161,7 +161,7 @@ APPROACH:
 - When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
 - Once you have ALL 5 answers, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
 - End with "Perfect! You're all set to proceed!"
-- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed
+- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).
 
 IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
 Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
@@ -224,7 +224,7 @@ Let me save this information for you!"
 [Then call checkTripStatus to verify completion before telling user they can proceed]
 
 IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
-Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
+Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).`
   }
 };
 
