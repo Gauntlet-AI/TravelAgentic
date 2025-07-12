@@ -11,6 +11,7 @@ import { Inter } from 'next/font/google';
 import { useAuth } from '@/lib/auth/auth-context';
 import { UserProfileDropdown } from '@/components/user-profile-dropdown';
 import { ChatInterface } from '@/components/chat-interface';
+import { MobileChatBubble } from '@/components/mobile-chat-bubble';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { MessageCircle, Brain, Sparkles, ChevronRight, Bot, ArrowRight } from 'lucide-react';
@@ -454,10 +455,10 @@ export default function WelcomePage() {
       </div>
 
       {/* Header */}
-      <header className="relative z-20 flex items-center justify-between p-6">
+      <header className="relative z-20 flex items-center justify-between p-4 md:p-6">
         <div className="flex items-center gap-2">
           <span
-            className={`text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}
+            className={`text-xl md:text-2xl font-bold text-white drop-shadow-lg ${inter.className} font-medium`}
           >
             TravelAgentic
           </span>
@@ -466,17 +467,17 @@ export default function WelcomePage() {
         {user && <UserProfileDropdown />}
       </header>
 
-      {/* Main Content - Centered Layout */}
-      <main className="relative z-10 flex min-h-[calc(100vh-88px)] p-6">
+      {/* Main Content - Responsive Layout */}
+      <main className="relative z-10 flex min-h-[calc(100vh-88px)] p-3 md:p-6">
         {/* Center Content - Option Selection */}
-        <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto">
-          <div className="w-full max-w-lg text-center mb-8">
-            <h1 className={`text-4xl lg:text-5xl font-bold mb-4 text-white ${inter.className} font-medium animate-in fade-in slide-in-from-bottom-4 duration-700`}>
+        <div className="flex-1 flex flex-col items-center justify-center max-w-4xl mx-auto lg:mr-[400px] pb-20 lg:pb-0">
+          <div className="w-full max-w-lg text-center mb-6 md:mb-8">
+            <h1 className={`text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-white ${inter.className} font-medium animate-in fade-in slide-in-from-bottom-4 duration-700`}>
               Let's plan your
               <br />
               <span className="text-blue-400">perfect trip</span>
             </h1>
-            <p className="text-lg text-white/90 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+            <p className="text-base md:text-lg text-white/90 mb-6 md:mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
               {user && (
                 <span className="block mb-2">
                   Welcome back, <span className="font-semibold text-blue-300">{user.user_metadata?.full_name || user.email?.split('@')[0] || 'User'}</span>!
@@ -487,7 +488,7 @@ export default function WelcomePage() {
           </div>
 
           {/* Mode Selection Cards */}
-          <div className="w-full max-w-lg space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
+          <div className="w-full max-w-lg space-y-3 md:space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-400">
             {chatModeOptions.map((option, index) => {
               const Icon = option.icon;
               const isSelected = selectedMode === option.id;
@@ -502,14 +503,14 @@ export default function WelcomePage() {
                   }`}
                   onClick={() => handleModeSelect(option.id)}
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-2 md:pb-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-lg ${option.color} flex items-center justify-center`}>
-                          <Icon className="w-5 h-5 text-white" />
+                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg ${option.color} flex items-center justify-center`}>
+                          <Icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
                         </div>
                         <div>
-                          <CardTitle className="text-lg font-semibold text-gray-900">
+                          <CardTitle className="text-base md:text-lg font-semibold text-gray-900">
                             {option.title}
                           </CardTitle>
                         </div>
@@ -525,11 +526,11 @@ export default function WelcomePage() {
           </div>
 
           {/* Proceed to Itinerary Button */}
-          <div className="w-full max-w-lg mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-600">
+          <div className="w-full max-w-lg mt-6 md:mt-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-600">
             <Button
               onClick={handleProceedToItinerary}
               disabled={!hasEnoughInformation()}
-              className={`w-full h-14 text-lg font-semibold transition-all duration-300 ${
+              className={`w-full h-12 md:h-14 text-base md:text-lg font-semibold transition-all duration-300 ${
                 hasEnoughInformation()
                   ? 'bg-green-600 hover:bg-green-700 shadow-lg hover:shadow-xl'
                   : 'bg-gray-400 cursor-not-allowed opacity-50'
@@ -540,7 +541,7 @@ export default function WelcomePage() {
               </span>
             </Button>
             {!hasEnoughInformation() && selectedMode && (
-              <p className="text-white/70 text-sm mt-2 text-center">
+              <p className="text-white/70 text-xs md:text-sm mt-2 text-center">
                 Complete your travel preferences in the chat to continue
               </p>
             )}
@@ -548,8 +549,8 @@ export default function WelcomePage() {
         </div>
       </main>
 
-      {/* AI Chat Interface - Always Visible Right Panel */}
-      <div className="fixed right-6 top-24 bottom-6 w-96 z-50">
+      {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
+      <div className="hidden lg:block fixed right-6 top-24 bottom-6 w-96 z-50">
         {selectedMode ? (
           <ChatInterface
             key={chatKey}
@@ -579,6 +580,31 @@ export default function WelcomePage() {
               </div>
             </CardContent>
           </Card>
+        )}
+      </div>
+
+      {/* Mobile AI Chat Bubble (visible on mobile only) */}
+      <div className="lg:hidden">
+        {selectedMode ? (
+          <MobileChatBubble
+            key={chatKey}
+            customSystemPrompt={getSystemPrompt(selectedMode)}
+            customPlaceholder={getPlaceholder(selectedMode)}
+            customEmptyStateMessage={getEmptyStateMessage(selectedMode)}
+            initialMessage={initialMessage}
+            travelDetails={selectedMode === 'autonomous' ? createTravelDetailsForAutonomous() : null}
+            mode={selectedMode}
+            onTripInfoUpdate={updateTripInformation}
+            tripInfoComplete={hasEnoughInformation()}
+          />
+        ) : (
+          <Button
+            className="fixed bottom-6 right-6 z-50 h-14 px-4 rounded-full bg-gray-500 shadow-lg opacity-50 cursor-not-allowed"
+            disabled
+          >
+            <MessageCircle className="h-6 w-6 text-white mr-2" />
+            <span className="text-white font-medium text-sm">AI Assistant</span>
+          </Button>
         )}
       </div>
     </div>
