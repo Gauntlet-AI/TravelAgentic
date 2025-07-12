@@ -17,6 +17,17 @@ import { MessageCircle, Brain, Sparkles, ChevronRight, Bot, ArrowRight } from 'l
 import { getCurrentLocation, formatLocationDisplay } from '@/lib/utils';
 import type { TravelDetails } from '@/lib/mock-data';
 
+// Key used for persisting trip preferences
+const LOCAL_STORAGE_KEY = 'tripPreferences';
+
+// Default preference values applied on reset
+const DEFAULT_PREFERENCES: Partial<TripInformation> = {
+  flightType: 'premium economy',
+  hotelType: 'boutique',
+  returnFlight: true,
+  activities: 'outdoor, relaxation, nightlife, cultural',
+};
+
 const inter = Inter({
   weight: ['400', '500', '600', '700'],
   subsets: ['latin'],
@@ -43,6 +54,12 @@ const chatModeConfig = {
     systemPrompt: `You are TravelAgentic's AI Travel Agent in CONVERSATION mode. Be CONCISE and FRIENDLY.
 
 CRITICAL: Your ONLY job is to COLLECT user travel preferences. DO NOT search for or book anything.
+
+LOCATION RULE:
+If the user gives only a city name for either departureLocation or destination (e.g., "Austin" or "Paris"), you MUST assume the most common full location string in the format "city, state/region, country". Examples: "Austin" → "Austin, TX, USA" ; "Paris" → "Paris, France".
+
+DATE RULE:
+If the user specifies a date that is earlier than TODAY_IS, assume they mean the next occurrence of that date in the future (add one year).
 
 STYLE:
 - Keep responses SHORT (2-3 sentences max)
@@ -78,14 +95,22 @@ APPROACH:
 - When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
 - Once you have ALL 5 required fields, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
 - DO NOT ask for confirmation - just save it automatically
+- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed
 
-IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
   },
   quiz: {
     title: 'Quiz Me',
     systemPrompt: `You are TravelAgentic's AI Travel Agent in QUIZ mode. Be BRIEF and ENGAGING.
 
 CRITICAL: Your ONLY job is to COLLECT user travel preferences through questions. DO NOT search for or book anything.
+
+LOCATION RULE:
+If the user gives only a city name for either departureLocation or destination, assume the most common full location string like "Austin, TX, USA" or "Paris, France".
+
+DATE RULE:
+If the user provides a date earlier than TODAY_IS, interpret it as the next occurrence in the future (add one year).
 
 STYLE:
 - Ask ONE short question at a time
@@ -130,8 +155,10 @@ APPROACH:
 - When they provide a date, understand it naturally ("July 18" = July 18 of current/next year, "7/18/2025" = July 18, 2025, etc.)
 - Once you have ALL 5 answers, IMMEDIATELY call updateTripInfo tool with the collected information + preset defaults
 - End with "Perfect! You're all set to proceed!"
+- After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed
 
-IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
   },
   autonomous: {
     title: 'Choose For Me',
@@ -152,9 +179,9 @@ PRESET DEFAULTS (use these automatically):
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
 
 REQUIRED FIELDS TO FILL (make decisions for these 5):
-1. departureLocation - ${userLocation ? formatLocationDisplay(userLocation) : 'Use their current location or major nearby airport'}
-2. destination - Pick a trending destination based on season/preferences
-3. departureDate - Choose a date 2-4 weeks from now (or use any date format the user provides)
+1. departureLocation - ${userLocation ? formatLocationDisplay(userLocation) : 'Use their current location or major nearby airport'} (if only city name is provided, assume full "city, state/region, country")
+2. destination - Pick a trending destination based on season/preferences (if only city name, assume full "city, country")
+3. departureDate - Choose a date 2-4 weeks from now (or use any date format the user provides; if the provided date is earlier than TODAY_IS, select the next occurrence of that date in the future)
 4. duration - Choose 5-7 days (perfect trip length)
 5. travelers - Assume 1-2 adults unless they specify otherwise
 
@@ -188,8 +215,10 @@ EXAMPLE RESPONSE:
 Let me save this information for you!"
 
 [Then IMMEDIATELY call updateTripInfo tool with all the information]
+[Then call checkTripStatus to verify completion before telling user they can proceed]
 
-IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!`
+IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
   }
 };
 
@@ -200,7 +229,19 @@ export default function WelcomePage() {
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
   const [initialMessage, setInitialMessage] = useState<string>('');
   const [clearHistory, setClearHistory] = useState(false);
-  const [tripInformation, setTripInformation] = useState<TripInformation>({});
+  const [tripInformation, setTripInformation] = useState<TripInformation>(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (stored) {
+          return JSON.parse(stored) as TripInformation;
+        }
+      } catch {
+        // ignore parsing errors
+      }
+    }
+    return { ...DEFAULT_PREFERENCES } as TripInformation;
+  });
   const [userLocation, setUserLocation] = useState<{
     city: string;
     region: string;
@@ -210,6 +251,17 @@ export default function WelcomePage() {
     timezone: string;
   } | null>(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+
+  // Persist trip information to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tripInformation));
+      } catch {
+        // ignore quota / serialization errors
+      }
+    }
+  }, [tripInformation]);
 
   // Fetch user location on component mount
   useEffect(() => {
@@ -292,7 +344,11 @@ export default function WelcomePage() {
 
   // Update trip information based on chat messages
   const updateTripInformation = (info: Partial<TripInformation>) => {
-    setTripInformation(prev => ({ ...prev, ...info }));
+    setTripInformation(prev => {
+      const updated = { ...prev, ...info } as TripInformation;
+      // localStorage will be updated by the useEffect above
+      return updated;
+    });
   };
 
   // Create travel details for autonomous mode
@@ -357,15 +413,17 @@ export default function WelcomePage() {
   ];
 
   const handleModeSelect = (mode: ChatMode) => {
+    // Clear stored preferences & reset defaults
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(LOCAL_STORAGE_KEY);
+    }
+    setTripInformation({ ...DEFAULT_PREFERENCES });
     setSelectedMode(mode);
     setChatKey(prev => prev + 1); // Force chat to re-render with new mode
     
     // Clear chat history when switching modes
     setClearHistory(true);
     setTimeout(() => setClearHistory(false), 100); // Reset after clearing
-    
-    // Reset trip information when switching modes
-    setTripInformation({});
     
     // Set the initial message based on the selected mode
     const initialMessages = {

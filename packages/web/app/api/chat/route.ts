@@ -90,9 +90,13 @@ ALWAYS:
 
 Remember: You're not just giving advice - you're actively helping users find and compare real travel options using their existing selections and showing them the right interface!`;
 
-    // Use custom system prompt if provided, otherwise use default with context
-    const finalSystemPrompt = systemPrompt || (defaultSystemPrompt + 
-      `AGENTIC CAPABILITIES:
+    // Build final system prompt: always include context when custom prompt is provided
+    const finalSystemPrompt = systemPrompt
+      ? `${systemPrompt}
+
+CONTEXT AWARENESS:
+${travelContext || "The user hasn't made any travel selections yet."}`
+      : (defaultSystemPrompt + `AGENTIC CAPABILITIES:
 You have access to tools that let you:
 - Search for flights in real-time
 - Find and compare hotels 
@@ -337,6 +341,21 @@ Remember: You're not just giving advice - you're actively helping users find and
                 activities,
                 travelers,
               },
+            };
+          },
+        }),
+
+        checkTripStatus: tool({
+          description: 'Check if all required trip information is complete and the user can proceed to itinerary planning. Use this before telling the user they are ready to proceed.',
+          parameters: z.object({}),
+          execute: async () => {
+            console.log(`🤖 AI is checking trip completion status`);
+            
+            // This tool will be handled by the frontend to return the actual localStorage state
+            return {
+              success: true,
+              message: 'Trip status check initiated. Frontend will provide actual completion status.',
+              checkRequested: true,
             };
           },
         }),
