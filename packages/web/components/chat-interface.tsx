@@ -177,6 +177,7 @@ export function ChatInterface({
         const args = toolCall.args as {
           departureLocation: string;
           destination: string;
+          departureDate: string;
           flightType: string;
           hotelType: string;
           returnFlight: boolean;
