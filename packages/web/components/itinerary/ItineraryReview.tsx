@@ -40,6 +40,8 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { useItinerary } from '@/contexts/ItineraryContext';
 import { useRouter } from 'next/navigation';
 import { sortItineraryItemsJSON } from '@/lib/utils';
+import { ActivityEditDialog } from './ActivityEditDialog';
+import { NaturalLanguageEditor } from './NaturalLanguageEditor';
 
 interface ItineraryItem {
   id: string;
@@ -54,6 +56,19 @@ interface ItineraryItem {
   duration?: string;
   location?: string;
   lastModified?: string;
+  timezoneInfo?: {
+    timezone: string;
+    abbreviation: string;
+    displayTime: string;
+    nextDay?: boolean;
+  };
+  travelToNext?: {
+    distance: number;
+    duration: number;
+    method: 'walking' | 'taxi' | 'public_transport' | 'driving';
+    cost?: number;
+  };
+  bufferAfter?: number;
 }
 
 interface ItineraryDay {
@@ -66,13 +81,117 @@ interface ItineraryDay {
 }
 
 export default function ItineraryReview() {
-  const { state } = useItinerary();
+  const { state, removeItineraryItem, updateItineraryItem, addItineraryItem } = useItinerary();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState('review');
   const [isModifying, setIsModifying] = useState(false);
   const [modifications, setModifications] = useState<any[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editingActivity, setEditingActivity] = useState<{ item: any; dayIndex: number } | null>(null);
+
+  /**
+   * Handle opening the edit dialog for an activity
+   */
+  function handleActivityEdit(item: any, dayIndex: number) {
+    setEditingActivity({ item, dayIndex });
+    setEditDialogOpen(true);
+  }
+
+  /**
+   * Handle removing an activity from the itinerary
+   */
+  async function handleRemoveActivity(activityId: string, dayIndex: number) {
+    try {
+      removeItineraryItem(dayIndex, activityId);
+      handleModification({
+        type: 'removal',
+        description: `Removed activity from Day ${dayIndex + 1}`,
+        itemId: activityId
+      });
+    } catch (error) {
+      console.error('Failed to remove activity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle moving an activity to another day
+   */
+  async function handleMoveActivity(activityId: string, fromDayIndex: number, toDayIndex: number) {
+    try {
+      // Find the activity in the current day
+      const currentDay = state.days[fromDayIndex];
+      const activityToMove = currentDay?.items.find(item => item.id === activityId);
+      
+      if (!activityToMove) {
+        throw new Error('Activity not found');
+      }
+
+      // Remove from current day
+      removeItineraryItem(fromDayIndex, activityId);
+      
+      // Add to new day
+      addItineraryItem(toDayIndex, activityToMove);
+      
+      handleModification({
+        type: 'move',
+        description: `Moved activity from Day ${fromDayIndex + 1} to Day ${toDayIndex + 1}`,
+        itemId: activityId
+      });
+    } catch (error) {
+      console.error('Failed to move activity:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Handle replacing an activity with a new one
+   */
+  async function handleReplaceActivity(activityId: string, dayIndex: number, newActivity: any) {
+    try {
+      // Find the original activity to get its timing
+      const currentDay = state.days[dayIndex];
+      const originalActivity = currentDay?.items.find(item => item.id === activityId);
+      
+      if (!originalActivity) {
+        throw new Error('Original activity not found');
+      }
+
+      // Create new activity with proper formatting
+      const replacementActivity = {
+        id: newActivity.id || `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        type: 'activity' as const,
+        name: newActivity.name,
+        description: newActivity.shortDescription || newActivity.description,
+        startTime: originalActivity.startTime,
+        endTime: originalActivity.endTime,
+        location: newActivity.location?.address || newActivity.location,
+        price: newActivity.price?.amount || 0,
+        currency: newActivity.price?.currency || 'USD',
+        status: 'suggested' as const,
+        source: 'ai' as const,
+        metadata: newActivity
+      };
+
+      // Remove old activity
+      removeItineraryItem(dayIndex, activityId);
+      
+      // Add new activity
+      addItineraryItem(dayIndex, replacementActivity);
+      
+      handleModification({
+        type: 'replacement',
+        description: `Replaced activity on Day ${dayIndex + 1}`,
+        itemId: activityId,
+        newItemId: replacementActivity.id
+      });
+    } catch (error) {
+      console.error('Failed to replace activity:', error);
+      throw error;
+    }
+  }
 
   // Use real itinerary data from context instead of hardcoded mock data
   const itinerary = useMemo(() => {
@@ -82,54 +201,93 @@ export default function ItineraryReview() {
         lastModified: new Date().toISOString(),
         status: 'reviewing' as const,
         totalCost: 0,
+        destination: state.travelDetails?.destination || '',
         days: []
       };
     }
 
-         // Convert context data to display format
-     const convertedDays = state.days.map((day, dayIndex) => {
-       const dayDate = new Date(state.travelDetails?.startDate || new Date());
-       dayDate.setDate(dayDate.getDate() + dayIndex);
-       
-       const dayTitle = dayIndex === 0 ? "Arrival Day" : 
-                        dayIndex === state.days.length - 1 ? "Departure Day" :
-                        `Day ${dayIndex + 1}`;
+    // Convert context data to display format with proper null checks
+    const convertedDays = state.days
+      .filter((day): day is NonNullable<typeof day> => day != null) // Filter out null/undefined days
+      .map((day, dayIndex) => {
+        const dayDate = new Date(state.travelDetails?.startDate || new Date());
+        dayDate.setDate(dayDate.getDate() + dayIndex);
+        
+        const dayTitle = dayIndex === 0 ? "Arrival Day" : 
+                         dayIndex === state.days.length - 1 ? "Departure Day" :
+                         `Day ${dayIndex + 1}`;
 
-       // Create a mutable copy for sorting and sort by time using JSON-based sorting
-       const itemsWithTime = day.items.filter((item): item is typeof item & { startTime: Date } => 
-         item.startTime !== undefined
-       );
-       const sortedItems = sortItineraryItemsJSON(itemsWithTime);
+        // Ensure day.items exists and is an array
+        const dayItems = Array.isArray(day.items) ? day.items : [];
 
-       const items = sortedItems.map((item: any) => ({
-        id: item.id,
-        type: item.type,
-        time: item.startTime ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '9:00 AM',
-        title: item.name,
-        description: item.description,
-        icon: item.type === 'flight' ? <Plane className="h-4 w-4" /> :
-              item.type === 'hotel' ? <Hotel className="h-4 w-4" /> :
-              <Activity className="h-4 w-4" />,
-        status: item.status || 'suggested',
-        price: item.price ? `$${item.price}` : undefined,
-        duration: item.startTime && item.endTime ? 
-          `${Math.round((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / (1000 * 60))}m` : 
-          undefined,
-        location: item.location,
-        lastModified: item.lastModified
-      }));
+        // Create a mutable copy for sorting and sort by time using JSON-based sorting
+        const itemsWithTime = dayItems.filter((item): item is typeof item & { startTime: Date } => 
+          item != null && item.startTime !== undefined
+        );
+        const sortedItems = sortItineraryItemsJSON(itemsWithTime);
 
-             const totalCost = day.items.reduce((sum: number, item: any) => sum + (item.price || 0), 0);
-      
-      return {
-        date: dayDate,
-        dayNumber: dayIndex + 1,
-        title: dayTitle,
-        totalCost,
-        totalDuration: `${items.length * 2} hours`,
-        items
-      };
-    });
+        const items = sortedItems.map((item: any) => {
+          // Use timezone-aware time display if available
+          const timeDisplay = item.timezoneInfo?.displayTime 
+            ? `${new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${item.timezoneInfo.abbreviation}`
+            : item.startTime 
+            ? new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            : '9:00 AM';
+          
+          // Enhanced description with duration and travel info
+          let enhancedDescription = item.description || '';
+          if (item.type === 'flight' && item.timezoneInfo?.nextDay) {
+            enhancedDescription += ` (arrives next day in ${item.timezoneInfo.abbreviation})`;
+          }
+          
+          // Add duration information to description if available
+          if (item.duration?.description) {
+            enhancedDescription += ` • Duration: ${item.duration.description}`;
+          }
+          
+          // Add travel information to description if available
+          if (item.travelToNext) {
+            const travelMethod = item.travelToNext.method === 'walking' ? '🚶' : 
+                                item.travelToNext.method === 'taxi' ? '🚕' : 
+                                item.travelToNext.method === 'public_transport' ? '🚌' : '🚗';
+            const travelCost = item.travelToNext.cost ? ` ($${item.travelToNext.cost})` : '';
+            enhancedDescription += ` • ${travelMethod} ${item.travelToNext.duration}min to next${travelCost}`;
+          }
+          
+          return {
+            id: item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            type: item.type || 'activity',
+            time: timeDisplay,
+            title: item.name || 'Untitled Item',
+            description: enhancedDescription,
+            icon: item.type === 'flight' ? <Plane className="h-4 w-4" /> :
+                  item.type === 'hotel' ? <Hotel className="h-4 w-4" /> :
+                  <Activity className="h-4 w-4" />,
+            status: item.status || 'suggested',
+            price: item.price ? `$${item.price}` : undefined,
+            duration: item.duration?.description || 
+              (item.startTime && item.endTime ? 
+                `${Math.round((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / (1000 * 60))}m` : 
+                undefined),
+            location: item.location,
+            lastModified: item.lastModified,
+            timezoneInfo: item.timezoneInfo,
+            travelToNext: item.travelToNext,
+            bufferAfter: item.bufferAfter
+          };
+        });
+
+        const totalCost = dayItems.reduce((sum: number, item: any) => sum + (item?.price || 0), 0);
+        
+        return {
+          date: dayDate,
+          dayNumber: dayIndex + 1,
+          title: dayTitle,
+          totalCost,
+          totalDuration: `${items.length * 2} hours`,
+          items
+        };
+      });
 
     const totalCost = convertedDays.reduce((sum, day) => sum + (day.totalCost || 0), 0);
 
@@ -138,6 +296,7 @@ export default function ItineraryReview() {
       lastModified: new Date().toISOString(),
       status: 'reviewing' as const,
       totalCost,
+      destination: state.travelDetails?.destination || '',
       days: convertedDays
          };
    }, [state.days, state.travelDetails]);
@@ -385,7 +544,7 @@ export default function ItineraryReview() {
                       <div 
                         key={item.id} 
                         className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => setSelectedItem(item)}
+                        onClick={() => item.type === 'activity' ? handleActivityEdit(item, dayIndex) : setSelectedItem(item)}
                       >
                         <div className="flex items-start gap-4">
                           <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
@@ -439,10 +598,11 @@ export default function ItineraryReview() {
 
         {/* Natural Language Tab */}
         <TabsContent value="chat" className="space-y-6">
-          <div className="p-8 text-center">
-            <MessageCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Natural Language Editor</h3>
-            <p className="text-gray-500">Coming in Phase 4 - Edit your itinerary using natural language</p>
+          <div className="h-[600px] border rounded-lg bg-white">
+            <NaturalLanguageEditor
+              itinerary={itinerary}
+              onModification={handleModification}
+            />
           </div>
         </TabsContent>
 
@@ -468,6 +628,20 @@ export default function ItineraryReview() {
           <span>{modifications.length} modifications made</span>
         </div>
       </div>
+
+      {/* Activity Edit Dialog */}
+      {editingActivity && (
+        <ActivityEditDialog
+          isOpen={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          activity={editingActivity.item}
+          currentDayIndex={editingActivity.dayIndex}
+          totalDays={itinerary.days.length}
+          onRemove={handleRemoveActivity}
+          onMove={handleMoveActivity}
+          onReplace={handleReplaceActivity}
+        />
+      )}
     </div>
   );
 } 

@@ -243,32 +243,42 @@ function itineraryReducer(state: ItineraryState, action: ItineraryAction): Itine
       const { dayIndex, item } = action.payload;
       const newDays = [...state.days];
 
+      // Ensure all preceding days exist to avoid sparse arrays
+      for (let i = 0; i <= dayIndex; i++) {
+        if (!newDays[i]) {
+          const fillDate = new Date(state.travelDetails?.startDate || new Date());
+          fillDate.setDate(fillDate.getDate() + i);
+          newDays[i] = { date: fillDate, items: [] };
+        }
+      }
+
+      // Work with a mutable targetDayIndex that can shift if needed
       let targetDayIndex = dayIndex;
 
-      // Ensure the target day exists
-      if (!newDays[targetDayIndex]) {
+      const targetDayExists = newDays[targetDayIndex] !== undefined;
+      if (!targetDayExists) {
         const dayDate = new Date(state.travelDetails?.startDate || new Date());
         dayDate.setDate(dayDate.getDate() + targetDayIndex);
         newDays[targetDayIndex] = { date: dayDate, items: [] };
       }
 
-      const targetDay = newDays[targetDayIndex];
+      let targetDay = newDays[targetDayIndex];
       const lastItemInDay = targetDay.items[targetDay.items.length - 1];
 
       // If new item's time is earlier than last item's time, it belongs to the next day
       if (lastItemInDay && item.startTime && lastItemInDay.startTime && item.startTime < lastItemInDay.startTime) {
-        targetDayIndex++;
-        // Ensure the next day exists
+        targetDayIndex += 1;
         if (!newDays[targetDayIndex]) {
           const nextDayDate = new Date(state.travelDetails?.startDate || new Date());
           nextDayDate.setDate(nextDayDate.getDate() + targetDayIndex);
           newDays[targetDayIndex] = { date: nextDayDate, items: [] };
         }
+        targetDay = newDays[targetDayIndex];
       }
 
       // Prevent duplicates in the target day
-      if (!newDays[targetDayIndex].items.find(i => i.id === item.id)) {
-        newDays[targetDayIndex].items.push(item);
+      if (!targetDay.items.find(i => i.id === item.id)) {
+        targetDay.items.push(item);
       } else {
         console.log(`Duplicate item prevented: ${item.id}`);
         return state;

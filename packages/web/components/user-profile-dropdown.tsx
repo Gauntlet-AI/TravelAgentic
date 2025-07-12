@@ -52,14 +52,10 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
   const [tripHistory, setTripHistory] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
 
-  if (!user) return null;
-
-  // Get user's display name
-  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
-  const userEmail = user.email || '';
-
   // Fetch trip history from API
   useEffect(() => {
+    if (!user) return;
+    
     const fetchTripHistory = async () => {
       setIsLoadingHistory(true);
       
@@ -80,7 +76,14 @@ export function UserProfileDropdown({ className }: UserProfileDropdownProps) {
     };
 
     fetchTripHistory();
-  }, [user.id]);
+  }, [user]);
+
+  // Early return after hooks
+  if (!user) return null;
+
+  // Get user's display name
+  const displayName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+  const userEmail = user.email || '';
 
   const handleSignOut = async () => {
     setIsSigningOut(true);

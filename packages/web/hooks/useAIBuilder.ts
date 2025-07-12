@@ -189,7 +189,7 @@ export function useAIBuilder() {
 
   // Handle streaming updates
   const handleStreamingUpdate = useCallback(async (data: any) => {
-    const { type, step, progress, message, items } = data;
+    const { type, step, progress, message, items, days } = data;
     
     switch (type) {
       case 'step_start':
@@ -210,11 +210,66 @@ export function useAIBuilder() {
         
       case 'step_complete':
         updateStepProgress(step, 100, 'completed');
+        
+        // Handle days data structure (new format)
+        if (days && days.length > 0) {
+          // Add days to itinerary context with proper day mapping
+          console.log('🎯 Frontend useAIBuilder: Processing AI-generated days received:', days.length);
+          days.forEach((day: any, dayIndex: number) => {
+            if (day.items && day.items.length > 0) {
+              console.log(`📅 Processing day ${dayIndex + 1} (${day.date}) with ${day.items.length} items`);
+              day.items.forEach((item: any, itemIndex: number) => {
+                // Ensure dayIndex is properly set for items
+                const processedItem = {
+                  ...item,
+                  // Ensure required fields are present
+                  id: item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                  name: item.name || item.title || 'Untitled Item',
+                  status: item.status || 'suggested',
+                  source: item.source || 'ai',
+                  // Convert date strings back to Date objects if needed
+                  startTime: item.startTime ? new Date(item.startTime) : undefined,
+                  endTime: item.endTime ? new Date(item.endTime) : undefined,
+                  dayIndex: item.dayIndex !== undefined ? item.dayIndex : dayIndex // Use item's dayIndex or fall back to loop index
+                };
+                
+                console.log(`🧩 Adding tile to context (Day ${dayIndex + 1}, Item ${itemIndex + 1}):`, JSON.stringify({
+                  id: processedItem.id,
+                  type: processedItem.type,
+                  name: processedItem.name,
+                  startTime: processedItem.startTime,
+                  endTime: processedItem.endTime,
+                  location: processedItem.location,
+                  price: processedItem.price,
+                  currency: processedItem.currency,
+                  dayIndex: processedItem.dayIndex,
+                  source: processedItem.source,
+                  status: processedItem.status
+                }, null, 2));
+                
+                // Use the actual day index from the item or the loop index
+                const actualDayIndex = processedItem.dayIndex !== undefined ? processedItem.dayIndex : dayIndex;
+                operations.addOrAdjustItineraryItem(actualDayIndex, processedItem);
+              });
+            }
+          });
+        }
+        
+        // Handle legacy items array format (fallback)
         if (items && items.length > 0) {
-          // Add items to itinerary
           for (const item of items) {
             const dayIndex = item.dayIndex || 0;
-            operations.addOrAdjustItineraryItem(dayIndex, item);
+            operations.addOrAdjustItineraryItem(dayIndex, {
+              ...item,
+              // Ensure required fields are present
+              id: item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              name: item.name || item.title || 'Untitled Item',
+              status: item.status || 'suggested',
+              source: item.source || 'ai',
+              // Convert date strings back to Date objects if needed
+              startTime: item.startTime ? new Date(item.startTime) : undefined,
+              endTime: item.endTime ? new Date(item.endTime) : undefined,
+            });
           }
         }
         break;

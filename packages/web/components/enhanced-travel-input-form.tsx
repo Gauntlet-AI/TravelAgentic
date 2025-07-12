@@ -16,9 +16,7 @@ import {
   Plane,
   Plus,
   Sparkles,
-  Target,
   Users,
-  Compass,
 } from 'lucide-react';
 
 import { Inter } from 'next/font/google';
@@ -160,11 +158,8 @@ export function EnhancedTravelInputForm({
   const [children, setChildren] = useState(0);
   
   // Enhanced preferences state
-  const [tripPurpose, setTripPurpose] = useState<TravelPreferences['tripPurpose']>();
   const [budget, setBudget] = useState<TravelPreferences['budget']>();
-  const [travelStyle, setTravelStyle] = useState<TravelPreferences['travelStyle']>();
   const [selectedActivityTypes, setSelectedActivityTypes] = useState<string[]>([]);
-  const [accommodationType, setAccommodationType] = useState<TravelPreferences['accommodationType']>();
   const [activityTypes, setActivityTypes] = useState<ActivityType[]>([]);
   const [isLoadingActivityTypes, setIsLoadingActivityTypes] = useState(false);
 
@@ -350,37 +345,31 @@ export function EnhancedTravelInputForm({
   const handleSubmit = (e: React.FormEvent, useItineraryFlow: boolean = mode === 'itinerary') => {
     e.preventDefault();
     
-    if (departureLocation && destination && firstDate && secondDate) {
-      const startDate = firstDate < secondDate ? firstDate : secondDate;
-      const endDate = firstDate < secondDate ? secondDate : firstDate;
-
-      const basicDetails: TravelDetails = {
-        departureLocation,
-        destination,
-        startDate,
-        endDate,
-        travelers: adults + children,
-        adults,
-        children,
-      };
-
-      const enhancedDetails: EnhancedTravelDetails = {
-        ...basicDetails,
-        preferences: showPreferences ? {
-          tripPurpose,
-          budget,
-          travelStyle,
-          activityTypes: selectedActivityTypes,
-          accommodationType,
-        } : undefined,
-      };
-
-      onSubmit(enhancedDetails, useItineraryFlow);
-    }
+    if (!departureLocation || !destination || !firstDate || !secondDate) return;
+    
+    const startDate = firstDate < secondDate ? firstDate : secondDate;
+    const endDate = firstDate < secondDate ? secondDate : firstDate;
+    
+         const details: EnhancedTravelDetails = {
+       departureLocation,
+       destination,
+       startDate,
+       endDate,
+       travelers: adults + children,
+       adults,
+       children,
+       preferences: showPreferences ? {
+         budget,
+         activityTypes: selectedActivityTypes,
+       } : undefined
+     };
+    
+    onSubmit(details, useItineraryFlow);
   };
 
+  // Form validation  
   const isFormValid = departureLocation && destination && firstDate && secondDate;
-  const isEnhancedFormValid = isFormValid && (!showPreferences || (tripPurpose && budget));
+  const isEnhancedFormValid = isFormValid; // Budget and preferences are now optional
 
   // Form sections component
   const BasicFormFields = () => (
@@ -627,34 +616,13 @@ export function EnhancedTravelInputForm({
 
   const EnhancedFormFields = () => (
     <>
-      {/* Trip Purpose */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Target size={16} />
-          What's the purpose of your trip?
-        </Label>
-        <Select value={tripPurpose} onValueChange={setTripPurpose}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select trip purpose" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="leisure">🏖️ Leisure & Vacation</SelectItem>
-            <SelectItem value="business">💼 Business Travel</SelectItem>
-            <SelectItem value="adventure">🏔️ Adventure & Exploration</SelectItem>
-            <SelectItem value="relaxation">🧘 Relaxation & Wellness</SelectItem>
-            <SelectItem value="culture">🏛️ Cultural Immersion</SelectItem>
-            <SelectItem value="family">👨‍👩‍👧‍👦 Family Trip</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
       {/* Budget */}
       <div className="space-y-2">
         <Label className="flex items-center gap-2">
           <DollarSign size={16} />
           What's your budget range?
         </Label>
-        <Select value={budget} onValueChange={setBudget}>
+        <Select value={budget} onValueChange={(value) => setBudget(value as TravelPreferences['budget'])}>
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Select budget range" />
           </SelectTrigger>
@@ -663,24 +631,6 @@ export function EnhancedTravelInputForm({
             <SelectItem value="mid-range">💳 Mid-Range</SelectItem>
             <SelectItem value="luxury">💎 Luxury</SelectItem>
             <SelectItem value="ultra-luxury">👑 Ultra-Luxury</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Travel Style */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <Compass size={16} />
-          How do you prefer to travel?
-        </Label>
-        <Select value={travelStyle} onValueChange={setTravelStyle}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select travel style" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="independent">🗺️ Independent Explorer</SelectItem>
-            <SelectItem value="guided">👥 Guided Tours</SelectItem>
-            <SelectItem value="mixed">🔄 Mix of Both</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -722,24 +672,7 @@ export function EnhancedTravelInputForm({
         )}
       </div>
 
-      {/* Accommodation Type */}
-      <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          🏨 Preferred accommodation type
-        </Label>
-        <Select value={accommodationType} onValueChange={setAccommodationType}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Select accommodation type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="hotel">🏨 Hotel</SelectItem>
-            <SelectItem value="resort">🏖️ Resort</SelectItem>
-            <SelectItem value="apartment">🏠 Apartment/Rental</SelectItem>
-            <SelectItem value="hostel">🛏️ Hostel</SelectItem>
-            <SelectItem value="villa">🏡 Villa</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+
     </>
   );
 
@@ -1152,61 +1085,22 @@ export function EnhancedTravelInputForm({
               {showPreferences && (
                 <div className="border-t pt-8">
                   <h3 className="text-lg font-semibold mb-6">Tell us more about your trip</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div>
-                      <Label className="flex items-center gap-2 text-sm font-medium mb-2">
-                        <Target size={16} />
-                        Trip Purpose
-                      </Label>
-                                              <Select value={tripPurpose} onValueChange={(value) => setTripPurpose(value as TravelPreferences['tripPurpose'])}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select purpose" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="leisure">🏖️ Leisure & Vacation</SelectItem>
-                          <SelectItem value="business">💼 Business Travel</SelectItem>
-                          <SelectItem value="adventure">🏔️ Adventure & Exploration</SelectItem>
-                          <SelectItem value="relaxation">🧘 Relaxation & Wellness</SelectItem>
-                          <SelectItem value="culture">🏛️ Cultural Immersion</SelectItem>
-                          <SelectItem value="family">👨‍👩‍👧‍👦 Family Trip</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="flex items-center gap-2 text-sm font-medium mb-2">
-                        <DollarSign size={16} />
-                        Budget Range
-                      </Label>
-                                              <Select value={budget} onValueChange={(value) => setBudget(value as TravelPreferences['budget'])}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select budget" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="budget">💰 Budget-Friendly</SelectItem>
-                          <SelectItem value="mid-range">💳 Mid-Range</SelectItem>
-                          <SelectItem value="luxury">💎 Luxury</SelectItem>
-                          <SelectItem value="ultra-luxury">👑 Ultra-Luxury</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div>
-                      <Label className="flex items-center gap-2 text-sm font-medium mb-2">
-                        <Compass size={16} />
-                        Travel Style
-                      </Label>
-                                              <Select value={travelStyle} onValueChange={(value) => setTravelStyle(value as TravelPreferences['travelStyle'])}>
-                        <SelectTrigger className="h-12">
-                          <SelectValue placeholder="Select style" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="independent">🗺️ Independent Explorer</SelectItem>
-                          <SelectItem value="guided">👥 Guided Tours</SelectItem>
-                          <SelectItem value="mixed">🔄 Mix of Both</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                  <div className="max-w-md">
+                    <Label className="flex items-center gap-2 text-sm font-medium mb-2">
+                      <DollarSign size={16} />
+                      Budget Range
+                    </Label>
+                    <Select value={budget} onValueChange={(value) => setBudget(value as TravelPreferences['budget'])}>
+                      <SelectTrigger className="h-12">
+                        <SelectValue placeholder="Select budget" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="budget">💰 Budget-Friendly</SelectItem>
+                        <SelectItem value="mid-range">💳 Mid-Range</SelectItem>
+                        <SelectItem value="luxury">💎 Luxury</SelectItem>
+                        <SelectItem value="ultra-luxury">👑 Ultra-Luxury</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Activity Preferences */}

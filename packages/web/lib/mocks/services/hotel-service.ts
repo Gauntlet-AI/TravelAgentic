@@ -23,8 +23,8 @@ export class MockHotelService implements IHotelService {
   private config: MockConfig;
 
   constructor(config: MockConfig = {
-    failureRate: 0.05,
-    responseDelay: { min: 800, max: 2500 },
+    failureRate: 0.01, // Reduced from 0.05 to 0.01 for better reliability
+    responseDelay: { min: 200, max: 800 },
     enableRealisticData: true,
     enablePriceFluctuation: true
   }) {

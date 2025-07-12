@@ -13,6 +13,7 @@ import {
   Price
 } from '../types';
 import { getAirportByCode, searchAirports } from '../data/airports';
+import { calculateFlightArrival, getAirportTimezone, formatWithTimezone, createTimezoneAwareISOString } from '../../web/lib/timezone-utils';
 
 /**
  * Airlines data for generating realistic flight results
@@ -256,7 +257,7 @@ export class MockFlightService implements IFlightService {
   }
 
   /**
-   * Create a single flight segment
+   * Create a single flight segment with timezone-aware calculations
    */
   private createFlightSegment(
     origin: any, 
@@ -270,28 +271,77 @@ export class MockFlightService implements IFlightService {
     const flightNumber = `${airline.code}${Math.floor(Math.random() * 9000) + 1000}`;
     const depTime = departureTime || this.generateRandomTime();
     const duration = this.calculateFlightDuration(origin, destination);
-    const arrTime = this.addMinutes(depTime, duration);
 
     // Extract just the date part - handle both "2024-12-20" and "2024-12-20T00:00:00.000Z" formats
     const departureDateStr = date.split('T')[0]; // Get just "2024-12-20"
+    
+    // Create departure datetime
+    const departureDateTime = new Date(`${departureDateStr}T${depTime}:00`);
 
-    return {
-      airline: airline.name,
-      flightNumber,
-      aircraft,
-      departure: {
-        airport: origin,
-        time: `${departureDateStr}T${depTime}:00Z`,
-        terminal: this.generateTerminal()
-      },
-      arrival: {
-        airport: destination,
-        time: `${departureDateStr}T${arrTime}:00Z`,
-        terminal: this.generateTerminal()
-      },
-      duration: this.formatDuration(duration),
-      cabin
-    };
+    try {
+      // Calculate timezone-aware arrival time
+      const flightCalc = calculateFlightArrival(
+        departureDateTime,
+        duration,
+        origin.code,
+        destination.code
+      );
+
+      // Get timezone abbreviations for display
+      const departureTimezone = getAirportTimezone(origin.code);
+      const arrivalTimezone = getAirportTimezone(destination.code);
+
+      return {
+        airline: airline.name,
+        flightNumber,
+        aircraft,
+        departure: {
+          airport: origin,
+          time: departureTimezone ? 
+            createTimezoneAwareISOString(departureDateTime, departureTimezone) : 
+            departureDateTime.toISOString(),
+          terminal: this.generateTerminal()
+        },
+        arrival: {
+          airport: destination,
+          time: arrivalTimezone ? 
+            createTimezoneAwareISOString(flightCalc.arrivalTime, arrivalTimezone) : 
+            flightCalc.arrivalTime.toISOString(),
+          terminal: this.generateTerminal()
+        },
+        duration: this.formatDuration(duration),
+        cabin,
+        // Add timezone metadata for enhanced display
+        timezoneInfo: {
+          departureTimezone: flightCalc.departureTimezone,
+          arrivalTimezone: flightCalc.arrivalTimezone,
+          timezoneChange: flightCalc.timezoneChange,
+          nextDay: flightCalc.nextDay
+        }
+      };
+    } catch (error) {
+      // Fallback to simple time calculation if timezone lookup fails
+      console.warn('Timezone calculation failed, using simple time calculation:', error);
+      const arrTime = this.addMinutes(depTime, duration);
+      
+      return {
+        airline: airline.name,
+        flightNumber,
+        aircraft,
+        departure: {
+          airport: origin,
+          time: `${departureDateStr}T${depTime}:00Z`,
+          terminal: this.generateTerminal()
+        },
+        arrival: {
+          airport: destination,
+          time: `${departureDateStr}T${arrTime}:00Z`,
+          terminal: this.generateTerminal()
+        },
+        duration: this.formatDuration(duration),
+        cabin
+      };
+    }
   }
 
   /**
@@ -403,7 +453,7 @@ export class MockFlightService implements IFlightService {
       };
     }
 
-    const cabinBaggage = {
+    const cabinBaggage: Record<string, { carry: string; checked: string }> = {
       economy: { carry: '1 carry-on + 1 personal item', checked: 'First bag $30' },
       premium: { carry: '1 carry-on + 1 personal item', checked: 'First bag included' },
       business: { carry: '2 carry-on + 1 personal item', checked: '2 bags included' },
