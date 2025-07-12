@@ -228,7 +228,6 @@ export default function WelcomePage() {
   const [selectedMode, setSelectedMode] = useState<ChatMode>(null);
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
   const [initialMessage, setInitialMessage] = useState<string>('');
-  const [clearHistory, setClearHistory] = useState(false);
   const [tripInformation, setTripInformation] = useState<TripInformation>(() => {
     if (typeof window !== 'undefined') {
       try {
@@ -421,10 +420,6 @@ export default function WelcomePage() {
     setSelectedMode(mode);
     setChatKey(prev => prev + 1); // Force chat to re-render with new mode
     
-    // Clear chat history when switching modes
-    setClearHistory(true);
-    setTimeout(() => setClearHistory(false), 100); // Reset after clearing
-    
     // Set the initial message based on the selected mode
     const initialMessages = {
       conversation: 'I have some trip ideas and want to discuss them with you',
@@ -562,7 +557,7 @@ export default function WelcomePage() {
             customPlaceholder={getPlaceholder(selectedMode)}
             customEmptyStateMessage={getEmptyStateMessage(selectedMode)}
             initialMessage={initialMessage}
-            clearHistory={clearHistory}
+            travelDetails={selectedMode === 'autonomous' ? createTravelDetailsForAutonomous() : null}
             mode={selectedMode}
             onTripInfoUpdate={updateTripInformation}
             tripInfoComplete={hasEnoughInformation()}
