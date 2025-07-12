@@ -58,14 +58,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
           setUser(session?.user ?? null);
 
-          // Handle redirect after sign in
+          // Handle redirect after sign in – only redirect if we're not already on the welcome page
           if (event === 'SIGNED_IN' && session?.user) {
-            window.location.href = '/welcome';
+            if (window.location.pathname !== '/welcome') {
+              window.location.href = '/welcome';
+            }
           }
 
-          // Handle redirect after sign out
+          // Handle redirect after sign out – only redirect if we're not on the landing page already
           if (event === 'SIGNED_OUT') {
-            window.location.href = '/';
+            if (window.location.pathname !== '/') {
+              window.location.href = '/';
+            }
           }
         });
 
