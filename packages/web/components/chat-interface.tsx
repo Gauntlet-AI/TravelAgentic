@@ -308,25 +308,6 @@ export function ChatInterface({
               </Button>
             )}
           </div>
-          
-          {/* Show current selections summary */}
-          {travelDetails && (
-            <div className="text-xs text-gray-600 bg-blue-50 p-2 rounded">
-              <div className="font-medium text-blue-700 mb-1">Current Trip:</div>
-              {travelDetails.departureLocation && travelDetails.destination && (
-                <div>{travelDetails.departureLocation} → {travelDetails.destination}</div>
-              )}
-              {travelDetails.startDate && travelDetails.endDate && (
-                <div>{travelDetails.startDate.toLocaleDateString()} - {travelDetails.endDate.toLocaleDateString()}</div>
-              )}
-              {(travelDetails.adults || travelDetails.children) && (
-                <div>
-                  {travelDetails.adults} adult{travelDetails.adults !== 1 ? 's' : ''}
-                  {travelDetails.children > 0 && `, ${travelDetails.children} child${travelDetails.children !== 1 ? 'ren' : ''}`}
-                </div>
-              )}
-            </div>
-          )}
         </CardHeader>
       )}
 
