@@ -78,6 +78,12 @@ export interface FlightSegment {
   };
   duration: string;
   cabin: string;
+  timezoneInfo?: {
+    departureTimezone: string;
+    arrivalTimezone: string;
+    timezoneChange: number;
+    nextDay: boolean;
+  };
 }
 
 export interface FlightResult {
@@ -198,6 +204,9 @@ export interface ActivitySearchParams {
   accessibility?: string[];
   timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
   filters?: SearchFilters;
+  excludeIds?: string[]; // IDs to exclude from results
+  preferences?: string[]; // User preferences for activity matching
+  maxResults?: number; // Maximum number of results to return
 }
 
 export interface ActivityResult {

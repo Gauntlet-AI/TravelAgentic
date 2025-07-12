@@ -122,3 +122,61 @@ export function sortByConfigJSON<T extends Record<string, any>>(
     return 0;
   });
 }
+
+/**
+ * Groups itinerary items by day based on their start dates
+ * @param items - Array of itinerary items
+ * @param startDate - Trip start date
+ * @returns Array of days with items grouped by date
+ */
+export function groupItemsByDays(items: any[], startDate: Date): Array<{ date: Date; items: any[] }> {
+  if (!items || items.length === 0) {
+    return [];
+  }
+
+  // Create a map to group items by date
+  const itemsByDate = new Map<string, any[]>();
+  
+  items.forEach((item) => {
+    let itemDate: Date;
+    
+    // Get the date from the item's startTime
+    if (item.startTime) {
+      itemDate = new Date(item.startTime);
+    } else {
+      // Fallback to start date if no startTime
+      itemDate = new Date(startDate);
+    }
+    
+    // Create a date key (YYYY-MM-DD format)
+    const dateKey = itemDate.toISOString().split('T')[0];
+    
+    // Initialize array for this date if it doesn't exist
+    if (!itemsByDate.has(dateKey)) {
+      itemsByDate.set(dateKey, []);
+    }
+    
+    // Add the item to the appropriate date
+    itemsByDate.get(dateKey)!.push({
+      ...item,
+      // Ensure startTime and endTime are Date objects
+      startTime: item.startTime ? new Date(item.startTime) : undefined,
+      endTime: item.endTime ? new Date(item.endTime) : undefined,
+    });
+  });
+
+  // Convert map to array and sort by date
+  const days = Array.from(itemsByDate.entries())
+    .map(([dateKey, dayItems]) => ({
+      date: new Date(dateKey),
+      items: dayItems.sort((a, b) => {
+        // Sort items within each day by start time
+        const aTime = a.startTime ? a.startTime.getTime() : 0;
+        const bTime = b.startTime ? b.startTime.getTime() : 0;
+        return aTime - bTime;
+      })
+    }))
+    .sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  return days;
+}

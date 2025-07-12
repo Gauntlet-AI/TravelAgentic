@@ -24,8 +24,8 @@ export class MockActivityService implements IActivityService {
   private config: MockConfig;
 
   constructor(config: MockConfig = {
-    failureRate: 0.05,
-    responseDelay: { min: 800, max: 2500 },
+    failureRate: 0.01, // Reduced from 0.05 to 0.01 for better reliability
+    responseDelay: { min: 200, max: 800 },
     enableRealisticData: true,
     enablePriceFluctuation: true
   }) {
@@ -63,10 +63,13 @@ export class MockActivityService implements IActivityService {
 
       // Sort results
       const sortedActivities = this.sortActivities(completeActivities, params.filters?.sortBy, params.filters?.sortOrder);
+      
+      // Apply maxResults limit
+      const finalActivities = params.maxResults ? sortedActivities.slice(0, params.maxResults) : sortedActivities;
 
       return {
         success: true,
-        data: sortedActivities,
+        data: finalActivities,
         fallbackUsed: 'api',
         responseTime: Date.now() - startTime
       };
@@ -206,6 +209,13 @@ export class MockActivityService implements IActivityService {
    */
   private applyFilters(activities: Partial<ActivityResult>[], params: ActivitySearchParams): Partial<ActivityResult>[] {
     let filtered = [...activities];
+
+    // Filter out excluded IDs
+    if (params.excludeIds && params.excludeIds.length > 0) {
+      filtered = filtered.filter(activity => 
+        !params.excludeIds!.includes(activity.id || '')
+      );
+    }
 
     // Filter by categories (OR logic - activity matches if it has any of the requested categories)
     if (params.categories && params.categories.length > 0) {

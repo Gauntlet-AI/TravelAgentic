@@ -78,6 +78,12 @@ export interface FlightSegment {
   };
   duration: string;
   cabin: string;
+  timezoneInfo?: {
+    departureTimezone: string;
+    arrivalTimezone: string;
+    timezoneChange: number;
+    nextDay: boolean;
+  };
 }
 
 export interface FlightResult {

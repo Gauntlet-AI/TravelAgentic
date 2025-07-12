@@ -41,12 +41,15 @@ export async function POST(request: NextRequest) {
       destination: body.destination,
       startDate: body.startDate,
       endDate: body.endDate,
-      categories: body.categories,
+      categories: body.categories || body.preferences, // Support both categories and preferences
       duration: body.duration,
       groupSize: body.groupSize,
       accessibility: body.accessibility,
       timeOfDay: body.timeOfDay,
       filters: body.filters,
+      excludeIds: body.excludeIds,
+      preferences: body.preferences,
+      maxResults: body.maxResults,
     };
 
     // Get the activity service and perform search

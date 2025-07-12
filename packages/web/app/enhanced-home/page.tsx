@@ -83,20 +83,11 @@ export default function EnhancedHomePage() {
 
       // Add preferences if available
       if (details.preferences) {
-        if (details.preferences.tripPurpose) {
-          params.append('tripPurpose', details.preferences.tripPurpose);
-        }
         if (details.preferences.budget) {
           params.append('budget', details.preferences.budget);
         }
-        if (details.preferences.travelStyle) {
-          params.append('travelStyle', details.preferences.travelStyle);
-        }
         if (details.preferences.activityTypes && details.preferences.activityTypes.length > 0) {
           params.append('activityTypes', details.preferences.activityTypes.join(','));
-        }
-        if (details.preferences.accommodationType) {
-          params.append('accommodationType', details.preferences.accommodationType);
         }
       }
 

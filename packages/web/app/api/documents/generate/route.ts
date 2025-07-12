@@ -20,25 +20,14 @@ import {
 import fs from 'fs';
 import path from 'path';
 
-// Register fonts
+// Use default fonts - react-pdf provides Helvetica, Times-Roman, and Courier
 const fonts = {
-  Inter: Font.create({
-    family: 'Inter',
-    fonts: [
-      {
-        src: fs.readFileSync(path.join(process.cwd(), 'public/fonts/Inter-Regular.ttf')),
-        weight: 'normal',
-      },
-      {
-        src: fs.readFileSync(path.join(process.cwd(), 'public/fonts/Inter-Bold.ttf')),
-        weight: 'bold',
-      },
-    ],
-  }),
+  Inter: 'Helvetica', // Use Helvetica as fallback
 };
 
 // Global type declaration for PDF cache
 declare global {
+  // eslint-disable-next-line no-var
   var pdfCache: Map<string, Buffer> | undefined;
 }
 
