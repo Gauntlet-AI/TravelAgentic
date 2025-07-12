@@ -197,6 +197,7 @@ BEHAVIOR:
 - If user provides a date in any format, use that instead of choosing one
 - Explain your reasoning briefly
 - Present final summary and save immediately
+- When presenting the final summary, use an UNNUMBERED bullet list where each item starts with "- " (e.g., "- Destination: ..."). Do NOT use numbered lists.
 - DO NOT ask questions - MAKE CHOICES
 - DO NOT search for flights, hotels, or activities
 
