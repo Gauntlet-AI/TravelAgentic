@@ -7,6 +7,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Inter } from 'next/font/google';
 import { useAuth } from '@/lib/auth/auth-context';
 import { UserProfileDropdown } from '@/components/user-profile-dropdown';
@@ -235,7 +236,8 @@ Then call checkTripStatus to confirm all information is properly saved before te
 };
 
 export default function WelcomePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [selectedMode, setSelectedMode] = useState<ChatMode>(null);
   const [chatKey, setChatKey] = useState(0); // Force re-render chat when mode changes
@@ -291,6 +293,13 @@ export default function WelcomePage() {
 
     fetchLocation();
   }, []);
+
+  // Redirect unauthenticated users to the landing page
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !loading && !user) {
+      router.replace('/new-landing-page');
+    }
+  }, [user, loading, router]);
 
   // Background slideshow images (same as landing page)
   const backgroundImages = [
