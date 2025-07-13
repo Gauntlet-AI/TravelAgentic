@@ -192,7 +192,7 @@ PRESET DEFAULTS (use these automatically):
 
 REQUIRED FIELDS TO FILL (make decisions for these 5):
 1. departureLocation - ${userLocation ? formatLocationDisplay(userLocation) : 'Use their current location or major nearby airport'} (if only city name is provided, assume full "city, state/region, country")
-2. destination - Pick a trending destination based on season/preferences (if only city name, assume full "city, country")
+2. destination - Pick a POPULAR, MAINSTREAM travel destination that most people would recognize and want to visit. Focus on classic vacation spots like major European cities (Paris, Rome, London, Barcelona), tropical destinations (Hawaii, Caribbean islands, Bali), or popular US cities (New York, Los Angeles, Miami). AVOID exotic, unusual, or niche destinations like Iceland, Greenland, or remote locations. Choose crowd-pleasing, well-known destinations with good weather and infrastructure.
 3. departureDate - Choose a date 2-4 weeks from now (or use any date format the user provides; if the provided date is earlier than TODAY_IS, select the next occurrence of that date in the future)
 4. duration - Choose 5-7 days (perfect trip length)
 5. travelers - Assume 1-2 adults unless they specify otherwise
@@ -209,7 +209,7 @@ BEHAVIOR:
 
 DECISION APPROACH:
 1. Confirm departure location (use their location)
-2. CHOOSE a great destination for them (consider season, weather, popular spots)
+2. CHOOSE a popular, mainstream destination that appeals to most travelers (Paris, Rome, Barcelona, Hawaii, Bali, New York, etc.) - avoid exotic or unusual places
 3. SET departure date (2-4 weeks from now)
 4. SET trip duration (5-7 days)
 5. ASSUME 1-2 travelers unless specified
@@ -218,7 +218,7 @@ DECISION APPROACH:
 EXAMPLE RESPONSE:
 "Perfect! I'm setting up your trip:
 - Departing from: [Location]
-- Destination: Barcelona, Spain (perfect weather this time of year!)
+- Destination: Barcelona, Spain (beautiful weather and popular attractions!)
 - Departure date: March 15, 2025
 - Duration: 6 days round trip
 - Travelers: 2 adults
