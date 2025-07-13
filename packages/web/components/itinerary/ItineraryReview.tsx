@@ -745,7 +745,7 @@ LIMITATIONS:
           customPlaceholder="Ask me to modify your itinerary..."
           customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
           onTripInfoUpdate={() => {}} // Not needed for review mode
-          tripInfoComplete={true}
+          tripInfoComplete={false} // Don't show completion message in review mode
           className="h-full"
         />
       </div>
@@ -757,7 +757,7 @@ LIMITATIONS:
           customPlaceholder="Ask me to modify your itinerary..."
           customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
           onTripInfoUpdate={() => {}} // Not needed for review mode
-          tripInfoComplete={true}
+          tripInfoComplete={false} // Don't show completion message in review mode
           defaultOpen={false}
         />
       </div>
