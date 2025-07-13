@@ -97,6 +97,9 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Save conversation state immediately so it's available for GET requests
+    await saveConversationState(conversationState);
+
     // Create readable stream for Server-Sent Events
     const stream = new ReadableStream({
       start(controller) {
@@ -139,18 +142,23 @@ async function startOrchestratorConversation(
       automation_level: state.automation_level
     });
 
-    // Call the orchestrator graph
+    // Call the orchestrator graph with proper OrchestratorRequest format
+    const orchestratorRequest = {
+      message: state.messages.length > 0 ? state.messages[state.messages.length - 1]?.content : undefined,
+      conversation_id: state.conversation_id,
+      automation_level: state.automation_level,
+      user_preferences: state.user_preferences,
+      action: request.action || 'start',
+      modify_section: request.modify_section
+    };
+
     const response = await fetch(`${process.env.LANGGRAPH_URL || 'http://localhost:8000'}/orchestrator/invoke`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${process.env.LANGGRAPH_API_KEY || 'dev-key'}`
       },
-      body: JSON.stringify({
-        conversation_state: state,
-        request_type: request.action || 'continue',
-        modify_section: request.modify_section
-      })
+      body: JSON.stringify(orchestratorRequest)
     });
 
     if (!response.ok) {

@@ -32,8 +32,8 @@ export default function PerformanceDemoPage() {
   const [activeDemo, setActiveDemo] = useState<string | null>(null);
   const [demoConfig, setDemoConfig] = useState<DemoConfig>({
     destination: 'New York City',
-    start_date: '2025-03-15',
-    end_date: '2025-03-20',
+    start_date: '2025-09-15',
+    end_date: '2025-09-20',
     travelers: 2,
     budget: 3000,
     automation_level: 2,
@@ -45,8 +45,8 @@ export default function PerformanceDemoPage() {
       title: 'NYC Weekend Getaway',
       config: {
         destination: 'New York City',
-        start_date: '2025-03-15',
-        end_date: '2025-03-17',
+        start_date: '2025-09-15',
+        end_date: '2025-09-17',
         travelers: 2,
         budget: 2500,
         automation_level: 2,
@@ -58,8 +58,8 @@ export default function PerformanceDemoPage() {
       title: 'European Adventure',
       config: {
         destination: 'Paris',
-        start_date: '2025-06-01',
-        end_date: '2025-06-10',
+        start_date: '2025-08-01',
+        end_date: '2025-08-10',
         travelers: 4,
         budget: 8000,
         automation_level: 3,
@@ -71,8 +71,8 @@ export default function PerformanceDemoPage() {
       title: 'I\'m Feeling Lucky',
       config: {
         destination: 'Tokyo',
-        start_date: '2025-04-10',
-        end_date: '2025-04-15',
+        start_date: '2025-10-10',
+        end_date: '2025-10-15',
         travelers: 1,
         budget: 4000,
         automation_level: 4,

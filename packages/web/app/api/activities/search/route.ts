@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActivityService } from '@/lib/mocks';
+import { langGraphService } from '@/lib/langgraph-service';
 import { ActivitySearchParams } from '@/lib/mocks/types';
 
 /**
@@ -9,12 +9,12 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validate required parameters
-    if (!body.destination) {
+    // Validate required parameters (using Amadeus parameter names)
+    if (!body.latitude || !body.longitude) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required parameter: destination',
+          error: 'Missing required parameters: latitude, longitude',
         },
         { status: 400 }
       );
@@ -36,35 +36,70 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Convert the request body to match our ActivitySearchParams interface
+    // Convert Amadeus API parameters to our internal format
     const searchParams: ActivitySearchParams = {
-      destination: body.destination,
+      destination: body.destination || `${body.latitude},${body.longitude}`,
       startDate: body.startDate,
       endDate: body.endDate,
-      categories: body.categories || body.preferences, // Support both categories and preferences
-      duration: body.duration,
+      categories: body.categories || body.preferences,
+      duration: body.minimumDuration && body.maximumDuration ? {
+        min: parseInt(body.minimumDuration.replace('H', '')),
+        max: parseInt(body.maximumDuration.replace('H', ''))
+      } : undefined,
       groupSize: body.groupSize,
       accessibility: body.accessibility,
       timeOfDay: body.timeOfDay,
-      filters: body.filters,
+      filters: {
+        priceRange: body.minimumPrice && body.maximumPrice ? [body.minimumPrice, body.maximumPrice] : undefined,
+        ...body.filters
+      },
       excludeIds: body.excludeIds,
       preferences: body.preferences,
-      maxResults: body.maxResults,
+      maxResults: body.limit || body.maxResults,
     };
 
-    // Get the activity service and perform search
-    const activityService = getActivityService();
-    const result = await activityService.search(searchParams);
+    // Call LangGraph orchestrator for activity search
+    const langGraphRequest = {
+      message: `Search for activities near ${body.latitude}, ${body.longitude}`,
+      automation_level: 1,
+      action: 'continue' as const,
+      user_preferences: {
+        latitude: body.latitude,
+        longitude: body.longitude,
+        radius: body.radius || 50,
+        destination: searchParams.destination,
+        start_date: searchParams.startDate,
+        end_date: searchParams.endDate,
+        categories: searchParams.categories,
+        duration: searchParams.duration,
+        group_size: searchParams.groupSize,
+        accessibility: searchParams.accessibility,
+        time_of_day: searchParams.timeOfDay,
+        preferences: searchParams.preferences,
+        filters: searchParams.filters,
+        max_results: searchParams.maxResults
+      }
+    };
 
-    if (!result.success) {
+    const response = await langGraphService.invokeOrchestrator(langGraphRequest);
+    
+    if (!response.success) {
       return NextResponse.json(
         {
           success: false,
-          error: result.error || 'Activity search failed',
+          error: response.data?.error || 'Activity search failed',
         },
         { status: 500 }
       );
     }
+
+    const activities = response.data?.activities || response.data?.results || [];
+    const result = {
+      success: true,
+      data: activities,
+      fallbackUsed: false,
+      responseTime: response.execution_time || 0
+    };
 
     return NextResponse.json({
       success: true,
@@ -102,64 +137,101 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Extract and validate search parameters
-  const destination = searchParams.get('destination');
+  // Extract and validate search parameters (using Amadeus parameter names)
+  const latitude = searchParams.get('latitude');
+  const longitude = searchParams.get('longitude');
 
-  if (!destination) {
+  if (!latitude || !longitude) {
     return NextResponse.json(
       {
-        error: 'Missing required parameter: destination',
+        error: 'Missing required parameters: latitude, longitude',
       },
       { status: 400 }
     );
   }
 
-  // Convert URL search params to ActivitySearchParams
+  // Convert Amadeus URL search params to ActivitySearchParams
   const activitySearchParams: ActivitySearchParams = {
-    destination,
+    destination: searchParams.get('destination') || `${latitude},${longitude}`,
     startDate: searchParams.get('startDate') || undefined,
     endDate: searchParams.get('endDate') || undefined,
     categories: searchParams.get('categories')?.split(','),
     duration: {
-      min: searchParams.get('durationMin') ? parseInt(searchParams.get('durationMin')!) : undefined,
-      max: searchParams.get('durationMax') ? parseInt(searchParams.get('durationMax')!) : undefined,
+      min: searchParams.get('minimumDuration') ? parseInt(searchParams.get('minimumDuration')!.replace('H', '')) : undefined,
+      max: searchParams.get('maximumDuration') ? parseInt(searchParams.get('maximumDuration')!.replace('H', '')) : undefined,
     },
     groupSize: searchParams.get('groupSize') ? parseInt(searchParams.get('groupSize')!) : undefined,
     accessibility: searchParams.get('accessibility')?.split(','),
     timeOfDay: searchParams.get('timeOfDay') as any,
+    filters: {
+      priceRange: searchParams.get('minimumPrice') && searchParams.get('maximumPrice') ? 
+        [parseInt(searchParams.get('minimumPrice')!), parseInt(searchParams.get('maximumPrice')!)] : undefined,
+    },
+    maxResults: searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined,
   };
 
   // Create streaming response
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const activityService = getActivityService();
-
         // Send initial status
         controller.enqueue(
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'status',
-              message: 'Starting activity search...',
+              message: 'Starting activity search with LangGraph...',
             })}\n\n`
           )
         );
 
-        // Perform search
-        const result = await activityService.search(activitySearchParams);
+        // Call LangGraph orchestrator for activity search
+        const langGraphRequest = {
+          message: `Search for activities near ${latitude}, ${longitude}`,
+          automation_level: 1,
+          action: 'continue' as const,
+          user_preferences: {
+            latitude: parseFloat(latitude),
+            longitude: parseFloat(longitude),
+            radius: searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : 50,
+            destination: activitySearchParams.destination,
+            start_date: activitySearchParams.startDate,
+            end_date: activitySearchParams.endDate,
+            categories: activitySearchParams.categories,
+            duration: activitySearchParams.duration,
+            group_size: activitySearchParams.groupSize,
+            accessibility: activitySearchParams.accessibility,
+            time_of_day: activitySearchParams.timeOfDay,
+            preferences: activitySearchParams.preferences,
+            filters: activitySearchParams.filters,
+            max_results: activitySearchParams.maxResults
+          }
+        };
 
-        if (!result.success) {
+        const response = await langGraphService.invokeOrchestrator(langGraphRequest);
+        
+        if (!response.success) {
           controller.enqueue(
             new TextEncoder().encode(
               `data: ${JSON.stringify({
                 type: 'error',
-                message: result.error || 'Activity search failed',
+                message: response.data?.error || 'Activity search failed',
               })}\n\n`
             )
           );
           controller.close();
           return;
         }
+
+        const activities = response.data?.activities || response.data?.results || [];
+        const result = {
+          success: true,
+          data: activities,
+          fallbackUsed: false,
+          responseTime: response.execution_time || 0
+        };
+
+        // Result is always successful at this point since we handled errors above
+        // Stream activities back to client
 
         // Stream each activity result
         if (result.data) {

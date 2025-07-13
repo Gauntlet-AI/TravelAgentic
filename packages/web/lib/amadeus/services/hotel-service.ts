@@ -74,6 +74,15 @@ export class AmadeusHotelService implements IHotelService {
       const hotelOffersResponse = await this.client.getHotelOffers(hotelOffersParams);
 
       // Step 3: Transform and combine hotel data with offers
+      if (!hotelOffersResponse.data || !Array.isArray(hotelOffersResponse.data)) {
+        return {
+          success: true,
+          data: [],
+          fallbackUsed: 'api',
+          responseTime: Date.now() - startTime,
+        };
+      }
+
       const hotelResults = hotelOffersResponse.data.map(hotelOffer =>
         this.transformHotelOffer(hotelOffer)
       );
@@ -195,12 +204,12 @@ export class AmadeusHotelService implements IHotelService {
         reviewSummary: 'No reviews available',
       },
       location: {
-        address: hotel.address.lines.join(', '),
-        city: hotel.address.cityName,
-        country: hotel.address.countryCode,
+        address: hotel.address?.lines?.join(', ') || hotel.address?.cityName || 'Address not available',
+        city: hotel.address?.cityName || 'Unknown',
+        country: hotel.address?.countryCode || 'Unknown',
         coordinates: {
-          latitude: hotel.latitude,
-          longitude: hotel.longitude,
+          latitude: hotel.latitude || 0,
+          longitude: hotel.longitude || 0,
         },
         distanceFromCenter: hotel.hotelDistance?.distance || 0,
       },

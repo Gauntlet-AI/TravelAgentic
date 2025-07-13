@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-Test script for TravelAgentic LangGraph Orchestrator
-Tests the orchestrator with Amadeus API integration
+Test script for TravelAgentic LangGraph Orchestrator via Web Server
+Tests the orchestrator through the web server interface
 """
 
 import asyncio
@@ -63,42 +63,42 @@ async def test_orchestrator():
     print()
     
     try:
-        # Run the orchestrator
-        print("🔄 Running orchestrator...")
+        # Execute orchestrator
         result = await orchestrator.run(test_input)
         
-        print("✅ Result:")
-        print(f"Success: {result.get('success', False)}")
-        print(f"Execution time: {result.get('execution_time', 0):.2f}s")
-        print(f"Steps: {result.get('step_count', 0)}")
+        print("✅ Orchestrator execution completed!")
+        print(f"📊 Result keys: {list(result.keys())}")
         
-        if result.get('success'):
-            data = result.get('data', {})
-            print(f"Final step: {data.get('current_step', 'unknown')}")
-            print(f"Agent status: {data.get('agent_status', {})}")
+        if "output_data" in result:
+            output = result["output_data"]
+            print(f"📋 Output data keys: {list(output.keys())}")
             
-            # Check shopping cart
-            shopping_cart = data.get('shopping_cart', {})
-            if shopping_cart:
-                print("\n🛒 Shopping Cart:")
-                print(f"Flights: {len(shopping_cart.get('flights', []))}")
-                print(f"Hotels: {len(shopping_cart.get('hotels', []))}")
-                print(f"Activities: {len(shopping_cart.get('activities', []))}")
+            # Show some sample data
+            if "messages" in output:
+                print(f"💬 Generated {len(output['messages'])} messages")
                 
-                if shopping_cart.get('flights'):
-                    flight = shopping_cart['flights'][0]
-                    print(f"Selected flight: {flight.get('airline', 'Unknown')} - ${flight.get('price', 0)}")
+            if "shopping_cart" in output:
+                cart = output["shopping_cart"]
+                print(f"🛒 Shopping cart items: {len(cart)}")
                 
-                if shopping_cart.get('hotels'):
-                    hotel = shopping_cart['hotels'][0]
-                    print(f"Selected hotel: {hotel.get('name', 'Unknown')} - ${hotel.get('nightly_rate', 0)}/night")
-        else:
-            print(f"❌ Error: {result.get('error', 'Unknown error')}")
-    
+                if "flights" in cart:
+                    print(f"   ✈️  Flights: {len(cart['flights'])}")
+                if "hotels" in cart:
+                    print(f"   🏨 Hotels: {len(cart['hotels'])}")
+                if "activities" in cart:
+                    print(f"   🎯 Activities: {len(cart['activities'])}")
+                    
+            if "progress" in output:
+                progress = output["progress"]
+                print(f"📈 Progress: {progress}")
+        
+        print(f"⏱️  Execution time: {result.get('execution_time', 0):.2f}s")
+        
     except Exception as e:
-        print(f"❌ Exception: {str(e)}")
+        print(f"❌ Orchestrator error: {str(e)}")
+        import traceback
+        traceback.print_exc()
     
-    print("\n" + "=" * 50)
     print("Test completed!")
 
 async def test_webserver_integration():

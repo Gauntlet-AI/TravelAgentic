@@ -7,19 +7,31 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - USE_MOCK_APIS=true
-      - DEVELOPMENT_PHASE=1
-      # Supabase Cloud Configuration
+      # Base Configuration
+      - NODE_ENV=${NODE_ENV}
+      - USE_MOCK_APIS=${USE_MOCK_APIS}
+      
+      # Database Configuration
       - SUPABASE_URL=${SUPABASE_URL}
       - SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      
       # AI Integration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - LANGGRAPH_URL=http://langgraph:8000
-      - ENABLE_LANGGRAPH=true
-      # Caching
+      - ENABLE_LANGGRAPH=${ENABLE_LANGGRAPH}
+      
+      # Infrastructure
       - REDIS_URL=redis://redis:6379
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      
+      # Travel APIs
+      - AMADEUS_CLIENT_ID=${AMADEUS_CLIENT_ID}
+      - AMADEUS_CLIENT_SECRET=${AMADEUS_CLIENT_SECRET}
+      - AMADEUS_ENVIRONMENT=${AMADEUS_ENVIRONMENT}
+      
     depends_on:
       - langgraph
       - redis
@@ -34,13 +46,46 @@ services:
     build:
       context: packages/langgraph
     environment:
+      # AI API Keys
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      
+      # Service Configuration
+      - WEBSERVER_URL=http://web:3000
+      - ENABLE_LANGGRAPH=${ENABLE_LANGGRAPH}
+      - PYTHON_ENV=${PYTHON_ENV}
+      - LOG_LEVEL=${LOG_LEVEL}
+      
     ports:
       - "8000:8000"
     depends_on:
       - redis
     restart: unless-stopped
+
+  # LangGraph Testing (On-demand)
+  langgraph-test:
+    build:
+      context: packages/langgraph
+    environment:
+      # AI API Keys  
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      
+      # Service Configuration
+      - WEBSERVER_URL=http://web:3000
+      - ENABLE_LANGGRAPH=${ENABLE_LANGGRAPH}
+      - PYTHON_ENV=${PYTHON_ENV}
+      - LOG_LEVEL=${LOG_LEVEL}
+      
+      # Test Configuration
+      - USE_MOCK_DATA=true
+      - AMADEUS_API_KEY=test_key
+      - AMADEUS_API_SECRET=test_secret
+      
+    depends_on:
+      - web
+      - redis
+    profiles:
+      - testing
+    command: python test_orchestrator.py
 
   # Redis (for caching and sessions)
   redis:

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActivityService } from '@/lib/mocks';
+import { langGraphService } from '@/lib/langgraph-service';
 
 /**
  * GET endpoint for activity details
@@ -21,26 +21,16 @@ export async function GET(
       );
     }
 
-    // Get the activity service and fetch details
-    const activityService = getActivityService();
-    const result = await activityService.getDetails(activityId);
-
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error || 'Activity details not found',
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      fallbackUsed: result.fallbackUsed,
-      responseTime: result.responseTime,
-    });
+    // Activity details not implemented in current phase
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Activity details not implemented. Please use activity search for general information.',
+        alternativeEndpoint: '/api/activities/search',
+        estimatedImplementation: 'Phase 2 development'
+      },
+      { status: 501 } // Not Implemented
+    );
 
   } catch (error) {
     console.error('Activity details error:', error);

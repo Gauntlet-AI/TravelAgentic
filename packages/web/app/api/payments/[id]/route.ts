@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentService } from '@/lib/mocks';
 
 /**
  * GET endpoint for booking status
@@ -21,26 +20,16 @@ export async function GET(
       );
     }
 
-    // Get the payment service and fetch booking status
-    const paymentService = getPaymentService();
-    const result = await paymentService.getBookingStatus(bookingId);
-
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error || 'Booking not found',
-        },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      fallbackUsed: result.fallbackUsed,
-      responseTime: result.responseTime,
-    });
+    // Payment system not implemented in current phase
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Payment system not implemented. Please contact support for booking status.',
+        supportEmail: 'support@travelagentic.com',
+        estimatedImplementation: 'Phase 3 development'
+      },
+      { status: 501 } // Not Implemented
+    );
 
   } catch (error) {
     console.error('Booking status error:', error);

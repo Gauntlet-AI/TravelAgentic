@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getHotelService } from '@/lib/mocks';
+import { createAmadeusClient, AmadeusHotelService } from '@/lib/amadeus';
 
 /**
  * GET endpoint for checking hotel availability
@@ -61,8 +61,9 @@ export async function GET(
       );
     }
 
-    // Get the hotel service and check availability
-    const hotelService = getHotelService();
+    // Get hotel availability using Amadeus service
+    const amadeusClient = createAmadeusClient();
+    const hotelService = new AmadeusHotelService(amadeusClient);
     const result = await hotelService.checkAvailability(hotelId, checkIn, checkOut);
 
     if (!result.success) {

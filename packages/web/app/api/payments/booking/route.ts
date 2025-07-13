@@ -1,6 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPaymentService } from '@/lib/mocks';
-import { BookingRequest } from '@/lib/mocks/types';
+
+interface BookingRequest {
+  items: Array<{
+    id: string;
+    type: string;
+    details: any;
+    price: number;
+  }>;
+  paymentMethod: {
+    type: string;
+    details: any;
+  };
+  customerInfo: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+  };
+  specialRequests?: string;
+}
 
 /**
  * POST endpoint for processing travel bookings with payment
@@ -72,26 +90,16 @@ export async function POST(request: NextRequest) {
       specialRequests: body.specialRequests,
     };
 
-    // Get the payment service and process booking
-    const paymentService = getPaymentService();
-    const result = await paymentService.processBooking(bookingRequest);
-
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error || 'Payment processing failed',
-        },
-        { status: 402 } // Payment Required
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      data: result.data,
-      fallbackUsed: result.fallbackUsed,
-      responseTime: result.responseTime,
-    });
+    // Payment processing not implemented in current phase
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Payment processing not implemented. Please contact support for booking assistance.',
+        supportEmail: 'support@travelagentic.com',
+        estimatedImplementation: 'Phase 3 development'
+      },
+      { status: 501 } // Not Implemented
+    );
 
   } catch (error) {
     console.error('Payment processing error:', error);

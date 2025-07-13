@@ -59,7 +59,8 @@ class PerformanceOptimizationMixin:
         
         for flight in flights:
             # Budget filter
-            if flight.get("price", 0) > max_flight_budget:
+            flight_price = flight.get("price", {}).get("amount", 0) if isinstance(flight.get("price"), dict) else flight.get("price", 0)
+            if flight_price > max_flight_budget:
                 continue
                 
             # Preference filters
@@ -83,7 +84,7 @@ class PerformanceOptimizationMixin:
             filtered.append(flight)
         
         # Sort by price and rating
-        filtered.sort(key=lambda x: (x.get("price", 0), -x.get("rating", 0)))
+        filtered.sort(key=lambda x: (x.get("price", {}).get("amount", 0) if isinstance(x.get("price"), dict) else x.get("price", 0), -x.get("rating", 0)))
         
         return filtered[:5]  # Return top 5
     
@@ -112,7 +113,8 @@ class PerformanceOptimizationMixin:
                 
                 # Budget filter
                 hotel_budget = preferences.get("budget", 5000) * 0.35  # 35% for hotels
-                if hotel.get("price_per_night", 0) * hotel.get("nights", 1) > hotel_budget:
+                hotel_price = hotel.get("priceBreakdown", {}).get("total", 0) if hotel.get("priceBreakdown") else hotel.get("price", {}).get("amount", 0) if hotel.get("price") else 0
+                if hotel_price > hotel_budget:
                     continue
                 
                 filtered.append(hotel)
@@ -190,7 +192,8 @@ class PerformanceOptimizationMixin:
             score = 0
             
             # Price factor (lower is better)
-            price_factor = 1.0 - (flight.get("price", 1000) / 2000)  # Normalize to 0-1
+            flight_price = flight.get("price", {}).get("amount", 1000) if isinstance(flight.get("price"), dict) else flight.get("price", 1000)
+            price_factor = 1.0 - (flight_price / 2000)  # Normalize to 0-1
             score += price_factor * 0.3
             
             # Duration factor (shorter is better)
@@ -232,8 +235,8 @@ class PerformanceOptimizationMixin:
             score = 0
             
             # Price factor
-            price_per_night = hotel.get("price_per_night", 200)
-            price_factor = 1.0 - (price_per_night / 500)  # Normalize
+            hotel_price = hotel.get("priceBreakdown", {}).get("total", 200) if hotel.get("priceBreakdown") else hotel.get("price", {}).get("amount", 200) if hotel.get("price") else 200
+            price_factor = 1.0 - (hotel_price / 500)  # Normalize
             score += price_factor * 0.25
             
             # Rating factor
@@ -382,11 +385,11 @@ class PerformanceOptimizationMixin:
                 )
                 
                 # Calculate total cost
-                total_cost = (
-                    flight.get("price", 0) + 
-                    hotel.get("price_per_night", 0) * hotel.get("nights", 1) +
-                    sum(activity.get("price", 0) for activity in best_activities)
-                )
+                flight_price = flight.get("price", 0) if flight.get("price") is not None else 0
+                hotel_price = hotel.get("priceBreakdown", {}).get("total", 0) if hotel.get("priceBreakdown") else hotel.get("price", {}).get("amount", 0) if hotel.get("price") else 0
+                activity_costs = sum(activity.get("price", 0) if activity.get("price") is not None else 0 for activity in best_activities)
+                
+                total_cost = flight_price + hotel_price + activity_costs
                 
                 # Create combination
                 combination = {
@@ -430,8 +433,10 @@ class PerformanceOptimizationMixin:
         
         # Price balance factor
         total_budget = state.get("user_preferences", {}).get("budget", 5000)
-        combined_cost = flight.get("price", 0) + hotel.get("price_per_night", 0) * hotel.get("nights", 1)
-        budget_efficiency = 1.0 - (combined_cost / total_budget)
+        flight_price = flight.get("price", 0) if flight.get("price") is not None else 0
+        hotel_price = hotel.get("priceBreakdown", {}).get("total", 0) if hotel.get("priceBreakdown") else hotel.get("price", {}).get("amount", 0) if hotel.get("price") else 0
+        combined_cost = flight_price + hotel_price
+        budget_efficiency = 1.0 - (combined_cost / total_budget) if total_budget > 0 else 0
         score += budget_efficiency * 0.3
         
         return min(score, 1.0)

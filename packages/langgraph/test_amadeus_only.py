@@ -1,37 +1,54 @@
 #!/usr/bin/env python3
 """
-Test script for Amadeus API integration only
-Tests the Amadeus wrapper without LLM dependencies
+Test script for Web Server API integration only
+Tests the web server client that calls the web server API (which then calls Amadeus)
 """
 
 import asyncio
 import json
 import os
+from datetime import datetime, timedelta
 from typing import Dict, Any
 
-# Set environment variables for testing
-os.environ["USE_MOCK_DATA"] = "true"
-os.environ["AMADEUS_API_KEY"] = "test_key"
-os.environ["AMADEUS_API_SECRET"] = "test_secret"
+def get_future_date(days_from_now: int = 30) -> str:
+    """Generate a future date string in YYYY-MM-DD format"""
+    return (datetime.now() + timedelta(days=days_from_now)).strftime("%Y-%m-%d")
 
-async def test_amadeus_wrapper():
-    """Test the Amadeus API wrapper comprehensively"""
-    print("🧪 Testing Amadeus API Wrapper")
+def get_test_dates() -> Dict[str, str]:
+    """Generate consistent test dates for flight/hotel searches"""
+    departure_date = get_future_date(30)  # 30 days from now
+    return_date = get_future_date(37)     # 7 days later
+    checkin_date = get_future_date(30)    # Same as departure
+    checkout_date = get_future_date(35)   # 5 days later
+    
+    return {
+        "departure_date": departure_date,
+        "return_date": return_date,
+        "checkin_date": checkin_date,
+        "checkout_date": checkout_date
+    }
+
+# Environment variables are passed by Docker Compose
+# WEBSERVER_URL is automatically set to http://web:3000 by Docker Compose
+
+async def test_webserver_client():
+    """Test the web server API client comprehensively"""
+    print("🧪 Testing Web Server API Client")
     print("=" * 50)
     
-    from travel_graphs.amadeus_api_wrapper import amadeus_client
+    from travel_graphs.webserver_api_client import webserver_client
     
     # Test 1: Basic flight search
     print("✈️  Test 1: Basic Flight Search")
     flight_params = {
-        "origin": "NYC",
-        "destination": "LAX",
-        "departure_date": "2024-08-01",
-        "passengers": 2
+        "originLocationCode": "NYC",
+        "destinationLocationCode": "LAX",
+        "departureDate": get_test_dates()["departure_date"],
+        "adults": 2
     }
     
     try:
-        flights = await amadeus_client.search_flights(flight_params)
+        flights = await webserver_client.search_flights(flight_params)
         print(f"✅ Found {len(flights)} flights")
         
         for i, flight in enumerate(flights[:3]):
@@ -47,14 +64,14 @@ async def test_amadeus_wrapper():
     # Test 2: Hotel search
     print("🏨 Test 2: Hotel Search")
     hotel_params = {
-        "destination": "LAX",
-        "check_in": "2024-08-01",
-        "check_out": "2024-08-05",
-        "guests": 2
+        "cityCode": "LAX",
+        "checkInDate": get_test_dates()["checkin_date"],
+        "checkOutDate": get_test_dates()["checkout_date"],
+        "adults": 2
     }
     
     try:
-        hotels = await amadeus_client.search_hotels(hotel_params)
+        hotels = await webserver_client.search_hotels(hotel_params)
         print(f"✅ Found {len(hotels)} hotels")
         
         for i, hotel in enumerate(hotels[:3]):
@@ -70,16 +87,16 @@ async def test_amadeus_wrapper():
     # Test 3: Round trip flights
     print("✈️  Test 3: Round Trip Flight Search")
     roundtrip_params = {
-        "origin": "NYC",
-        "destination": "LAX",
-        "departure_date": "2024-08-01",
-        "return_date": "2024-08-05",
-        "passengers": 1,
-        "cabin": "business"
+        "originLocationCode": "NYC",
+        "destinationLocationCode": "LAX",
+        "departureDate": get_test_dates()["departure_date"],
+        "returnDate": get_test_dates()["return_date"],
+        "adults": 1,
+        "travelClass": "BUSINESS"
     }
     
     try:
-        flights = await amadeus_client.search_flights(roundtrip_params)
+        flights = await webserver_client.search_flights(roundtrip_params)
         print(f"✅ Found {len(flights)} round-trip flights")
         
         if flights:
@@ -96,14 +113,14 @@ async def test_amadeus_wrapper():
     # Test 4: Hotel search with different parameters
     print("🏨 Test 4: Extended Hotel Search")
     extended_hotel_params = {
-        "destination": "Miami",
-        "check_in": "2024-09-01",
-        "check_out": "2024-09-07",
-        "guests": 4
+        "cityCode": "MIA",
+        "checkInDate": get_test_dates()["checkin_date"],
+        "checkOutDate": get_test_dates()["checkout_date"],
+        "adults": 4
     }
     
     try:
-        hotels = await amadeus_client.search_hotels(extended_hotel_params)
+        hotels = await webserver_client.search_hotels(extended_hotel_params)
         print(f"✅ Found {len(hotels)} hotels in Miami")
         
         for hotel in hotels[:2]:
@@ -112,12 +129,9 @@ async def test_amadeus_wrapper():
     
     except Exception as e:
         print(f"❌ Extended hotel search error: {str(e)}")
-    
-    await amadeus_client.close()
-    
+
     print("\n" + "=" * 50)
     print("✅ Amadeus API tests completed!")
-
 async def test_orchestrator_data_conversion():
     """Test the data conversion functions in orchestrator"""
     print("\n🔄 Testing Orchestrator Data Conversion")
@@ -133,13 +147,13 @@ async def test_orchestrator_data_conversion():
         flight_context = {
             "departure_city": "New York",
             "destination_city": "Los Angeles", 
-            "departure_date": "2024-08-01",
+            "departure_date": get_test_dates()["departure_date"],
             "travelers": 2,
             "budget": 3000
         }
         
         print("✈️  Testing flight data conversion...")
-        flight_results = await orchestrator._generate_flight_data_with_amadeus(flight_context)
+        flight_results = await orchestrator._generate_flight_data_with_webserver(flight_context)
         
         print(f"✅ Generated {len(flight_results.get('flights', []))} flights")
         print(f"   Source: {flight_results.get('source', 'unknown')}")
@@ -151,15 +165,15 @@ async def test_orchestrator_data_conversion():
         # Test hotel context preparation
         hotel_context = {
             "destination_city": "Los Angeles",
-            "checkin_date": "2024-08-01",
-            "checkout_date": "2024-08-05",
+            "checkin_date": get_test_dates()["checkin_date"],
+            "checkout_date": get_test_dates()["checkout_date"],
             "travelers": 2,
             "budget": 3000,
             "context_aware": True
         }
         
         print("\n🏨 Testing hotel data conversion...")
-        hotel_results = await orchestrator._generate_hotel_data_with_amadeus(hotel_context)
+        hotel_results = await orchestrator._generate_hotel_data_with_webserver(hotel_context)
         
         print(f"✅ Generated {len(hotel_results.get('hotels', []))} hotels")
         print(f"   Source: {hotel_results.get('source', 'unknown')}")
@@ -175,8 +189,14 @@ async def test_orchestrator_data_conversion():
 
 async def main():
     """Main test function"""
-    await test_amadeus_wrapper()
-    await test_orchestrator_data_conversion()
+    from travel_graphs.webserver_api_client import webserver_client
+    
+    try:
+        await test_webserver_client()
+        await test_orchestrator_data_conversion()
+    finally:
+        # Always close the client at the end
+        await webserver_client.close()
 
 if __name__ == "__main__":
     asyncio.run(main()) 

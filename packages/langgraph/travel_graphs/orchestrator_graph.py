@@ -10,15 +10,34 @@ import time
 import uuid
 import json
 from typing import Dict, Any, List, TypedDict, Optional
+from datetime import datetime, timedelta
 
 from langgraph.graph import StateGraph, END
 from langchain_core.messages import SystemMessage, HumanMessage
 
 from .base_graph import BaseTravelGraph
 from .performance_optimizations import PerformanceOptimizationMixin
-from .amadeus_api_wrapper import amadeus_client
+from .webserver_api_client import webserver_client
 
 logger = logging.getLogger(__name__)
+
+def get_future_date(days_from_now: int = 30) -> str:
+    """Generate a future date string in YYYY-MM-DD format"""
+    return (datetime.now() + timedelta(days=days_from_now)).strftime("%Y-%m-%d")
+
+def get_default_dates() -> Dict[str, str]:
+    """Generate default dates for API requests"""
+    departure_date = get_future_date(30)  # 30 days from now
+    return_date = get_future_date(37)     # 7 days later  
+    checkin_date = get_future_date(30)    # Same as departure
+    checkout_date = get_future_date(35)   # 5 days later
+    
+    return {
+        "departure_date": departure_date,
+        "return_date": return_date,
+        "checkin_date": checkin_date,
+        "checkout_date": checkout_date
+    }
 
 class ConversationState(TypedDict):
     """Enhanced conversation state for orchestrator workflow"""
@@ -502,47 +521,63 @@ Budget: ${preferences.get('budget', 5000)}"""
         
         return {"flights": mock_flights}
     
-    async def _generate_flight_data_with_amadeus(self, flight_context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate flight data using Amadeus API with fallback to mock data"""
+    async def _generate_flight_data_with_webserver(self, flight_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate flight data using web server API (which calls Amadeus) with fallback to mock data"""
         try:
-            # Prepare search parameters for Amadeus API
+            # Convert city names to airport codes for Amadeus API
+            origin_city = flight_context.get("departure_city", "New York")
+            destination_city = flight_context.get("destination_city", "Los Angeles")
+            
+            # Prepare search parameters for Amadeus API (using correct parameter names)
+            default_dates = get_default_dates()
             search_params = {
-                "origin": flight_context.get("departure_city", "NYC"),
-                "destination": flight_context.get("destination_city", "LAX"),
-                "departure_date": flight_context.get("departure_date", "2024-08-01"),
-                "return_date": flight_context.get("return_date"),
-                "passengers": flight_context.get("travelers", 1),
-                "cabin": flight_context.get("cabin_class", "economy")
+                "originLocationCode": self._convert_city_to_airport_code(origin_city),
+                "destinationLocationCode": self._convert_city_to_airport_code(destination_city),
+                "departureDate": flight_context.get("departure_date", default_dates["departure_date"]),
+                "returnDate": flight_context.get("return_date"),
+                "adults": flight_context.get("travelers", 1),
+                "travelClass": flight_context.get("cabin_class", "ECONOMY").upper()
             }
             
-            # Use Amadeus API wrapper
-            flights = await amadeus_client.search_flights(search_params)
+            # Use web server API client
+            flights = await webserver_client.search_flights(search_params)
             
-            # Convert Amadeus format to orchestrator format
+            # Debug: Log the API response structure
+            logger.info(f"Flight API response: {len(flights)} flights, first flight: {flights[0] if flights else 'None'}")
+            
+            # Convert FlightResult format to orchestrator format
             converted_flights = []
             for flight in flights:
+                # Extract data from FlightResult format
+                segments = flight.get("segments", [])
+                first_segment = segments[0] if segments else {}
+                departure_info = first_segment.get("departure", {})
+                arrival_info = first_segment.get("arrival", {})
+                
                 converted_flight = {
-                    "airline": flight.get("airline_name", flight.get("airline", "Unknown")),
-                    "flight_number": flight.get("flight_number", ""),
-                    "departure_time": flight.get("departure_time", ""),
-                    "arrival_time": flight.get("arrival_time", ""),
-                    "duration": flight.get("duration", ""),
+                    "airline": first_segment.get("airline", "Unknown"),
+                    "flight_number": first_segment.get("flightNumber", ""),
+                    "departure_time": departure_info.get("time", ""),
+                    "arrival_time": arrival_info.get("time", ""),
+                    "duration": flight.get("totalDuration", ""),
                     "stops": flight.get("stops", 0),
-                    "price": flight.get("price", 0),
-                    "destination_airport": f"{flight_context.get('destination_city', 'Unknown')} Airport",
+                    "price": flight.get("price", {}).get("amount", 0),
+                    "destination_airport": arrival_info.get("airport", {}).get("name", f"{flight_context.get('destination_city', 'Unknown')} Airport"),
                     "arrival_date": flight_context.get("departure_date", ""),
-                    "departure_airport": f"{flight_context.get('departure_city', 'Unknown')} Airport",
-                    "source": flight.get("source", "amadeus_api"),
-                    "currency": flight.get("currency", "USD"),
-                    "cabin": flight.get("cabin", "economy"),
-                    "rating": flight.get("rating", 4.0),
-                    "amenities": flight.get("amenities", [])
+                    "departure_airport": departure_info.get("airport", {}).get("name", f"{flight_context.get('departure_city', 'Unknown')} Airport"),
+                    "source": flight.get("source", "api"),
+                    "currency": flight.get("price", {}).get("currency", "USD"),
+                    "cabin": first_segment.get("cabin", "Economy"),
+                    "rating": 4.0,
+                    "amenities": [],
+                    "baggage": flight.get("baggage", {}),
+                    "id": flight.get("id", "")
                 }
                 converted_flights.append(converted_flight)
             
             return {
                 "flights": converted_flights,
-                "source": "amadeus_api" if flights and flights[0].get("source") == "amadeus_api" else "placeholder"
+                "source": "amadeus_api" if flights and flights[0].get("source") == "api" else "placeholder"
             }
             
         except Exception as e:
@@ -649,50 +684,65 @@ Budget: ${preferences.get('budget', 5000)}"""
         
         return {"hotels": mock_hotels}
     
-    async def _generate_hotel_data_with_amadeus(self, hotel_context: Dict[str, Any]) -> Dict[str, Any]:
-        """Generate hotel data using Amadeus API with fallback to mock data"""
+    async def _generate_hotel_data_with_webserver(self, hotel_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate hotel data using web server API (which calls Amadeus) with fallback to mock data"""
         try:
-            # Prepare search parameters for Amadeus API
+            # Convert city name to airport code for Amadeus API
+            destination_city = hotel_context.get("destination_city", "Los Angeles")
+            
+            # Prepare search parameters for Amadeus API (using correct parameter names)
+            default_dates = get_default_dates()
             search_params = {
-                "destination": hotel_context.get("destination_city", "NYC"),
-                "check_in": hotel_context.get("checkin_date", "2024-08-01"),
-                "check_out": hotel_context.get("checkout_date", "2024-08-05"),
-                "guests": hotel_context.get("travelers", 1)
+                "cityCode": self._convert_city_to_airport_code(destination_city),
+                "checkInDate": hotel_context.get("checkin_date", default_dates["checkin_date"]),
+                "checkOutDate": hotel_context.get("checkout_date", default_dates["checkout_date"]),
+                "adults": hotel_context.get("travelers", 1),
+                "roomQuantity": 1
             }
             
-            # Use Amadeus API wrapper
-            hotels = await amadeus_client.search_hotels(search_params)
+            # Use web server API client
+            hotels = await webserver_client.search_hotels(search_params)
             
-            # Convert Amadeus format to orchestrator format
+            # Debug: Log the API response structure
+            logger.info(f"Hotel API response: {len(hotels)} hotels, first hotel: {hotels[0] if hotels else 'None'}")
+            
+            # Convert HotelResult format to orchestrator format
             converted_hotels = []
             for hotel in hotels:
+                # Extract data from HotelResult format
+                location = hotel.get("location", {})
+                price_breakdown = hotel.get("priceBreakdown", {})
+                policies = hotel.get("policies", {})
+                rating_info = hotel.get("rating", {})
+                
                 converted_hotel = {
                     "name": hotel.get("name", "Unknown Hotel"),
-                    "address": hotel.get("location", {}).get("address", "Unknown Address"),
+                    "address": location.get("address", "Unknown Address"),
                     "type": "Hotel",
-                    "rating": hotel.get("rating", 4.0),
-                    "nightly_rate": hotel.get("price_per_night", 150),
-                    "total_cost": hotel.get("total_price", 600),
+                    "rating": rating_info.get("score", 4.0) if isinstance(rating_info, dict) else rating_info,
+                    "nightly_rate": price_breakdown.get("basePrice", 150),
+                    "total_cost": price_breakdown.get("total", 600),
                     "amenities": hotel.get("amenities", []),
-                    "location": f"{hotel_context.get('destination_city', 'Unknown')} {hotel.get('location', {}).get('city', 'City')}",
+                    "location": f"{hotel_context.get('destination_city', 'Unknown')} {location.get('city', 'City')}",
                     "nearby_attractions": ["Museum", "Shopping", "Restaurants"],
-                    "source": hotel.get("source", "amadeus_api"),
-                    "currency": hotel.get("currency", "USD"),
-                    "star_rating": hotel.get("star_rating", 3),
-                    "room_type": hotel.get("room_type", "Standard Room"),
-                    "cancellation_policy": hotel.get("cancellation_policy", "Standard")
+                    "source": hotel.get("source", "api"),
+                    "currency": hotel.get("price", {}).get("currency", "USD"),
+                    "star_rating": hotel.get("starRating", 3),
+                    "room_type": hotel.get("roomTypes", [{}])[0].get("name", "Standard Room") if hotel.get("roomTypes") else "Standard Room",
+                    "cancellation_policy": policies.get("cancellation", "Standard"),
+                    "id": hotel.get("id", "")
                 }
                 
                 # Add airport proximity if flight context exists
                 if hotel_context.get("context_aware"):
-                    converted_hotel["airport_distance"] = "5 miles from airport"
+                    converted_hotel["airport_distance"] = f"{location.get('distanceFromCenter', 5)} miles from airport"
                     converted_hotel["airport_shuttle"] = True
                 
                 converted_hotels.append(converted_hotel)
             
             return {
                 "hotels": converted_hotels,
-                "source": "amadeus_api" if hotels and hotels[0].get("source") == "amadeus_api" else "placeholder"
+                "source": "amadeus_api" if hotels and hotels[0].get("source") == "api" else "placeholder"
             }
             
         except Exception as e:
@@ -1001,6 +1051,14 @@ Begin by asking: "Welcome to your personal travel planner. Please enter your aut
         """Main orchestrator using OrchestratorAgent.txt prompt with automation level routing"""
         logger.info(f"Orchestrator agent - automation level {state['automation_level']}")
         
+        # DEBUG: Log the complete state at the very beginning
+        logger.info(f"=== ORCHESTRATOR DEBUG START ===")
+        logger.info(f"State keys: {list(state.keys())}")
+        logger.info(f"State messages: {state.get('messages', 'NOT_FOUND')}")
+        logger.info(f"State input_data: {state.get('input_data', 'NOT_FOUND')}")
+        logger.info(f"State user_preferences: {state.get('user_preferences', 'NOT_FOUND')}")
+        logger.info(f"=== ORCHESTRATOR DEBUG END ===")
+        
         # Load orchestrator prompt
         try:
             orchestrator_prompt = self._load_prompt("OrchestratorAgent")
@@ -1019,7 +1077,37 @@ Allow users to reverse choices or restart planning at any time."""
         preferences = state["user_preferences"]
         automation_level = state["automation_level"]
         
-        # Validate we have enough information to proceed
+        # Debug: Log current state to understand message structure
+        logger.info(f"State messages: {state.get('messages', [])}")
+        logger.info(f"State input_data: {state.get('input_data', {})}")
+        
+        # Always try to parse from the most recent user message to extract travel details BEFORE validation
+        user_messages = [msg for msg in state["messages"] if msg.get("role") == "user"]
+        logger.info(f"Found {len(user_messages)} user messages")
+        
+        if user_messages:
+            latest_message = user_messages[-1].get("content", "")
+            logger.info(f"Attempting to parse message: {latest_message}")
+            parsed_details = self._parse_travel_message(latest_message)
+            if parsed_details:
+                # Update user preferences with parsed details
+                state["user_preferences"].update(parsed_details)
+                preferences = state["user_preferences"]
+                logger.info(f"Updated preferences from message parsing: {preferences}")
+        
+        # If still no message found in state, check if message was passed directly in input_data
+        elif not user_messages:
+            input_message = state.get("input_data", {}).get("message")
+            logger.info(f"No user messages found, checking input_data message: {input_message}")
+            if input_message:
+                logger.info(f"Attempting to parse input message: {input_message}")
+                parsed_details = self._parse_travel_message(input_message)
+                if parsed_details:
+                    state["user_preferences"].update(parsed_details)
+                    preferences = state["user_preferences"]
+                    logger.info(f"Updated preferences from input message parsing: {preferences}")
+        
+        # Now validate we have enough information to proceed (after parsing)
         required_info = self._validate_planning_requirements(state)
         if not required_info["valid"]:
             # Need more information from user
@@ -1143,9 +1231,20 @@ Return only the flight data in JSON format."""
         }
         
         # Validate required flight search data
-        if not all([flight_context["departure_city"], flight_context["destination_city"], 
-                   flight_context["departure_date"]]):
-            error_msg = "Missing required flight information (departure city, destination, or dates)"
+        missing_fields = []
+        if not flight_context["departure_city"]:
+            missing_fields.append("departure city")
+        if not flight_context["destination_city"]:
+            missing_fields.append("destination city")
+        if not flight_context["departure_date"]:
+            missing_fields.append("departure date")
+            
+        if missing_fields:
+            if len(missing_fields) == 1:
+                error_msg = f"Missing required flight information: {missing_fields[0]}"
+            else:
+                error_msg = f"Missing required flight information: {', '.join(missing_fields[:-1])} and {missing_fields[-1]}"
+            
             await self._emit_itinerary_update({
                 "type": "error",
                 "message": error_msg,
@@ -1186,8 +1285,8 @@ Return JSON with flight options based on automation level {automation_level}."""
             try:
                 flight_results = json.loads(response.content)
             except json.JSONDecodeError:
-                # Fallback to Amadeus API search
-                flight_results = await self._generate_flight_data_with_amadeus(flight_context)
+                # Fallback to web server API search
+                flight_results = await self._generate_flight_data_with_webserver(flight_context)
             
             # Process results based on automation level
             processed_flights = self._process_flight_results(flight_results, automation_level, instructions)
@@ -1244,6 +1343,9 @@ Return JSON with flight options based on automation level {automation_level}."""
             state["agent_status"]["flight_agent"] = "complete"
             state["step_count"] += 1
             
+            # Store search results for parallel processing
+            state["search_results"] = processed_flights
+            
             # Save snapshot after flight selection
             self._save_context_snapshot(state, "flight_agent_complete")
             
@@ -1253,6 +1355,9 @@ Return JSON with flight options based on automation level {automation_level}."""
             logger.error(f"Flight agent failed: {str(e)}")
             state["error"] = f"Flight search failed: {str(e)}"
             state["agent_status"]["flight_agent"] = "error"
+            
+            # Ensure search_results is empty on error
+            state["search_results"] = []
             
             await self._emit_itinerary_update({
                 "type": "error",
@@ -1335,9 +1440,20 @@ Return only lodging data in JSON format."""
             logger.info(f"Hotel search enhanced with flight context: {flight_context.get('arrival_airport', 'Unknown')}")
         
         # Validate required hotel search data
-        if not all([hotel_context["destination_city"], hotel_context["checkin_date"], 
-                   hotel_context["checkout_date"]]):
-            error_msg = "Missing required hotel information (destination, check-in, or check-out dates)"
+        missing_fields = []
+        if not hotel_context["destination_city"]:
+            missing_fields.append("destination")
+        if not hotel_context["checkin_date"]:
+            missing_fields.append("check-in date")
+        if not hotel_context["checkout_date"]:
+            missing_fields.append("check-out date")
+            
+        if missing_fields:
+            if len(missing_fields) == 1:
+                error_msg = f"Missing required hotel information: {missing_fields[0]}"
+            else:
+                error_msg = f"Missing required hotel information: {', '.join(missing_fields[:-1])} and {missing_fields[-1]}"
+            
             await self._emit_itinerary_update({
                 "type": "error",
                 "message": error_msg,
@@ -1382,8 +1498,8 @@ Return JSON with hotel options based on automation level {automation_level}."""
             try:
                 hotel_results = json.loads(response.content)
             except json.JSONDecodeError:
-                # Fallback to Amadeus API search
-                hotel_results = await self._generate_hotel_data_with_amadeus(hotel_context)
+                # Fallback to web server API search
+                hotel_results = await self._generate_hotel_data_with_webserver(hotel_context)
             
             # Process results based on automation level
             processed_hotels = self._process_hotel_results(hotel_results, automation_level, instructions, flight_context)
@@ -1444,6 +1560,9 @@ Return JSON with hotel options based on automation level {automation_level}."""
             state["agent_status"]["lodging_agent"] = "complete"
             state["step_count"] += 1
             
+            # Store search results for parallel processing
+            state["search_results"] = processed_hotels
+            
             # Save snapshot after hotel selection
             self._save_context_snapshot(state, "lodging_agent_complete")
             
@@ -1453,6 +1572,9 @@ Return JSON with hotel options based on automation level {automation_level}."""
             logger.error(f"Lodging agent failed: {str(e)}")
             state["error"] = f"Hotel search failed: {str(e)}"
             state["agent_status"]["lodging_agent"] = "error"
+            
+            # Ensure search_results is empty on error
+            state["search_results"] = []
             
             await self._emit_itinerary_update({
                 "type": "error",
@@ -1538,8 +1660,18 @@ Return only activities data in JSON format."""
             logger.info(f"Activities search enhanced with hotel context: {hotel_context.get('hotel_name', 'Unknown')}")
         
         # Validate required activities search data
-        if not all([activities_context["destination_city"], activities_context["start_date"]]):
-            error_msg = "Missing required activity information (destination or dates)"
+        missing_fields = []
+        if not activities_context["destination_city"]:
+            missing_fields.append("destination")
+        if not activities_context["start_date"]:
+            missing_fields.append("start date")
+            
+        if missing_fields:
+            if len(missing_fields) == 1:
+                error_msg = f"Missing required activity information: {missing_fields[0]}"
+            else:
+                error_msg = f"Missing required activity information: {', '.join(missing_fields[:-1])} and {missing_fields[-1]}"
+            
             await self._emit_itinerary_update({
                 "type": "error",
                 "message": error_msg,
@@ -1650,6 +1782,9 @@ Return JSON with activity options based on automation level {automation_level}."
             state["agent_status"]["activities_agent"] = "complete"
             state["step_count"] += 1
             
+            # Store search results for parallel processing
+            state["search_results"] = processed_activities
+            
             # Save snapshot after activities selection
             self._save_context_snapshot(state, "activities_agent_complete")
             
@@ -1659,6 +1794,9 @@ Return JSON with activity options based on automation level {automation_level}."
             logger.error(f"Activities agent failed: {str(e)}")
             state["error"] = f"Activities search failed: {str(e)}"
             state["agent_status"]["activities_agent"] = "error"
+            
+            # Ensure search_results is empty on error
+            state["search_results"] = []
             
             await self._emit_itinerary_update({
                 "type": "error",
@@ -2621,17 +2759,12 @@ Return JSON with activity options based on automation level {automation_level}."
     
     def _calculate_trip_duration(self, preferences: Dict[str, Any]) -> int:
         """Calculate trip duration in days"""
-        start_date = preferences.get("start_date")
-        end_date = preferences.get("end_date")
-        
-        if not start_date or not end_date:
-            return 0
-        
         try:
-            # Simple string comparison for now - in real implementation would parse dates
-            return 3  # Default assumption
-        except:
-            return 0
+            start_date = datetime.strptime(preferences.get("start_date", ""), "%Y-%m-%d")
+            end_date = datetime.strptime(preferences.get("end_date", ""), "%Y-%m-%d")
+            return (end_date - start_date).days
+        except (ValueError, TypeError):
+            return 7  # Default to 7 days
     
     def _extract_flight_preferences(self, state: ConversationState) -> Dict[str, Any]:
         """Extract flight preferences from current state"""
@@ -2740,7 +2873,10 @@ Return JSON with activity options based on automation level {automation_level}."
             "activity_search", "activity_results", "activity_selected",
             "booking_progress", "checkout_progress", "booking_complete",
             "agent_status", "missing_information", "backtrack_point",
-            "general", "error"
+            "parallel_search_start", "parallel_search_complete", "parallel_agent_complete", "parallel_agent_error",
+            "progressive_filter_complete", "results_aggregation_complete", "cart_validation_error",
+            "budget_warning", "safety_checkpoint_failed", "booking_partial_failure", "manual_intervention_required",
+            "booking_error", "general", "error"
         ]
         
         if update["type"] not in valid_types:
@@ -3791,10 +3927,14 @@ Return as structured JSON."""
                     state["parallel_search"]["agents"][agent_name]["progress"] = 100
                 
                 # Emit agent completion
+                results_count = 0
+                if result_state and isinstance(result_state, dict) and "search_results" in result_state:
+                    results_count = len(result_state["search_results"]) if result_state["search_results"] else 0
+                
                 await self._emit_itinerary_update({
                     "type": "parallel_agent_complete",
                     "agent": agent_name,
-                    "results_count": len(result_state.get("search_results", [])),
+                    "results_count": results_count,
                     "message": f"{agent_name.replace('_', ' ').title()} search completed"
                 })
                 
@@ -3831,10 +3971,18 @@ Return as structured JSON."""
             state["parallel_search"]["completion_time"] = time.time()
             state["parallel_search"]["status"] = "completed"
             
-            # Store results in main state
-            state["flight_results"] = flight_result.get("search_results", []) if isinstance(flight_result, dict) else []
-            state["lodging_results"] = lodging_result.get("search_results", []) if isinstance(lodging_result, dict) else []
-            state["activities_results"] = activities_result.get("search_results", []) if isinstance(activities_result, dict) else []
+            # Store results in main state with proper null checks
+            state["flight_results"] = []
+            if flight_result and isinstance(flight_result, dict):
+                state["flight_results"] = flight_result.get("search_results", []) or []
+            
+            state["lodging_results"] = []
+            if lodging_result and isinstance(lodging_result, dict):
+                state["lodging_results"] = lodging_result.get("search_results", []) or []
+            
+            state["activities_results"] = []
+            if activities_result and isinstance(activities_result, dict):
+                state["activities_results"] = activities_result.get("search_results", []) or []
             
             # Calculate performance metrics
             total_time = state["parallel_search"]["completion_time"] - state["parallel_search"]["start_time"]
@@ -3867,6 +4015,18 @@ Return as structured JSON."""
         flight_results = state.get("flight_results", [])
         lodging_results = state.get("lodging_results", [])
         activities_results = state.get("activities_results", [])
+        
+        # Debug: Log the types and first items
+        logger.info(f"Flight results type: {type(flight_results)}, length: {len(flight_results) if flight_results else 0}")
+        logger.info(f"Lodging results type: {type(lodging_results)}, length: {len(lodging_results) if lodging_results else 0}")
+        logger.info(f"Activities results type: {type(activities_results)}, length: {len(activities_results) if activities_results else 0}")
+        
+        if flight_results:
+            logger.info(f"First flight result type: {type(flight_results[0])}")
+        if lodging_results:
+            logger.info(f"First lodging result type: {type(lodging_results[0])}")
+        if activities_results:
+            logger.info(f"First activities result type: {type(activities_results[0])}")
         
         # Apply cross-agent filtering
         filtered_results = await self._apply_cross_agent_filtering(
@@ -3920,3 +4080,312 @@ Return as structured JSON."""
         })
         
         return state
+    
+    def _parse_travel_message(self, message: str) -> Dict[str, Any]:
+        """Parse travel details from natural language message"""
+        import re
+        from datetime import datetime, timedelta
+        
+        # Initialize extracted data
+        extracted = {}
+        
+        # Extract origin and destination - improved parsing
+        logger.info(f"Parsing origin/destination from: {message}")
+        
+        # Pattern 1: "trip to X from Y" - most common in presets
+        trip_pattern = re.search(r'trip\s+to\s+([A-Za-z\s]+?)\s+from\s+([A-Za-z\s,]+?)(?:\s*,|\s+departing)', message, re.IGNORECASE)
+        if trip_pattern:
+            destination = trip_pattern.group(1).strip().title()
+            origin = trip_pattern.group(2).strip().rstrip(',').title()
+            extracted['destination'] = destination
+            extracted['start_location'] = origin
+            extracted['origin'] = origin
+            logger.info(f"Pattern 1 - Extracted origin: '{origin}', destination: '{destination}'")
+        
+        # Pattern 2: Direct "from X to Y"
+        elif not extracted.get('destination'):
+            from_to_match = re.search(r'from\s+([A-Za-z\s]+?)\s+to\s+([A-Za-z\s]+)', message, re.IGNORECASE)
+            if from_to_match:
+                origin = from_to_match.group(1).strip().title()
+                destination = from_to_match.group(2).strip().title()
+                extracted['start_location'] = origin
+                extracted['origin'] = origin
+                extracted['destination'] = destination
+                logger.info(f"Pattern 2 - Extracted origin: '{origin}', destination: '{destination}'")
+        
+        # Pattern 3: Just "trip to X" (fallback for destination only)
+        if not extracted.get('destination'):
+            dest_only = re.search(r'trip\s+to\s+([A-Za-z\s]+)', message, re.IGNORECASE)
+            if dest_only:
+                destination = dest_only.group(1).strip().title()
+                extracted['destination'] = destination
+                logger.info(f"Pattern 3 - Extracted destination only: '{destination}'")
+        
+        # Extract dates and convert to proper YYYY-MM-DD format
+        date_patterns = [
+            r'departing\s+(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})',  # departing March 15th, 2025
+            r'(\w+\s+\d{1,2}(?:st|nd|rd|th)?,?\s+\d{4})',  # March 15th, 2025
+            r'(\d{4}-\d{2}-\d{2})',                        # 2025-03-15
+            r'(\d{1,2}/\d{1,2}/\d{4})',                    # 3/15/2025
+        ]
+        
+        for pattern in date_patterns:
+            matches = re.findall(pattern, message, re.IGNORECASE)
+            if matches:
+                try:
+                    date_str = matches[0] if isinstance(matches[0], str) else matches[0][0]
+                    # Convert natural language date to YYYY-MM-DD format
+                    parsed_date = self._parse_natural_date(date_str)
+                    if parsed_date:
+                        extracted['start_date'] = parsed_date
+                        break
+                except:
+                    continue
+        
+        # Extract trip duration and calculate end date
+        duration_patterns = [
+            r'(\d+)[-\s]day',           # "5-day trip", "5 day"
+            r'(\d+)\s+days?',           # "5 days"
+        ]
+        
+        duration_days = None
+        for pattern in duration_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                duration_days = int(match.group(1))
+                break
+        
+        # Calculate end date if we have start date and duration
+        if 'start_date' in extracted and duration_days:
+            try:
+                start = datetime.strptime(extracted['start_date'], '%Y-%m-%d')
+                end = start + timedelta(days=duration_days)
+                extracted['end_date'] = end.strftime('%Y-%m-%d')
+            except:
+                pass
+        
+        # Set default dates if none found
+        if 'start_date' not in extracted:
+            default_dates = get_default_dates()
+            extracted['start_date'] = default_dates['departure_date']
+            
+        if 'end_date' not in extracted:
+            if 'start_date' in extracted and duration_days:
+                try:
+                    start = datetime.strptime(extracted['start_date'], '%Y-%m-%d')
+                    end = start + timedelta(days=duration_days)
+                    extracted['end_date'] = end.strftime('%Y-%m-%d')
+                except:
+                    default_dates = get_default_dates()
+                    extracted['end_date'] = default_dates['return_date']
+            else:
+                default_dates = get_default_dates()
+                extracted['end_date'] = default_dates['return_date']
+        
+        # Extract number of travelers - improved patterns
+        traveler_patterns = [
+            r'for\s+(\d+)\s+adults?',                      # "for 2 adults"
+            r'(\d+)\s+adults?',                            # "2 adults"
+            r'(\d+)\s+(?:people|travelers?|persons?)',     # "2 people", "4 travelers"
+        ]
+        
+        for pattern in traveler_patterns:
+            match = re.search(pattern, message, re.IGNORECASE)
+            if match:
+                extracted['travelers'] = int(match.group(1))
+                break
+        
+        # Extract budget - direct approach with explicit search
+        # Look for dollar amounts, prioritizing 4-digit amounts
+        budget_match = re.search(r'\$(\d{4,})', message)  # Try $4000+ first
+        if budget_match:
+            extracted['budget'] = int(budget_match.group(1))
+        else:
+            # Fallback to any dollar amount
+            budget_match = re.search(r'\$(\d+)', message)
+            if budget_match:
+                extracted['budget'] = int(budget_match.group(1))
+        
+        # Extract preferences
+        if 'luxury' in message.lower():
+            extracted['accommodation_preference'] = 'luxury'
+        elif 'budget' in message.lower() and 'budget' not in extracted:
+            extracted['accommodation_preference'] = 'budget'
+        
+        # Extract specific interests
+        if 'disney' in message.lower():
+            extracted['interests'] = ['theme parks', 'family activities']
+        elif 'business' in message.lower():
+            extracted['trip_type'] = 'business'
+        elif 'family' in message.lower():
+            extracted['trip_type'] = 'family'
+        elif 'romantic' in message.lower() or 'honeymoon' in message.lower():
+            extracted['trip_type'] = 'romantic'
+        
+        logger.info(f"Extracted travel details from message: {extracted}")
+        return extracted
+    
+    def _parse_natural_date(self, date_str: str) -> Optional[str]:
+        """Convert natural language date to YYYY-MM-DD format"""
+        from datetime import datetime
+        import re
+        
+        # Clean up the date string
+        date_str = re.sub(r'(\d+)(st|nd|rd|th)', r'\1', date_str)  # Remove ordinal suffixes
+        date_str = date_str.replace(',', '').strip()
+        
+        # Try different date formats
+        formats = [
+            '%B %d %Y',      # March 15 2025
+            '%b %d %Y',      # Mar 15 2025
+            '%Y-%m-%d',      # 2025-03-15
+            '%m/%d/%Y',      # 3/15/2025
+        ]
+        
+        for fmt in formats:
+            try:
+                parsed = datetime.strptime(date_str, fmt)
+                return parsed.strftime('%Y-%m-%d')
+            except ValueError:
+                continue
+        
+        # If all parsing fails, return None
+        logger.warning(f"Could not parse date: {date_str}")
+        return None
+
+    def _convert_city_to_airport_code(self, city_name: str) -> str:
+        """Convert city name to airport code for API calls"""
+        if not city_name:
+            return "JFK"  # Default fallback
+            
+        # Comprehensive city-to-airport mapping
+        city_mappings = {
+            # Major US Cities
+            'New York': 'JFK',
+            'NYC': 'JFK', 
+            'New York City': 'JFK',
+            'Los Angeles': 'LAX',
+            'LA': 'LAX',
+            'San Francisco': 'SFO',
+            'Chicago': 'ORD',
+            'Miami': 'MIA',
+            'Las Vegas': 'LAS',
+            'Seattle': 'SEA',
+            'Boston': 'BOS',
+            'Denver': 'DEN',
+            'Atlanta': 'ATL',
+            'Dallas': 'DFW',
+            'Phoenix': 'PHX',
+            'Philadelphia': 'PHL',
+            'Houston': 'IAH',
+            'Detroit': 'DTW',
+            'Minneapolis': 'MSP',
+            'Orlando': 'MCO',
+            'Tampa': 'TPA',
+            'Nashville': 'BNA',
+            'Austin': 'AUS',
+            'San Antonio': 'SAT',
+            'Charlotte': 'CLT',
+            'Washington': 'DCA',
+            'Washington DC': 'DCA',
+            'Baltimore': 'BWI',
+            'Portland': 'PDX',
+            'Salt Lake City': 'SLC',
+            'Sacramento': 'SMF',
+            'San Diego': 'SAN',
+            'Kansas City': 'MCI',
+            'St. Louis': 'STL',
+            'Pittsburgh': 'PIT',
+            'Cleveland': 'CLE',
+            'Cincinnati': 'CVG',
+            'Indianapolis': 'IND',
+            'Columbus': 'CMH',
+            'Milwaukee': 'MKE',
+            'Memphis': 'MEM',
+            'New Orleans': 'MSY',
+            'Raleigh': 'RDU',
+            'Richmond': 'RIC',
+            'Buffalo': 'BUF',
+            'Rochester': 'ROC',
+            'Syracuse': 'SYR',
+            'Albany': 'ALB',
+            'Hartford': 'BDL',
+            'Providence': 'PVD',
+            'Honolulu': 'HNL',
+            'Anchorage': 'ANC',
+            
+            # International Cities
+            'London': 'LHR',
+            'Paris': 'CDG',
+            'Tokyo': 'NRT',
+            'Sydney': 'SYD',
+            'Dubai': 'DXB',
+            'Singapore': 'SIN',
+            'Hong Kong': 'HKG',
+            'Bangkok': 'BKK',
+            'Seoul': 'ICN',
+            'Frankfurt': 'FRA',
+            'Amsterdam': 'AMS',
+            'Madrid': 'MAD',
+            'Barcelona': 'BCN',
+            'Rome': 'FCO',
+            'Milan': 'MXP',
+            'Munich': 'MUC',
+            'Berlin': 'TXL',
+            'Vienna': 'VIE',
+            'Zurich': 'ZUR',
+            'Copenhagen': 'CPH',
+            'Stockholm': 'ARN',
+            'Oslo': 'OSL',
+            'Helsinki': 'HEL',
+            'Athens': 'ATH',
+            'Istanbul': 'IST',
+            'Moscow': 'SVO',
+            'Delhi': 'DEL',
+            'Mumbai': 'BOM',
+            'Bangalore': 'BLR',
+            'Hyderabad': 'HYD',
+            'Chennai': 'MAA',
+            'Kolkata': 'CCU',
+            'Beijing': 'PEK',
+            'Shanghai': 'PVG',
+            'Guangzhou': 'CAN',
+            'Toronto': 'YYZ',
+            'Vancouver': 'YVR',
+            'Montreal': 'YUL',
+            'Calgary': 'YYC',
+            'Edmonton': 'YEG',
+            'Ottawa': 'YOW',
+            'Winnipeg': 'YWG',
+            'Brisbane': 'BNE',
+            'Melbourne': 'MEL',
+            'Perth': 'PER',
+            'Adelaide': 'ADL',
+            'Auckland': 'AKL',
+            'Wellington': 'WLG',
+            'Christchurch': 'CHC',
+        }
+        
+        # Clean the city name
+        city_clean = city_name.strip()
+        
+        # Check direct mapping first
+        if city_clean in city_mappings:
+            return city_mappings[city_clean]
+        
+        # Check case-insensitive mapping
+        for city, code in city_mappings.items():
+            if city.lower() == city_clean.lower():
+                return code
+        
+        # If it's already a 3-letter airport code, return it
+        if len(city_clean) == 3 and city_clean.isalpha() and city_clean.isupper():
+            return city_clean
+        
+        # Try to convert to airport code format
+        if len(city_clean) == 3 and city_clean.isalpha():
+            return city_clean.upper()
+        
+        # Default fallback - extract first 3 letters and uppercase
+        fallback_code = ''.join(c for c in city_clean if c.isalpha())[:3].upper()
+        return fallback_code if len(fallback_code) == 3 else "JFK"

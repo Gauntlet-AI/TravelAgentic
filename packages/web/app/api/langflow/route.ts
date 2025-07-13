@@ -4,7 +4,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server';
 
-import { travelLangGraphService } from '@/lib/langgraph-service';
+import { langGraphService } from '@/lib/langgraph-service';
 
 export const maxDuration = 60;
 
@@ -65,7 +65,12 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const status = await travelLangGraphService.getServiceStatus();
+    const isHealthy = await langGraphService.healthCheck();
+    const status = {
+      enabled: isHealthy,
+      service: 'langgraph',
+      status: isHealthy ? 'operational' : 'error'
+    };
     return NextResponse.json(status);
   } catch (error) {
     console.error('LangGraph status check error:', error);
@@ -101,14 +106,26 @@ async function handleGenerateQuestions(data: any): Promise<NextResponse> {
   }
 
   try {
-    const questions = await travelLangGraphService.generatePreferenceQuestions(
-      data.destination,
-      data.startDate,
-      data.endDate,
-      data.travelers,
-      data.budget
-    );
+    // Call LangGraph orchestrator to generate preference questions
+    const request = {
+      message: `Generate preference questions for travel to ${data.destination} from ${data.startDate} to ${data.endDate} for ${data.travelers} travelers with budget $${data.budget}`,
+      automation_level: 1,
+      action: 'start' as const,
+      destination: data.destination,
+      start_date: data.startDate,
+      end_date: data.endDate,
+      travelers: data.travelers,
+      budget: data.budget
+    };
 
+    const response = await langGraphService.invokeOrchestrator(request);
+    
+    if (!response.success) {
+      throw new Error(response.data?.error || 'Failed to generate preference questions');
+    }
+
+    const questions = response.data?.questions || [];
+    
     return NextResponse.json({
       success: true,
       questions,
@@ -148,9 +165,27 @@ async function handleGenerateSearchParameters(
   }
 
   try {
-    const searchParams =
-      await travelLangGraphService.generateSearchParameters(data);
+    // Call LangGraph orchestrator to process preferences and generate search parameters
+    const request = {
+      message: `Process travel preferences and generate search parameters for ${data.destination}`,
+      automation_level: data.automation_level || 1,
+      action: 'continue' as const,
+      user_preferences: data.preferences || data,
+      destination: data.destination,
+      start_date: data.startDate,
+      end_date: data.endDate,
+      travelers: data.travelers,
+      budget: data.budget
+    };
 
+    const response = await langGraphService.invokeOrchestrator(request);
+    
+    if (!response.success) {
+      throw new Error(response.data?.error || 'Failed to generate search parameters');
+    }
+
+    const searchParams = response.data?.search_parameters || response.data;
+    
     return NextResponse.json({
       success: true,
       searchParams,
@@ -182,15 +217,30 @@ async function handleProcessBookingDecisions(data: any): Promise<NextResponse> {
   }
 
   try {
-    const decisions = await travelLangGraphService.processBookingDecisions(
-      data.searchResults,
-      data.preferences
-    );
+    // Call LangGraph orchestrator to process booking decisions
+    const request = {
+      message: `Process search results and make booking recommendations based on user preferences`,
+      automation_level: data.automation_level || 1,
+      action: 'continue' as const,
+      user_preferences: {
+        search_results: data.searchResults,
+        preferences: data.preferences,
+        budget: data.budget
+      }
+    };
 
+    const response = await langGraphService.invokeOrchestrator(request);
+    
+    if (!response.success) {
+      throw new Error(response.data?.error || 'Failed to process booking decisions');
+    }
+
+    const decisions = response.data?.booking_decisions || response.data;
+    
     return NextResponse.json({
       success: true,
       decisions,
-      confidence_score: decisions.confidence_score,
+      confidence_score: decisions.confidence_score || 0,
       has_alternatives: !!decisions.alternatives,
     });
   } catch (error) {
@@ -219,16 +269,33 @@ async function handleGenerateItinerary(data: any): Promise<NextResponse> {
   }
 
   try {
-    const itinerary = await travelLangGraphService.generateItinerary(
-      data.bookings,
-      data.preferences
-    );
+    // Call LangGraph orchestrator to generate detailed itinerary
+    const request = {
+      message: `Generate detailed travel itinerary based on confirmed bookings and preferences`,
+      automation_level: data.automation_level || 1,
+      action: 'continue' as const,
+      user_preferences: {
+        bookings: data.bookings,
+        preferences: data.preferences,
+        destination: data.bookings.destination,
+        start_date: data.bookings.startDate,
+        end_date: data.bookings.endDate
+      }
+    };
 
+    const response = await langGraphService.invokeOrchestrator(request);
+    
+    if (!response.success) {
+      throw new Error(response.data?.error || 'Failed to generate itinerary');
+    }
+
+    const itinerary = response.data?.itinerary || response.data;
+    
     return NextResponse.json({
       success: true,
       itinerary,
-      days_count: itinerary.days.length,
-      title: itinerary.title,
+      days_count: itinerary.days?.length || 0,
+      title: itinerary.title || `Trip to ${data.bookings.destination}`,
     });
   } catch (error) {
     console.error('Itinerary generation failed:', error);
@@ -249,7 +316,16 @@ async function handleGenerateItinerary(data: any): Promise<NextResponse> {
  */
 async function handleGetStatus(): Promise<NextResponse> {
   try {
-    const status = await travelLangGraphService.getServiceStatus();
+    const isHealthy = await langGraphService.healthCheck();
+    const status = {
+      enabled: isHealthy,
+      service: 'langgraph',
+      status: isHealthy ? 'operational' : 'error',
+      components: {
+        orchestrator: isHealthy ? 'healthy' : 'unhealthy',
+        api: 'healthy'
+      }
+    };
 
     return NextResponse.json({
       success: true,

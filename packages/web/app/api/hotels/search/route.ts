@@ -1,28 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getHotelService } from '@/lib/mocks';
+import { createAmadeusClient, AmadeusHotelService } from '@/lib/amadeus';
 import { HotelSearchParams } from '@/lib/mocks/types';
 
 /**
- * POST endpoint for hotel search using the new service architecture
+ * POST endpoint for hotel search using LangGraph orchestrator with Amadeus integration
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validate required parameters
-    if (!body.destination || !body.checkIn || !body.checkOut) {
+    // Validate required parameters (using Amadeus parameter names)
+    if (!body.cityCode || !body.checkInDate || !body.checkOutDate) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required parameters: destination, checkIn, checkOut',
+          error: 'Missing required parameters: cityCode, checkInDate, checkOutDate',
         },
         { status: 400 }
       );
     }
 
     // Validate date logic
-    const checkInDate = new Date(body.checkIn);
-    const checkOutDate = new Date(body.checkOut);
+    const checkInDate = new Date(body.checkInDate);
+    const checkOutDate = new Date(body.checkOutDate);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
@@ -46,25 +46,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Convert the request body to match our HotelSearchParams interface
+    // Convert Amadeus API parameters to our internal format
     const searchParams: HotelSearchParams = {
-      destination: body.destination,
-      checkIn: body.checkIn,
-      checkOut: body.checkOut,
+      destination: body.cityCode,
+      checkIn: body.checkInDate,
+      checkOut: body.checkOutDate,
       guests: {
-        adults: body.guests?.adults || body.adults || 2,
-        children: body.guests?.children || body.children || 0,
-        rooms: body.guests?.rooms || body.rooms || 1,
+        adults: body.adults || 2,
+        children: body.childAges ? body.childAges.length : 0,
+        rooms: body.roomQuantity || 1,
       },
-      starRating: body.starRating,
+      starRating: body.ratings,
       amenities: body.amenities,
       propertyTypes: body.propertyTypes,
-      maxDistance: body.maxDistance,
-      filters: body.filters,
+      maxDistance: body.radius,
     };
 
-    // Get the hotel service and perform search
-    const hotelService = getHotelService();
+    // Use Amadeus service directly
+    const amadeusClient = createAmadeusClient();
+    const hotelService = new AmadeusHotelService(amadeusClient);
     const result = await hotelService.search(searchParams);
 
     if (!result.success) {
@@ -113,53 +113,53 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Extract and validate search parameters
-  const destination = searchParams.get('destination');
-  const checkIn = searchParams.get('checkIn');
-  const checkOut = searchParams.get('checkOut');
+  // Extract and validate search parameters (using Amadeus parameter names)
+  const cityCode = searchParams.get('cityCode');
+  const checkInDate = searchParams.get('checkInDate');
+  const checkOutDate = searchParams.get('checkOutDate');
 
-  if (!destination || !checkIn || !checkOut) {
+  if (!cityCode || !checkInDate || !checkOutDate) {
     return NextResponse.json(
       {
-        error: 'Missing required parameters: destination, checkIn, checkOut',
+        error: 'Missing required parameters: cityCode, checkInDate, checkOutDate',
       },
       { status: 400 }
     );
   }
 
-  // Convert URL search params to HotelSearchParams
+  // Convert Amadeus URL search params to HotelSearchParams
   const hotelSearchParams: HotelSearchParams = {
-    destination,
-    checkIn,
-    checkOut,
+    destination: cityCode,
+    checkIn: checkInDate,
+    checkOut: checkOutDate,
     guests: {
       adults: parseInt(searchParams.get('adults') || '2'),
-      children: parseInt(searchParams.get('children') || '0'),
-      rooms: parseInt(searchParams.get('rooms') || '1'),
+      children: searchParams.get('childAges') ? searchParams.get('childAges')!.split(',').length : 0,
+      rooms: parseInt(searchParams.get('roomQuantity') || '1'),
     },
-    starRating: searchParams.get('starRating')?.split(',').map(Number),
+    starRating: searchParams.get('ratings')?.split(',').map(Number),
     amenities: searchParams.get('amenities')?.split(','),
     propertyTypes: searchParams.get('propertyTypes')?.split(','),
-    maxDistance: searchParams.get('maxDistance') ? parseFloat(searchParams.get('maxDistance')!) : undefined,
+    maxDistance: searchParams.get('radius') ? parseFloat(searchParams.get('radius')!) : undefined,
   };
 
   // Create streaming response
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const hotelService = getHotelService();
-
         // Send initial status
         controller.enqueue(
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'status',
-              message: 'Starting hotel search...',
+              message: 'Starting hotel search with LangGraph orchestrator...',
             })}\n\n`
           )
         );
 
-        // Perform search
+        // Use Amadeus service directly
+        const amadeusClient = createAmadeusClient();
+        const hotelService = new AmadeusHotelService(amadeusClient);
         const result = await hotelService.search(hotelSearchParams);
 
         if (!result.success) {
@@ -174,6 +174,19 @@ export async function GET(request: NextRequest) {
           controller.close();
           return;
         }
+
+        // Send source information
+        const dataSource = result.data && result.data.length > 0 ? result.data[0].source : 'api';
+        controller.enqueue(
+          new TextEncoder().encode(
+            `data: ${JSON.stringify({
+              type: 'info',
+              message: `Using ${dataSource === 'api' ? 'Amadeus API' : 'fallback data'}`,
+              source: dataSource,
+              fallbackUsed: result.fallbackUsed,
+            })}\n\n`
+          )
+        );
 
         // Stream each hotel result
         if (result.data) {
@@ -198,6 +211,7 @@ export async function GET(request: NextRequest) {
             `data: ${JSON.stringify({
               type: 'complete',
               totalResults: result.data?.length || 0,
+              source: dataSource,
               fallbackUsed: result.fallbackUsed,
               responseTime: result.responseTime,
             })}\n\n`

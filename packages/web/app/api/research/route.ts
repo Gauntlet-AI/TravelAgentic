@@ -50,9 +50,28 @@ export async function POST(req: Request) {
     // Parse the JSON response
     let structuredData;
     try {
-      structuredData = JSON.parse(result.text);
+      // Extract JSON from markdown code blocks if present
+      let jsonText = result.text.trim();
+      
+      // Check if response is wrapped in markdown code blocks
+      if (jsonText.startsWith('```json')) {
+        const startIndex = jsonText.indexOf('{');
+        const lastBraceIndex = jsonText.lastIndexOf('}');
+        if (startIndex !== -1 && lastBraceIndex !== -1) {
+          jsonText = jsonText.substring(startIndex, lastBraceIndex + 1);
+        }
+      } else if (jsonText.startsWith('```')) {
+        // Handle generic code blocks
+        const lines = jsonText.split('\n');
+        lines.shift(); // Remove first ```
+        lines.pop(); // Remove last ```
+        jsonText = lines.join('\n');
+      }
+      
+      structuredData = JSON.parse(jsonText);
     } catch (parseError) {
       console.error('Failed to parse AI response as JSON:', parseError);
+      console.error('Raw response:', result.text.substring(0, 200) + '...');
       // Fallback to text response if JSON parsing fails
       return Response.json({ research: result.text, structured: false });
     }

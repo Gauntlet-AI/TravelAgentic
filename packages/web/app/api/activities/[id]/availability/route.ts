@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getActivityService } from '@/lib/mocks';
 
 /**
  * GET endpoint for checking activity availability
@@ -51,26 +50,16 @@ export async function GET(
       );
     }
 
-    // Get the activity service and check availability
-    const activityService = getActivityService();
-    const result = await activityService.checkAvailability(activityId, date);
-
-    if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: result.error || 'Failed to check activity availability',
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      success: true,
-      available: result.data,
-      fallbackUsed: result.fallbackUsed,
-      responseTime: result.responseTime,
-    });
+    // Activity availability not implemented in current phase
+    return NextResponse.json(
+      {
+        success: false,
+        error: 'Activity availability checking not implemented. Please contact support.',
+        supportEmail: 'support@travelagentic.com',
+        estimatedImplementation: 'Phase 2 development'
+      },
+      { status: 501 } // Not Implemented
+    );
 
   } catch (error) {
     console.error('Activity availability check error:', error);

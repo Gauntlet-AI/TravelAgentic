@@ -89,12 +89,55 @@ export interface ConversationEvent {
   message?: string;
 }
 
+export interface FlightSearchRequest {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  passengers: {
+    adults: number;
+    children: number;
+    infants: number;
+  };
+  cabin?: 'economy' | 'premium_economy' | 'business' | 'first';
+  directFlightsOnly?: boolean;
+  maxStops?: number;
+  preferredAirlines?: string[];
+  automation_level?: number;
+}
+
+export interface HotelSearchRequest {
+  destination: string;
+  checkIn: string;
+  checkOut: string;
+  guests: {
+    adults: number;
+    children: number;
+    rooms: number;
+  };
+  starRating?: number[];
+  amenities?: string[];
+  propertyTypes?: string[];
+  maxDistance?: number;
+  automation_level?: number;
+}
+
+export interface SearchResponse<T> {
+  success: boolean;
+  data?: T[];
+  error?: string;
+  responseTime?: number;
+  fallbackUsed?: boolean;
+}
+
 class LangGraphService {
   private baseUrl: string;
   private activeConnections: Map<string, EventSource> = new Map();
 
   constructor() {
-    this.baseUrl = process.env.NEXT_PUBLIC_LANGGRAPH_URL || 'http://localhost:8000';
+    // LangGraph orchestrator URL - used for conversational AI workflows only
+    // Flight/hotel searches now go directly to web server APIs to avoid circular dependencies
+    this.baseUrl = process.env.LANGGRAPH_URL || 'http://localhost:8000';
   }
 
   /**
@@ -104,10 +147,8 @@ class LangGraphService {
     request: LangGraphRequest,
     onEvent: (event: ConversationEvent) => void
   ): Promise<string> {
-    const conversationId = crypto.randomUUID();
-    
     try {
-      // Start conversation via streaming endpoint
+      // Start conversation via streaming endpoint - DON'T pass conversation_id for new conversations
       const response = await fetch('/api/langgraph/chat', {
         method: 'POST',
         headers: {
@@ -115,7 +156,7 @@ class LangGraphService {
         },
         body: JSON.stringify({
           ...request,
-          conversation_id: conversationId,
+          // Do NOT include conversation_id for new conversations
         }),
       });
 
@@ -123,8 +164,64 @@ class LangGraphService {
         throw new Error(`Failed to start conversation: ${response.status}`);
       }
 
-      // Set up Server-Sent Events for real-time updates
-      this.setupEventStream(conversationId, onEvent);
+      // Process the streaming response to get conversation_id and events
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      let conversationId = '';
+      
+      if (!reader) {
+        throw new Error('No response body available');
+      }
+
+      // Read the stream and process events
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  if (data.conversation_id && !conversationId) {
+                    conversationId = data.conversation_id;
+                  }
+                  onEvent(data);
+                } catch (e) {
+                  // Ignore parsing errors
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing stream:', error);
+          onEvent({
+            type: 'error',
+            error: 'Stream processing failed'
+          });
+        } finally {
+          reader.releaseLock();
+        }
+      };
+
+      // Start processing the stream in the background
+      processStream();
+
+      // Wait a bit for the conversation_id to be received
+      let attempts = 0;
+      while (!conversationId && attempts < 50) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        attempts++;
+      }
+
+      if (!conversationId) {
+        throw new Error('Failed to get conversation ID from response');
+      }
 
       return conversationId;
     } catch (error) {
@@ -373,6 +470,137 @@ class LangGraphService {
     } catch (error) {
       console.error('LangGraph health check failed:', error);
       return false;
+    }
+  }
+
+  /**
+   * Search for flights using LangGraph orchestrator with Amadeus integration
+   */
+  async searchFlights(request: FlightSearchRequest): Promise<SearchResponse<any>> {
+    try {
+      const startTime = Date.now();
+      
+      // Convert to web server API format
+      const apiRequest = {
+        origin: request.origin,
+        destination: request.destination,
+        departureDate: request.departureDate,
+        returnDate: request.returnDate,
+        passengers: {
+          adults: request.passengers.adults,
+          children: request.passengers.children,
+          infants: request.passengers.infants,
+        },
+        cabin: request.cabin || 'economy',
+        directFlightsOnly: request.directFlightsOnly,
+        maxStops: request.maxStops,
+        preferredAirlines: request.preferredAirlines,
+      };
+
+      // Call the web server API directly (avoiding circular dependency)
+      const response = await fetch('/api/flights/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiRequest),
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (!response.ok) {
+        throw new Error(`Flight search failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Flight search failed',
+          responseTime
+        };
+      }
+
+      return {
+        success: true,
+        data: result.data || [],
+        responseTime,
+        fallbackUsed: result.fallbackUsed || false
+      };
+
+    } catch (error) {
+      console.error('LangGraph flight search error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        responseTime: 0
+      };
+    }
+  }
+
+  /**
+   * Search for hotels using LangGraph orchestrator with Amadeus integration
+   */
+  async searchHotels(request: HotelSearchRequest): Promise<SearchResponse<any>> {
+    try {
+      const startTime = Date.now();
+      
+      // Convert to web server API format
+      const apiRequest = {
+        destination: request.destination,
+        checkIn: request.checkIn,
+        checkOut: request.checkOut,
+        guests: {
+          adults: request.guests.adults,
+          children: request.guests.children,
+          rooms: request.guests.rooms,
+        },
+        starRating: request.starRating,
+        amenities: request.amenities,
+        propertyTypes: request.propertyTypes,
+        maxDistance: request.maxDistance,
+      };
+
+      // Call the web server API directly (avoiding circular dependency)
+      const response = await fetch('/api/hotels/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(apiRequest),
+      });
+
+      const responseTime = Date.now() - startTime;
+
+      if (!response.ok) {
+        throw new Error(`Hotel search failed: ${response.status} ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      
+      if (!result.success) {
+        return {
+          success: false,
+          error: result.error || 'Hotel search failed',
+          responseTime
+        };
+      }
+
+      return {
+        success: true,
+        data: result.data || [],
+        responseTime,
+        fallbackUsed: result.fallbackUsed || false
+      };
+
+    } catch (error) {
+      console.error('LangGraph hotel search error:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        responseTime: 0
+      };
     }
   }
 

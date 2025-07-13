@@ -11,7 +11,6 @@ services:
     environment:
       - NODE_ENV=production
       - USE_MOCK_APIS=${USE_MOCK_APIS:-false}
-      - DEVELOPMENT_PHASE=${DEVELOPMENT_PHASE:-3}
       
       # Supabase Cloud Configuration
       - SUPABASE_URL=${SUPABASE_URL}
@@ -20,7 +19,6 @@ services:
       
       # AI Integration
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - LANGGRAPH_URL=http://langgraph:8000
       - ENABLE_LANGGRAPH=true
       
@@ -31,7 +29,7 @@ services:
       - WEATHER_API_KEY=${WEATHER_API_KEY}
       - CURRENCY_API_KEY=${CURRENCY_API_KEY}
       
-      # Advanced APIs (Phase 3)
+      # Advanced APIs
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
       - ELEVENLABS_API_KEY=${ELEVENLABS_API_KEY}
@@ -48,9 +46,7 @@ services:
       
       # Browser Automation
       - BROWSER_USE_HEADLESS=true
-      - BROWSER_USE_TIMEOUT=30000
-      - AUTOMATION_USER_AGENT=TravelAgentic/1.0 (+https://github.com/Gauntlet-AI/TravelAgentic)
-      - AUTOMATION_DELAY_MS=2000
+      - AUTOMATION_USER_AGENT=TravelAgentic/1.0
       
     depends_on:
       - langgraph
@@ -70,7 +66,7 @@ services:
       context: packages/langgraph
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - WEBSERVER_URL=http://web:3000
     ports:
       - "8000:8000"
     depends_on:

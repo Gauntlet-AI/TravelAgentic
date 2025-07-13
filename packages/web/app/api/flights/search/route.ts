@@ -1,45 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getFlightService } from '@/lib/mocks';
+import { createAmadeusClient, AmadeusFlightService } from '@/lib/amadeus';
 import { FlightSearchParams } from '@/lib/mocks/types';
 
 /**
- * POST endpoint for flight search using the new service architecture
+ * POST endpoint for flight search using LangGraph orchestrator with Amadeus integration
  */
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // Validate required parameters
-    if (!body.origin || !body.destination || !body.departureDate) {
+    // Validate required parameters (using Amadeus parameter names)
+    if (!body.originLocationCode || !body.destinationLocationCode || !body.departureDate) {
       return NextResponse.json(
         {
           success: false,
-          error: 'Missing required parameters: origin, destination, departureDate',
+          error: 'Missing required parameters: originLocationCode, destinationLocationCode, departureDate',
         },
         { status: 400 }
       );
     }
 
-    // Convert the request body to match our FlightSearchParams interface
+    // Convert Amadeus API parameters to our internal format
     const searchParams: FlightSearchParams = {
-      origin: body.origin,
-      destination: body.destination,
+      origin: body.originLocationCode,
+      destination: body.destinationLocationCode,
       departureDate: body.departureDate,
       returnDate: body.returnDate,
       passengers: {
-        adults: body.passengers?.adults || body.passengers || 1,
-        children: body.passengers?.children || 0,
-        infants: body.passengers?.infants || 0,
+        adults: body.adults || 1,
+        children: body.children || 0,
+        infants: body.infants || 0,
       },
-      cabin: body.cabin || 'economy',
-      directFlightsOnly: body.directFlightsOnly,
+      cabin: body.travelClass?.toLowerCase() || 'economy',
+      directFlightsOnly: body.nonStop || false,
       maxStops: body.maxStops,
-      preferredAirlines: body.preferredAirlines,
-      filters: body.filters,
+      preferredAirlines: body.includedAirlineCodes,
+      filters: {
+        priceRange: body.maxPrice ? [0, body.maxPrice] : undefined,
+      },
     };
 
-    // Get the flight service and perform search
-    const flightService = getFlightService();
+    // Use Amadeus service directly
+    const amadeusClient = createAmadeusClient();
+    const flightService = new AmadeusFlightService(amadeusClient);
     const result = await flightService.search(searchParams);
 
     if (!result.success) {
@@ -88,24 +91,24 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Extract and validate search parameters
-  const origin = searchParams.get('origin');
-  const destination = searchParams.get('destination');
+  // Extract and validate search parameters (using Amadeus parameter names)
+  const originLocationCode = searchParams.get('originLocationCode');
+  const destinationLocationCode = searchParams.get('destinationLocationCode');
   const departureDate = searchParams.get('departureDate');
 
-  if (!origin || !destination || !departureDate) {
+  if (!originLocationCode || !destinationLocationCode || !departureDate) {
     return NextResponse.json(
       {
-        error: 'Missing required parameters: origin, destination, departureDate',
+        error: 'Missing required parameters: originLocationCode, destinationLocationCode, departureDate',
       },
       { status: 400 }
     );
   }
 
-  // Convert URL search params to FlightSearchParams
+  // Convert Amadeus URL search params to FlightSearchParams
   const flightSearchParams: FlightSearchParams = {
-    origin,
-    destination,
+    origin: originLocationCode,
+    destination: destinationLocationCode,
     departureDate,
     returnDate: searchParams.get('returnDate') || undefined,
     passengers: {
@@ -113,28 +116,32 @@ export async function GET(request: NextRequest) {
       children: parseInt(searchParams.get('children') || '0'),
       infants: parseInt(searchParams.get('infants') || '0'),
     },
-    cabin: (searchParams.get('cabin') as any) || 'economy',
-    directFlightsOnly: searchParams.get('directFlightsOnly') === 'true',
+    cabin: (searchParams.get('travelClass')?.toLowerCase() as any) || 'economy',
+    directFlightsOnly: searchParams.get('nonStop') === 'true',
     maxStops: searchParams.get('maxStops') ? parseInt(searchParams.get('maxStops')!) : undefined,
+    preferredAirlines: searchParams.get('includedAirlineCodes')?.split(','),
+    filters: {
+      priceRange: searchParams.get('maxPrice') ? [0, parseInt(searchParams.get('maxPrice')!)] : undefined,
+    },
   };
 
   // Create streaming response
   const stream = new ReadableStream({
     async start(controller) {
       try {
-        const flightService = getFlightService();
-
         // Send initial status
         controller.enqueue(
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'status',
-              message: 'Starting flight search...',
+              message: 'Starting flight search with LangGraph orchestrator...',
             })}\n\n`
           )
         );
 
-        // Perform search
+        // Use Amadeus service directly
+        const amadeusClient = createAmadeusClient();
+        const flightService = new AmadeusFlightService(amadeusClient);
         const result = await flightService.search(flightSearchParams);
 
         if (!result.success) {
@@ -149,6 +156,19 @@ export async function GET(request: NextRequest) {
           controller.close();
           return;
         }
+
+        // Send source information
+        const dataSource = result.data && result.data.length > 0 ? result.data[0].source : 'api';
+        controller.enqueue(
+          new TextEncoder().encode(
+            `data: ${JSON.stringify({
+              type: 'info',
+              message: `Using ${dataSource === 'api' ? 'Amadeus API' : 'fallback data'}`,
+              source: dataSource,
+              fallbackUsed: result.fallbackUsed,
+            })}\n\n`
+          )
+        );
 
         // Stream each flight result
         if (result.data) {
@@ -173,6 +193,7 @@ export async function GET(request: NextRequest) {
             `data: ${JSON.stringify({
               type: 'complete',
               totalResults: result.data?.length || 0,
+              source: dataSource,
               fallbackUsed: result.fallbackUsed,
               responseTime: result.responseTime,
             })}\n\n`
