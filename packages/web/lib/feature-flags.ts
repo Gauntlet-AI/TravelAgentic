@@ -1,6 +1,6 @@
 /**
  * Feature Flags for TravelAgentic
- * Manages feature toggles for gradual rollout and A/B testing
+ * Manages feature toggles for gradual rollout
  */
 
 export interface FeatureFlags {
@@ -16,10 +16,8 @@ export interface FeatureFlags {
   bookingOrchestration: boolean;
   automationLevels: boolean;
   // Phase 6 features
-  abTestingFramework: boolean;
   mobileOptimization: boolean;
   performanceMonitoring: boolean;
-  legacyFlowComparison: boolean;
 }
 
 // Default feature flags configuration
@@ -36,10 +34,8 @@ const DEFAULT_FLAGS: FeatureFlags = {
   bookingOrchestration: false, // Phase 5 feature
   automationLevels: false, // Phase 1 feature
   // Phase 6 features
-  abTestingFramework: false, // Phase 6 feature
   mobileOptimization: false, // Phase 6 feature
   performanceMonitoring: false, // Phase 6 feature
-  legacyFlowComparison: false, // Phase 6 feature
 };
 
 // Phase-based feature flag presets
@@ -104,10 +100,8 @@ const PHASE_PRESETS: Record<string, Partial<FeatureFlags>> = {
     bookingOrchestration: true,
     automationLevels: true,
     // Phase 6 features
-    abTestingFramework: true,
     mobileOptimization: true,
     performanceMonitoring: true,
-    legacyFlowComparison: true,
   },
   'production': {
     itineraryCentricFlow: true,
@@ -122,10 +116,8 @@ const PHASE_PRESETS: Record<string, Partial<FeatureFlags>> = {
     bookingOrchestration: true,
     automationLevels: true,
     // Phase 6 features
-    abTestingFramework: true,
     mobileOptimization: true,
     performanceMonitoring: true,
-    legacyFlowComparison: true,
   }
 };
 
@@ -167,10 +159,8 @@ class FeatureFlagManager {
       bookingOrchestration: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_BOOKING_ORCHESTRATION', 'FEATURE_BOOKING_ORCHESTRATION'),
       automationLevels: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_AUTOMATION_LEVELS', 'FEATURE_AUTOMATION_LEVELS'),
       // Phase 6 features
-      abTestingFramework: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_AB_TESTING', 'FEATURE_AB_TESTING'),
       mobileOptimization: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_MOBILE_OPTIMIZATION', 'FEATURE_MOBILE_OPTIMIZATION'),
       performanceMonitoring: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_PERFORMANCE_MONITORING', 'FEATURE_PERFORMANCE_MONITORING'),
-      legacyFlowComparison: this.getBooleanEnvVar('NEXT_PUBLIC_FEATURE_LEGACY_FLOW_COMPARISON', 'FEATURE_LEGACY_FLOW_COMPARISON'),
     };
 
     // Filter out undefined values and apply to base flags
@@ -220,7 +210,6 @@ class FeatureFlagManager {
 
   /**
    * Set user-specific override for a feature
-   * Useful for A/B testing or user-specific toggles
    */
   setUserOverride(feature: keyof FeatureFlags, enabled: boolean): void {
     this.userOverrides[feature] = enabled;
@@ -254,7 +243,13 @@ class FeatureFlagManager {
       'realTimeProgressUpdates',
       'activityPreferencesFlow',
       'naturalLanguageModification',
-      'automationLevels'
+      'voiceCallFallback',
+      'browserAutomationFallback',
+      'pdfDocumentGeneration',
+      'bookingOrchestration',
+      'automationLevels',
+      'mobileOptimization',
+      'performanceMonitoring'
     ];
 
     flagsToInclude.forEach(flag => {
@@ -265,7 +260,7 @@ class FeatureFlagManager {
   }
 
   /**
-   * Check if the new itinerary flow should be used
+   * Check if itinerary flow should be used
    */
   shouldUseItineraryFlow(): boolean {
     return this.isEnabled('itineraryCentricFlow');
@@ -279,7 +274,7 @@ class FeatureFlagManager {
   }
 
   /**
-   * Check if streaming builder is available
+   * Check if streaming builder can be used
    */
   canUseStreamingBuilder(): boolean {
     return this.isEnabled('streamingItineraryBuilder');
@@ -289,36 +284,27 @@ class FeatureFlagManager {
    * Get current development phase
    */
   getCurrentPhase(): string {
-    const phase = process.env.NEXT_PUBLIC_FEATURE_PHASE || process.env.FEATURE_PHASE;
-    if (phase && PHASE_PRESETS[phase]) {
-      return phase;
-    }
-
-    // Determine phase based on enabled features
-    if (this.isEnabled('abTestingFramework')) return 'phase-6';
+    if (this.isEnabled('performanceMonitoring')) return 'phase-6';
     if (this.isEnabled('bookingOrchestration')) return 'phase-5';
     if (this.isEnabled('naturalLanguageModification')) return 'phase-4';
     if (this.isEnabled('activityPreferencesFlow')) return 'phase-3';
     if (this.isEnabled('streamingItineraryBuilder')) return 'phase-2';
     if (this.isEnabled('itineraryCentricFlow')) return 'phase-1';
-    
-    return 'legacy';
+    return 'phase-0';
   }
 
   /**
-   * Enable a specific phase (for development/testing)
+   * Enable a specific phase and its features
    */
   enablePhase(phase: string): void {
     if (PHASE_PRESETS[phase]) {
-      Object.assign(this.flags, PHASE_PRESETS[phase]);
+      Object.entries(PHASE_PRESETS[phase]).forEach(([key, value]) => {
+        this.setUserOverride(key as keyof FeatureFlags, value!);
+      });
     }
   }
 }
 
-// Export singleton instance
-export const featureFlags = new FeatureFlagManager();
-
-// Convenience hooks for React components
 export function useFeatureFlag(feature: keyof FeatureFlags): boolean {
   return featureFlags.isEnabled(feature);
 }
@@ -327,59 +313,40 @@ export function useFeatureFlags(): FeatureFlags {
   return featureFlags.getAllFlags();
 }
 
-// Type guard for feature flag keys
 export function isValidFeatureFlag(key: string): key is keyof FeatureFlags {
   return key in DEFAULT_FLAGS;
 }
 
+// Create singleton instance
+export const featureFlags = new FeatureFlagManager();
+
 // Development utilities
-export const FeatureFlagUtils = {
-  /**
-   * Log current feature flag status (development only)
-   */
-  logStatus(): void {
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🏗️ TravelAgentic Feature Flags Status:');
-      console.log(`📋 Current Phase: ${featureFlags.getCurrentPhase()}`);
-      console.log('🎯 Enabled Features:');
-      
-      const flags = featureFlags.getAllFlags();
-      Object.entries(flags).forEach(([key, enabled]) => {
-        if (enabled) {
-          console.log(`  ✅ ${key}`);
-        }
-      });
-
-      console.log('❌ Disabled Features:');
-      Object.entries(flags).forEach(([key, enabled]) => {
-        if (!enabled) {
-          console.log(`  ⭕ ${key}`);
-        }
-      });
-    }
-  },
-
-  /**
-   * Get feature flag configuration for debugging
-   */
-  getDebugInfo(): {
-    phase: string;
-    flags: FeatureFlags;
-    environment: Record<string, string | undefined>;
-  } {
-    return {
-      phase: featureFlags.getCurrentPhase(),
-      flags: featureFlags.getAllFlags(),
+if (process.env.NODE_ENV === 'development') {
+  (window as any).featureFlags = featureFlags;
+  
+  (featureFlags as any).logStatus = function() {
+    console.log('🚀 Feature Flags Status:', {
+      phase: this.getCurrentPhase(),
+      flags: this.getAllFlags(),
       environment: {
-        FEATURE_PHASE: process.env.FEATURE_PHASE,
-        NEXT_PUBLIC_FEATURE_PHASE: process.env.NEXT_PUBLIC_FEATURE_PHASE,
         NODE_ENV: process.env.NODE_ENV,
+        FEATURE_PHASE: process.env.NEXT_PUBLIC_FEATURE_PHASE || process.env.FEATURE_PHASE,
+      }
+    });
+  };
+
+  (featureFlags as any).getDebugInfo = function() {
+    return {
+      phase: this.getCurrentPhase(),
+      flags: this.getAllFlags(),
+      environment: {
+        NODE_ENV: process.env.NODE_ENV,
+        FEATURE_PHASE: process.env.NEXT_PUBLIC_FEATURE_PHASE || process.env.FEATURE_PHASE,
+        ITINERARY_CENTRIC: process.env.NEXT_PUBLIC_FEATURE_ITINERARY_CENTRIC || process.env.FEATURE_ITINERARY_CENTRIC,
+        ENHANCED_FORM: process.env.NEXT_PUBLIC_FEATURE_ENHANCED_FORM || process.env.FEATURE_ENHANCED_FORM,
+        STREAMING_BUILDER: process.env.NEXT_PUBLIC_FEATURE_STREAMING_BUILDER || process.env.FEATURE_STREAMING_BUILDER,
+        AUTOMATION_LEVELS: process.env.NEXT_PUBLIC_FEATURE_AUTOMATION_LEVELS || process.env.FEATURE_AUTOMATION_LEVELS,
       }
     };
-  }
-};
-
-// Initialize feature flags and log status in development
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'development') {
-  FeatureFlagUtils.logStatus();
+  };
 } 
