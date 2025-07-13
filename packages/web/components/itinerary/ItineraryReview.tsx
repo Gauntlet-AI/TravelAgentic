@@ -211,6 +211,63 @@ export default function ItineraryReview() {
     const seenActivities = new Set<string>();
     let removedDuplicates = 0;
 
+    // Collect all activities across all days for proper redistribution
+    const allActivities = state.days
+      .filter((day): day is NonNullable<typeof day> => day != null)
+      .flatMap((day, dayIndex) => {
+        const dayItems = Array.isArray(day.items) ? day.items : [];
+        return dayItems
+          .filter((item): item is typeof item & { startTime: Date } => 
+            item != null && item.startTime !== undefined
+          )
+          .map(item => ({ ...item, originalDayIndex: dayIndex }));
+      });
+
+    // Separate arrival flights, return flights, and hotel check-ins
+    const arrivalFlights = allActivities.filter(item => 
+      item.type === 'flight' && (
+        item.name?.toLowerCase().includes('to ' + (state.travelDetails?.destination || '').toLowerCase()) ||
+        item.description?.toLowerCase().includes('to ' + (state.travelDetails?.destination || '').toLowerCase()) ||
+        (!item.name?.toLowerCase().includes('return') && !item.description?.toLowerCase().includes('return'))
+      )
+    );
+    
+    const returnFlights = allActivities.filter(item => 
+      item.type === 'flight' && (
+        item.name?.toLowerCase().includes('return') ||
+        item.description?.toLowerCase().includes('return') ||
+        item.name?.toLowerCase().includes('to austin') ||
+        item.name?.toLowerCase().includes('to home') ||
+        item.description?.toLowerCase().includes('to austin') ||
+        item.description?.toLowerCase().includes('to home')
+      )
+    );
+    
+    const hotelCheckins = allActivities.filter(item => 
+      item.type === 'hotel' && (
+        item.name?.toLowerCase().includes('check-in') || 
+        item.name?.toLowerCase().includes('check in') ||
+        item.description?.toLowerCase().includes('check-in') ||
+        item.description?.toLowerCase().includes('check in')
+      )
+    );
+    
+    const otherActivities = allActivities.filter(item => 
+      item.type !== 'flight' && !(item.type === 'hotel' && (
+        item.name?.toLowerCase().includes('check-in') || 
+        item.name?.toLowerCase().includes('check in') ||
+        item.description?.toLowerCase().includes('check-in') ||
+        item.description?.toLowerCase().includes('check in')
+      ))
+    );
+
+    // Debug logging
+    console.log('Total activities found:', allActivities.length);
+    console.log('Arrival flights:', arrivalFlights.length, arrivalFlights.map((a: any) => a.name));
+    console.log('Return flights:', returnFlights.length, returnFlights.map((a: any) => a.name));
+    console.log('Hotel check-ins:', hotelCheckins.length, hotelCheckins.map((a: any) => a.name));
+    console.log('Other activities:', otherActivities.length, otherActivities.map((a: any) => a.name));
+
     // Convert context data to display format with proper null checks
     const convertedDays = state.days
       .filter((day): day is NonNullable<typeof day> => day != null) // Filter out null/undefined days
@@ -222,14 +279,35 @@ export default function ItineraryReview() {
                          dayIndex === state.days.length - 1 ? "Departure Day" :
                          "";
 
-        // Ensure day.items exists and is an array
-        const dayItems = Array.isArray(day.items) ? day.items : [];
+        // Determine which activities belong to this day
+        let dayActivities: any[] = [];
+        
+        if (dayIndex === 0) {
+          // Day 1: Include arrival flights and hotel check-ins
+          dayActivities = [...arrivalFlights, ...hotelCheckins];
+          
+          // Also include any other activities that were originally assigned to Day 1
+          const originalDay1Activities = otherActivities.filter(item => item.originalDayIndex === 0);
+          dayActivities = [...dayActivities, ...originalDay1Activities];
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${arrivalFlights.length} arrival flights, ${hotelCheckins.length} hotel check-ins, and ${originalDay1Activities.length} original Day 1 activities`);
+        } else if (dayIndex === state.days.length - 1) {
+          // Last day: Include return flights and activities originally assigned to this day
+          dayActivities = [...returnFlights];
+          
+          const originalLastDayActivities = otherActivities.filter(item => item.originalDayIndex === dayIndex);
+          dayActivities = [...dayActivities, ...originalLastDayActivities];
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${returnFlights.length} return flights and ${originalLastDayActivities.length} original activities`);
+        } else {
+          // Other days: Include activities originally assigned to this day (excluding arrival/return flights)
+          dayActivities = otherActivities.filter(item => item.originalDayIndex === dayIndex);
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length} activities originally assigned to this day`);
+        }
 
-        // Create a mutable copy for sorting and sort by time using JSON-based sorting
-        const itemsWithTime = dayItems.filter((item): item is typeof item & { startTime: Date } => 
-          item != null && item.startTime !== undefined
-        );
-        const sortedItems = sortItineraryItemsJSON(itemsWithTime);
+        // Sort activities by time using JSON-based sorting
+        const sortedItems = sortItineraryItemsJSON(dayActivities);
 
         // Filter out duplicates based on activity name/title
         const uniqueItems = sortedItems.filter((item: any) => {
