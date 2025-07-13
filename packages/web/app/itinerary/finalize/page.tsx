@@ -79,9 +79,9 @@ export default function FinalizePage() {
       // For now, use mock data
       const mockData: ItineraryData = {
         id: itineraryId,
-        destination: 'Paris, France',
+        destination: 'Barcelona, Spain',
         startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 6 * 24 * 60 * 60 * 1000).toISOString(),
         travelers: 2,
         totalCost: 1555,
         days: [
@@ -336,25 +336,6 @@ export default function FinalizePage() {
           </div>
         )}
       </div>
-
-      {/* Progress Indicator for non-confirmation modes */}
-      {pageState.mode !== 'confirmation' && (
-        <div className="fixed bottom-6 right-6">
-          <Card className="shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-sm">
-                <div className={`w-2 h-2 rounded-full ${
-                  pageState.mode === 'finalize' ? 'bg-blue-500' : 'bg-green-500'
-                }`} />
-                <span className="font-medium">
-                  {pageState.mode === 'finalize' && 'Ready to Book'}
-                  {pageState.mode === 'status' && 'Processing...'}
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 } 

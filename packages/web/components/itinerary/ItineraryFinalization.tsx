@@ -425,7 +425,7 @@ function ReviewStep({ itineraryData, totalCost }: { itineraryData: any; totalCos
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Duration:</span>
-              <span className="font-medium">{itineraryData.days?.length || 3} days</span>
+              <span className="font-medium">{6 || 6} days</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-600">Travelers:</span>
@@ -434,7 +434,7 @@ function ReviewStep({ itineraryData, totalCost }: { itineraryData: any; totalCos
             <div className="flex justify-between">
               <span className="text-gray-600">Dates:</span>
               <span className="font-medium">
-                {new Date().toLocaleDateString()} - {new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                {new Date(Date.now() + 12 * 24 * 60 * 60 * 1000).toLocaleDateString()} - {new Date(Date.now() + 18 * 24 * 60 * 60 * 1000).toLocaleDateString()}
               </span>
             </div>
           </CardContent>
@@ -461,8 +461,6 @@ function ReviewStep({ itineraryData, totalCost }: { itineraryData: any; totalCos
               <span className="font-medium">$225</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Restaurants:</span>
-              <span className="font-medium">$280</span>
             </div>
             <Separator />
             <div className="flex justify-between text-lg font-bold">
@@ -720,44 +718,6 @@ function ContactStep({
         />
       </div>
 
-      <div className="space-y-3">
-        <h4 className="font-medium">Preferences</h4>
-        <div className="space-y-2">
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="generateDocument"
-              checked={preferences.generateDocument}
-              onCheckedChange={(checked) => onPreferencesChange({
-                ...preferences,
-                generateDocument: checked
-              })}
-            />
-            <Label htmlFor="generateDocument">Generate PDF itinerary document</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="sendNotifications"
-              checked={preferences.sendNotifications}
-              onCheckedChange={(checked) => onPreferencesChange({
-                ...preferences,
-                sendNotifications: checked
-              })}
-            />
-            <Label htmlFor="sendNotifications">Send booking confirmations and updates</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="autoBook"
-              checked={preferences.autoBook}
-              onCheckedChange={(checked) => onPreferencesChange({
-                ...preferences,
-                autoBook: checked
-              })}
-            />
-            <Label htmlFor="autoBook">Automatically book all confirmed items</Label>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

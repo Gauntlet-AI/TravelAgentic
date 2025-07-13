@@ -713,7 +713,7 @@ function mapToConfirmationData(apiResponse: any): ConfirmationData {
     currency: apiResponse.currency || 'USD',
     bookingDate: apiResponse.timestamp || new Date().toISOString(),
     itinerary: {
-      destination: 'Paris, France',
+      destination: 'Barcelona, Spain',
       startDate: new Date().toISOString(),
       endDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(),
       duration: 3,
