@@ -224,6 +224,11 @@ function itineraryReducer(state: ItineraryState, action: ItineraryAction): Itine
       
       if (!existingItem) {
         newDays[action.payload.dayIndex].items.push(action.payload.item);
+        // Resort items by startTime after insertion
+        newDays[action.payload.dayIndex].items.sort((a, b) => {
+          if (!a.startTime || !b.startTime) return 0;
+          return a.startTime.getTime() - b.startTime.getTime();
+        });
         
         return {
           ...state,

@@ -168,11 +168,11 @@ export default function ItineraryReview() {
         return existingTimes.some(t => t.getHours() === date.getHours() && t.getMinutes() === date.getMinutes());
       };
 
-      // Iterate in 30-minute increments until we find a free slot (max 24h iterations to prevent
-      // endless loops)
+      // Iterate in 2-hour increments until we find a free slot (max 24h iterations)
       let iterations = 0;
-      while (hasConflict(proposedStart) && iterations < 48) {
-        proposedStart = new Date(proposedStart.getTime() + 30 * 60 * 1000);
+      const incrementMs = 2 * 60 * 60 * 1000; // 2 hours
+      while (hasConflict(proposedStart) && iterations < 12) {
+        proposedStart = new Date(proposedStart.getTime() + incrementMs);
         iterations += 1;
       }
 
