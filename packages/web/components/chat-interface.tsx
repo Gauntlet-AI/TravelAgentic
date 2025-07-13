@@ -1,16 +1,17 @@
 'use client';
 
-import { useChat } from 'ai/react';
-import { MessageCircle, Send } from 'lucide-react';
-
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { MessageCircle, Send, Loader2, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 
 import type { TravelDetails } from '@/lib/mock-data';
+import { useLangGraphChat } from '@/hooks/use-langgraph-conversation';
+import { formatTravelDetailsForLangGraph } from '@/lib/langgraph-service';
 
 interface ChatInterfaceProps {
   className?: string;
@@ -18,8 +19,10 @@ interface ChatInterfaceProps {
   isCollapsed?: boolean;
   onToggle?: () => void;
   hideCard?: boolean;
-  travelDetails?: TravelDetails | null; // Add travel details prop
-  onTabChange?: (tabValue: string) => void; // Add tab change handler
+  travelDetails?: TravelDetails | null;
+  onTabChange?: (tabValue: string) => void;
+  conversationId?: string | null; // Pass conversation ID from parent
+  onConversationStart?: (conversationId: string) => void; // Callback when conversation starts
 }
 
 export function ChatInterface({
@@ -30,14 +33,37 @@ export function ChatInterface({
   hideCard,
   travelDetails,
   onTabChange,
+  conversationId,
+  onConversationStart,
 }: ChatInterfaceProps) {
-  // Create context message with current travel selections
-  // Track processed tool calls to prevent re-execution
-  const processedToolCallsRef = useRef<Set<string>>(new Set());
+  const [input, setInput] = useState('');
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  
+  // Use LangGraph chat hook
+  const { messages, isLoading, error, sendMessage } = useLangGraphChat(conversationId || null);
+
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  // Handle connection errors
+  useEffect(() => {
+    if (error) {
+      setConnectionError(error);
+    } else {
+      setConnectionError(null);
+    }
+  }, [error]);
 
   const getTravelContext = () => {
     if (!travelDetails) {
-      return "The user hasn't made any travel selections yet.";
+      return "No travel details provided yet.";
     }
     
     const { 
@@ -79,43 +105,37 @@ export function ChatInterface({
     return context;
   };
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading } =
-    useChat({
-      api: '/api/chat',
-      body: {
-        travelContext: getTravelContext(), // Include travel context in API calls
-      },
-    });
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!input.trim()) return;
+    
+    // If no conversation ID, we can't send messages
+    if (!conversationId) {
+      setConnectionError('No active conversation. Please start planning to begin chatting.');
+      return;
+    }
 
-  // Effect to handle tab changes from tool calls
-  useEffect(() => {
-    // Find all changeTab tool calls across all messages
-    const allChangeTabToolCalls = messages.flatMap((msg) => 
-      msg.toolInvocations?.filter(tool => tool.toolName === 'changeTab') || []
-    );
-
-    // Process only new tool calls that haven't been processed yet
-    allChangeTabToolCalls.forEach((toolCall) => {
-      const toolCallId = toolCall.toolCallId;
-      
-      // Skip if already processed
-      if (processedToolCallsRef.current.has(toolCallId)) {
-        return;
-      }
-      
-      // Execute the tab change for new tool calls
-      if ('args' in toolCall && toolCall.args) {
-        const args = toolCall.args as { tabValue: string };
-        onTabChange?.(args.tabValue);
+    const messageToSend = input.trim();
+    setInput('');
+    
+    try {
+      // Include travel context in the message if available
+      const contextualMessage = travelDetails 
+        ? `${messageToSend}\n\nContext:\n${getTravelContext()}`
+        : messageToSend;
         
-        // Mark as processed
-        processedToolCallsRef.current.add(toolCallId);
-      }
-    });
-  }, [messages, onTabChange]);
+      await sendMessage(contextualMessage);
+      setConnectionError(null);
+    } catch (error) {
+      console.error('Failed to send message:', error);
+      setConnectionError('Failed to send message. Please try again.');
+    }
+  };
 
-  // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
-  const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInput(e.target.value);
+  };
 
   // Legacy mobile collapsed view (no longer used with new bubble)
   if (isMobile && isCollapsed) {
@@ -132,6 +152,9 @@ export function ChatInterface({
     );
   }
 
+  // Construct container classes so the chat panel stays visible while the user scrolls (desktop only)
+  const containerClasses = `${className ?? ''} flex flex-col ${!isMobile ? 'sticky top-0 max-h-screen overflow-y-auto' : ''}`;
+
   const chatContent = (
     <>
       {/* Header - only show if not hiding card */}
@@ -143,6 +166,29 @@ export function ChatInterface({
               <Button variant="ghost" size="sm" onClick={onToggle}>
                 ×
               </Button>
+            )}
+          </div>
+          
+          {/* Connection status indicator */}
+          <div className="flex items-center gap-2">
+            <Badge variant={conversationId ? "default" : "outline"} className={conversationId ? "bg-green-500" : ""}>
+              {conversationId ? (
+                <>
+                  <div className="w-2 h-2 bg-white rounded-full mr-2" />
+                  Connected
+                </>
+              ) : (
+                <>
+                  <div className="w-2 h-2 bg-gray-400 rounded-full mr-2" />
+                  Not Connected
+                </>
+              )}
+            </Badge>
+            
+            {connectionError && (
+              <Badge variant="destructive" className="text-xs">
+                Error
+              </Badge>
             )}
           </div>
           
@@ -168,8 +214,31 @@ export function ChatInterface({
       )}
 
       <CardContent className={hideCard ? 'flex h-full flex-col p-0' : ''}>
+        {/* Connection Error */}
+        {connectionError && (
+          <div className="mx-4 mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center gap-2 text-yellow-700">
+              <AlertCircle className="h-4 w-4" />
+              <span className="text-sm">{connectionError}</span>
+            </div>
+          </div>
+        )}
+
         {/* Empty State Message */}
-        {messages.length === 0 && (
+        {messages.length === 0 && !conversationId && (
+          <div
+            className={`py-8 text-center text-muted-foreground ${hideCard ? 'sticky top-0 z-10 bg-white' : 'sticky top-16 z-10 bg-white'}`}
+          >
+            <MessageCircle className="mx-auto mb-2" size={32} />
+            <p>Start planning your trip to begin chatting!</p>
+            <p className="text-sm text-gray-500 mt-2">
+              Fill out your travel details and click "Start Planning" to activate the AI assistant.
+            </p>
+          </div>
+        )}
+
+        {/* Connected but no messages */}
+        {messages.length === 0 && conversationId && (
           <div
             className={`py-8 text-center text-muted-foreground ${hideCard ? 'sticky top-0 z-10 bg-white' : 'sticky top-16 z-10 bg-white'}`}
           >
@@ -185,9 +254,9 @@ export function ChatInterface({
 
         {/* Scrollable Messages Area */}
         <ScrollArea className="flex-1 overflow-y-auto p-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => (
             <div
-              key={message.id}
+              key={`${message.timestamp}-${index}`}
               className={`mb-4 ${message.role === 'user' ? 'text-right' : 'text-left'}`}
             >
               <div
@@ -199,71 +268,70 @@ export function ChatInterface({
               >
                 {message.content}
 
-                {/* Show tool calls if they exist */}
-                {message.toolInvocations &&
-                  message.toolInvocations.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      {message.toolInvocations.map((tool, index) => (
-                        <div
-                          key={index}
-                          className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-sm"
-                        >
-                          <div className="flex items-center gap-2 font-medium text-blue-700">
-                            {tool.toolName === 'searchFlights' &&
-                              '✈️ Searching flights...'}
-                            {tool.toolName === 'searchHotels' &&
-                              '🏨 Searching hotels...'}
-                            {tool.toolName === 'searchActivities' &&
-                              '🎯 Searching activities...'}
-                          </div>
-                          {'result' in tool && tool.result && (
-                            <div className="mt-1 text-xs text-gray-600">
-                              {(tool.result as any).success ? (
-                                <span className="text-green-600">
-                                  ✅ Found{' '}
-                                  {(tool.result as any).data?.length || 0}{' '}
-                                  options
-                                </span>
-                              ) : (
-                                <span className="text-red-600">
-                                  ❌ {(tool.result as any).message}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                {/* Show metadata if available */}
+                {message.metadata?.section && (
+                  <div className="mt-2 text-xs opacity-75">
+                    Section: {message.metadata.section}
+                  </div>
+                )}
+              </div>
+              
+              {/* Show timestamp */}
+              <div className="text-xs text-gray-500 mt-1">
+                {new Date(message.timestamp).toLocaleTimeString()}
               </div>
             </div>
           ))}
+          
+          {/* Loading indicator */}
           {isLoading && (
             <div className="text-left">
               <div className="inline-block rounded-lg bg-gray-100 p-3 text-gray-900">
-                AI is thinking...
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  AI is thinking...
+                </div>
               </div>
             </div>
           )}
+          
+          <div ref={messagesEndRef} />
         </ScrollArea>
 
         {/* Input Form */}
-        <div className="sticky bottom-0 z-10 bg-white p-4">
+        <div className="sticky bottom-0 z-10 bg-white p-4 border-t">
           <form onSubmit={handleSubmit} className="flex gap-2">
             <Input
               value={input}
               onChange={handleInputChange}
               placeholder={
-                travelDetails 
-                  ? "e.g., 'Find flights' or 'Search budget hotels' or 'Show me outdoor activities'"
-                  : "e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
+                !conversationId 
+                  ? "Start planning to activate chat..."
+                  : travelDetails 
+                    ? "e.g., 'Find flights' or 'Search budget hotels' or 'Show me outdoor activities'"
+                    : "e.g., 'Find flights to Tokyo for March 15' or 'Search budget hotels in Barcelona'"
               }
               className="flex-1"
+              disabled={!conversationId || isLoading}
             />
-            <Button type="submit" disabled={isLoading}>
-              <Send size={16} />
+            <Button 
+              type="submit" 
+              disabled={!conversationId || isLoading || !input.trim()}
+            >
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send size={16} />
+              )}
             </Button>
           </form>
+          
+          {/* Helper text */}
+          {conversationId && (
+            <p className="text-xs text-gray-500 mt-2">
+              💡 Tip: I can help you search for flights, hotels, activities, and answer questions about your trip.
+            </p>
+          )}
         </div>
       </CardContent>
     </>
