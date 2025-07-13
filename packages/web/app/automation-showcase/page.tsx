@@ -280,9 +280,9 @@ function MyComponent() {
                 Home Page
               </Button>
             </Link>
-            <Link href="/enhanced-home">
+            <Link href="/">
               <Button variant="outline">
-                Enhanced Home
+                Home (Enhanced)
               </Button>
             </Link>
             <Link href="/itinerary/building">

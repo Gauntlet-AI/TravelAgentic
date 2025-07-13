@@ -116,7 +116,7 @@ export class ComponentPreloader {
    */
   static preloadForRoute(currentPath: string) {
     switch (currentPath) {
-      case '/enhanced-home':
+      case '/':
         // Preload building page (likely next step)
         this.preload('ItineraryBuilding', () => import('@/app/itinerary/building/page'));
         break;
