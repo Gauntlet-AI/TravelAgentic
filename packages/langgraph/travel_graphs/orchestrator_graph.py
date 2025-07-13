@@ -16,6 +16,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 
 from .base_graph import BaseTravelGraph
 from .performance_optimizations import PerformanceOptimizationMixin
+from .amadeus_api_wrapper import amadeus_client
 
 logger = logging.getLogger(__name__)
 
@@ -501,6 +502,53 @@ Budget: ${preferences.get('budget', 5000)}"""
         
         return {"flights": mock_flights}
     
+    async def _generate_flight_data_with_amadeus(self, flight_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate flight data using Amadeus API with fallback to mock data"""
+        try:
+            # Prepare search parameters for Amadeus API
+            search_params = {
+                "origin": flight_context.get("departure_city", "NYC"),
+                "destination": flight_context.get("destination_city", "LAX"),
+                "departure_date": flight_context.get("departure_date", "2024-08-01"),
+                "return_date": flight_context.get("return_date"),
+                "passengers": flight_context.get("travelers", 1),
+                "cabin": flight_context.get("cabin_class", "economy")
+            }
+            
+            # Use Amadeus API wrapper
+            flights = await amadeus_client.search_flights(search_params)
+            
+            # Convert Amadeus format to orchestrator format
+            converted_flights = []
+            for flight in flights:
+                converted_flight = {
+                    "airline": flight.get("airline_name", flight.get("airline", "Unknown")),
+                    "flight_number": flight.get("flight_number", ""),
+                    "departure_time": flight.get("departure_time", ""),
+                    "arrival_time": flight.get("arrival_time", ""),
+                    "duration": flight.get("duration", ""),
+                    "stops": flight.get("stops", 0),
+                    "price": flight.get("price", 0),
+                    "destination_airport": f"{flight_context.get('destination_city', 'Unknown')} Airport",
+                    "arrival_date": flight_context.get("departure_date", ""),
+                    "departure_airport": f"{flight_context.get('departure_city', 'Unknown')} Airport",
+                    "source": flight.get("source", "amadeus_api"),
+                    "currency": flight.get("currency", "USD"),
+                    "cabin": flight.get("cabin", "economy"),
+                    "rating": flight.get("rating", 4.0),
+                    "amenities": flight.get("amenities", [])
+                }
+                converted_flights.append(converted_flight)
+            
+            return {
+                "flights": converted_flights,
+                "source": "amadeus_api" if flights and flights[0].get("source") == "amadeus_api" else "placeholder"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error with Amadeus API, falling back to mock data: {str(e)}")
+            return self._generate_mock_flight_data(flight_context)
+    
     def _process_flight_results(self, flight_results: Dict[str, Any], automation_level: int, 
                                instructions: Dict[str, Any]) -> List[Dict[str, Any]]:
         """Process flight results based on automation level and instructions"""
@@ -600,6 +648,56 @@ Budget: ${preferences.get('budget', 5000)}"""
             mock_hotels.append(mock_hotel)
         
         return {"hotels": mock_hotels}
+    
+    async def _generate_hotel_data_with_amadeus(self, hotel_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate hotel data using Amadeus API with fallback to mock data"""
+        try:
+            # Prepare search parameters for Amadeus API
+            search_params = {
+                "destination": hotel_context.get("destination_city", "NYC"),
+                "check_in": hotel_context.get("checkin_date", "2024-08-01"),
+                "check_out": hotel_context.get("checkout_date", "2024-08-05"),
+                "guests": hotel_context.get("travelers", 1)
+            }
+            
+            # Use Amadeus API wrapper
+            hotels = await amadeus_client.search_hotels(search_params)
+            
+            # Convert Amadeus format to orchestrator format
+            converted_hotels = []
+            for hotel in hotels:
+                converted_hotel = {
+                    "name": hotel.get("name", "Unknown Hotel"),
+                    "address": hotel.get("location", {}).get("address", "Unknown Address"),
+                    "type": "Hotel",
+                    "rating": hotel.get("rating", 4.0),
+                    "nightly_rate": hotel.get("price_per_night", 150),
+                    "total_cost": hotel.get("total_price", 600),
+                    "amenities": hotel.get("amenities", []),
+                    "location": f"{hotel_context.get('destination_city', 'Unknown')} {hotel.get('location', {}).get('city', 'City')}",
+                    "nearby_attractions": ["Museum", "Shopping", "Restaurants"],
+                    "source": hotel.get("source", "amadeus_api"),
+                    "currency": hotel.get("currency", "USD"),
+                    "star_rating": hotel.get("star_rating", 3),
+                    "room_type": hotel.get("room_type", "Standard Room"),
+                    "cancellation_policy": hotel.get("cancellation_policy", "Standard")
+                }
+                
+                # Add airport proximity if flight context exists
+                if hotel_context.get("context_aware"):
+                    converted_hotel["airport_distance"] = "5 miles from airport"
+                    converted_hotel["airport_shuttle"] = True
+                
+                converted_hotels.append(converted_hotel)
+            
+            return {
+                "hotels": converted_hotels,
+                "source": "amadeus_api" if hotels and hotels[0].get("source") == "amadeus_api" else "placeholder"
+            }
+            
+        except Exception as e:
+            logger.error(f"Error with Amadeus API, falling back to mock data: {str(e)}")
+            return self._generate_mock_hotel_data(hotel_context)
     
     def _process_hotel_results(self, hotel_results: Dict[str, Any], automation_level: int, 
                               instructions: Dict[str, Any], flight_context: Optional[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -1088,8 +1186,8 @@ Return JSON with flight options based on automation level {automation_level}."""
             try:
                 flight_results = json.loads(response.content)
             except json.JSONDecodeError:
-                # Fallback to mock flight data
-                flight_results = self._generate_mock_flight_data(flight_context)
+                # Fallback to Amadeus API search
+                flight_results = await self._generate_flight_data_with_amadeus(flight_context)
             
             # Process results based on automation level
             processed_flights = self._process_flight_results(flight_results, automation_level, instructions)
@@ -1284,8 +1382,8 @@ Return JSON with hotel options based on automation level {automation_level}."""
             try:
                 hotel_results = json.loads(response.content)
             except json.JSONDecodeError:
-                # Fallback to mock hotel data
-                hotel_results = self._generate_mock_hotel_data(hotel_context)
+                # Fallback to Amadeus API search
+                hotel_results = await self._generate_hotel_data_with_amadeus(hotel_context)
             
             # Process results based on automation level
             processed_hotels = self._process_hotel_results(hotel_results, automation_level, instructions, flight_context)
