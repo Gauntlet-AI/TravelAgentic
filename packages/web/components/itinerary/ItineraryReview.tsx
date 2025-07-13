@@ -766,7 +766,7 @@ LIMITATIONS:
 
   {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
   <div 
-    className={`hidden lg:block fixed right-0 bottom-0 w-96 z-40 border-l bg-white transition-all duration-300 ${
+    className={`hidden lg:block fixed right-0 bottom-0 w-96 z-40 border-l bg-white transition-all duration-300 rounded-tl-lg overflow-hidden ${
       isScrolled ? 'top-0' : 'top-[140px]'
     }`}
   >
