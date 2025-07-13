@@ -541,7 +541,7 @@ LIMITATIONS:
               <div className="flex items-center justify-between">
                 <div>
                   <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                    Review Your Itinerary
+                    Review your Itinerary
                   </h1>
                   <p className="text-lg text-gray-600">
                     Customize your {state.travelDetails.destination} trip
@@ -605,15 +605,7 @@ LIMITATIONS:
               </Alert>
             )}
 
-            {/* Duplicate Removal Alert */}
-            {(itinerary.removedDuplicates || 0) > 0 && (
-              <Alert className="border-orange-200 bg-orange-50">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  {itinerary.removedDuplicates || 0} duplicate {(itinerary.removedDuplicates || 0) === 1 ? 'activity was' : 'activities were'} automatically removed from your itinerary to avoid repetition.
-                </AlertDescription>
-              </Alert>
-            )}
+
 
             {/* Trip Summary */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
