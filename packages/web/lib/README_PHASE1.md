@@ -163,15 +163,12 @@ All Phase 1 components are fully responsive:
    - [ ] Phase-1 preset enables correct features
    - [ ] Individual flags can be toggled
    - [ ] Development logging works
-   - [ ] Fallback to legacy flow works
 
 ## 🔄 Backward Compatibility
 
 Phase 1 maintains full backward compatibility:
-- Original home page (`/`) still works with legacy flow
 - Enhanced features only activate with feature flags
 - Existing API endpoints remain functional
-- Legacy components are preserved
 
 ## 🚧 Phase 1 Limitations
 
@@ -195,8 +192,7 @@ Phase 1 maintains full backward compatibility:
 ✅ **Streaming API foundation**: Working with simulation  
 ✅ **Basic itinerary view**: Displays with mock data  
 ✅ **Feature flag system**: Fully functional  
-✅ **Mobile responsive**: All components work on mobile  
-✅ **Backward compatibility**: Legacy flow preserved  
+✅ **Mobile responsive**: All components work on mobile   
 
 ## 🔜 Next Steps (Phase 2)
 
