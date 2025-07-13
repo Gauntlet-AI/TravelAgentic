@@ -88,7 +88,7 @@ export default function ItineraryBuildingPage() {
       description: 'Setting up personalized travel planning agents',
       status: 'pending',
       icon: <Sparkles className="h-5 w-5" />,
-      estimatedTime: '5s',
+      estimatedTime: '2s',
     },
     {
       id: 'analyze',
@@ -96,7 +96,7 @@ export default function ItineraryBuildingPage() {
       description: 'Understanding your travel style and preferences',
       status: 'pending',
       icon: <Activity className="h-5 w-5" />,
-      estimatedTime: '10s',
+      estimatedTime: '4s',
     },
     {
       id: 'flights',
@@ -104,7 +104,7 @@ export default function ItineraryBuildingPage() {
       description: 'Searching for optimal flight options',
       status: 'pending',
       icon: <Plane className="h-5 w-5" />,
-      estimatedTime: '15s',
+      estimatedTime: '6s',
     },
     {
       id: 'accommodation',
@@ -112,7 +112,7 @@ export default function ItineraryBuildingPage() {
       description: 'Finding perfect places to stay',
       status: 'pending',
       icon: <Hotel className="h-5 w-5" />,
-      estimatedTime: '12s',
+      estimatedTime: '5s',
     },
     {
       id: 'activities',
@@ -120,7 +120,7 @@ export default function ItineraryBuildingPage() {
       description: 'Curating experiences based on your interests',
       status: 'pending',
       icon: <Activity className="h-5 w-5" />,
-      estimatedTime: '20s',
+      estimatedTime: '6s',
     },
     {
       id: 'optimize',
@@ -128,7 +128,7 @@ export default function ItineraryBuildingPage() {
       description: 'Fine-tuning schedule and logistics',
       status: 'pending',
       icon: <MapPin className="h-5 w-5" />,
-      estimatedTime: '8s',
+      estimatedTime: '2s',
     },
   ]);
 
