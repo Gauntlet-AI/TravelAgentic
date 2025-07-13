@@ -28,6 +28,7 @@ const DEFAULT_PREFERENCES: Partial<TripInformation> = {
   hotelType: 'boutique',
   returnFlight: true,
   activities: 'outdoor, relaxation, nightlife, cultural',
+  children: 0,
 };
 
 const inter = Inter({
@@ -48,6 +49,7 @@ interface TripInformation {
   duration?: string;
   activities?: string;
   travelers?: number;
+  children?: number;
 }
 
 const chatModeConfig = {
@@ -75,6 +77,7 @@ PRESET DEFAULTS (use these automatically):
 - hotelType: 'boutique' (slightly upscale, unique experience)
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
+- children: 0 (no children by default)
 
 REQUIRED FIELDS TO COLLECT (only ask for these 5):
 1. departureLocation - Where they're leaving from (city, airport)
@@ -101,7 +104,7 @@ APPROACH:
 - DO NOT ask for confirmation - just save it automatically
 - After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).
 
-IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+IMPORTANT: Once you have the 5 required fields, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural', children: 0)!
 Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
   },
   quiz: {
@@ -127,6 +130,7 @@ PRESET DEFAULTS (use these automatically):
 - hotelType: 'boutique' (slightly upscale, unique experience)
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
+- children: 0 (no children by default)
 
 REQUIRED FIELDS TO COLLECT (quiz through these 5 only):
 1. departureLocation - Where they're leaving from
@@ -163,7 +167,7 @@ APPROACH:
 - End with "Perfect! You're all set to proceed!"
 - After calling updateTripInfo, ALWAYS call checkTripStatus to verify completion before telling user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).
 
-IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+IMPORTANT: Once you have the 5 required answers, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural', children: 0)!
 Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed.`
   },
   autonomous: {
@@ -183,6 +187,7 @@ PRESET DEFAULTS (use these automatically):
 - hotelType: 'boutique' (slightly upscale, unique experience)
 - returnFlight: true (round trip)
 - activities: 'outdoor, relaxation, nightlife, cultural' (well-rounded mix)
+- children: 0 (no children by default)
 
 REQUIRED FIELDS TO FILL (make decisions for these 5):
 1. departureLocation - ${userLocation ? formatLocationDisplay(userLocation) : 'Use their current location or major nearby airport'} (if only city name is provided, assume full "city, state/region, country")
@@ -224,7 +229,7 @@ Let me save this information for you!"
 [Then IMMEDIATELY call updateTripInfo tool with all the information]
 [Then call checkTripStatus to verify completion before telling user they can proceed]
 
-IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural')!
+IMPORTANT: Once you've made all the decisions, immediately call updateTripInfo with: departureLocation, destination, departureDate (convert to YYYY-MM-DD format), duration, travelers, plus the preset defaults (flightType: 'premium economy', hotelType: 'boutique', returnFlight: true, activities: 'outdoor, relaxation, nightlife, cultural', children: 0)!
 Then call checkTripStatus to confirm all information is properly saved before telling the user they can proceed. In that SAME assistant message (before or after the tool calls) explicitly tell the user: "Great! We are ready to generate your itinerary." (or similar wording).`
   }
 };
@@ -336,7 +341,8 @@ export default function WelcomePage() {
       (required.returnFlight !== undefined) &&
       required.duration &&
       required.activities &&
-      required.travelers
+      required.travelers &&
+      (required.children !== undefined)
     );
   };
 
