@@ -20,7 +20,6 @@ import {
   Download,
   History,
   MessageCircle,
-  Settings,
   Save,
   RefreshCw,
   CheckCircle,
@@ -611,7 +610,7 @@ export default function ItineraryReview() {
 
       {/* Main Content Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="review">
             <Edit className="h-4 w-4 mr-2" />
             Review & Edit
@@ -619,10 +618,6 @@ export default function ItineraryReview() {
           <TabsTrigger value="chat">
             <MessageCircle className="h-4 w-4 mr-2" />
             Natural Language
-          </TabsTrigger>
-          <TabsTrigger value="controls">
-            <Settings className="h-4 w-4 mr-2" />
-            Quick Controls
           </TabsTrigger>
         </TabsList>
 
@@ -720,14 +715,7 @@ export default function ItineraryReview() {
           </div>
         </TabsContent>
 
-        {/* Quick Controls Tab */}
-        <TabsContent value="controls" className="space-y-6">
-          <div className="p-8 text-center">
-            <Settings className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Quick Controls</h3>
-            <p className="text-gray-500">Coming in Phase 4 - Quick modification controls</p>
-          </div>
-        </TabsContent>
+
       </Tabs>
 
       {/* Last Modified Info */}
