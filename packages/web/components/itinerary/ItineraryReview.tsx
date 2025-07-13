@@ -914,7 +914,13 @@ LIMITATIONS:
                               </p>
                               {item.lastModified && (
                                 <p className="text-xs text-gray-400 mt-1">
-                                  Last modified: {new Date(item.lastModified).toLocaleString()}
+                                  Last modified: {new Date(item.lastModified).toLocaleString([], { 
+                                    year: 'numeric', 
+                                    month: 'short', 
+                                    day: 'numeric', 
+                                    hour: '2-digit', 
+                                    minute: '2-digit' 
+                                  })}
                                 </p>
                               )}
                             </div>
@@ -934,18 +940,21 @@ LIMITATIONS:
               ))}
             </div>
 
-                    {/* Last Modified Info */}
-        <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">
-          <div className="flex items-center gap-2">
-            <Info className="h-4 w-4" />
-            <span>
-              Last modified: {new Date(itinerary.lastModified).toLocaleString()}
-            </span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span>{modifications.length} modifications made</span>
-          </div>
-        </div>
+                                {/* Last Modified Info */}
+            <div className="flex items-center text-sm text-gray-500 pt-4 border-t">
+              <div className="flex items-center gap-2">
+                <Info className="h-4 w-4" />
+                <span>
+                  Last modified: {new Date(itinerary.lastModified).toLocaleString([], { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric', 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  })}
+                </span>
+              </div>
+            </div>
       </div>
     </div>
   </div>
