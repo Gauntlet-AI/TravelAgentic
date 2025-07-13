@@ -1,18 +1,14 @@
 /**
- * Enhanced Home Page with A/B Testing
- * Phase 6: Compares new itinerary-centric flow vs legacy search flow
- * Uses A/B testing framework to measure performance and user satisfaction
+ * Enhanced Home Page - AI-First Travel Planning
+ * Always shows the enhanced itinerary-centric flow
  */
 
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { EnhancedTravelInputForm } from '@/components/enhanced-travel-input-form';
-import { TravelInputForm } from '@/components/travel-input-form';
-import { FlowSelector, useABTestMetrics } from '@/components/FlowSelector';
-import { LegacyFallback } from '@/components/LegacyFallback';
 import { AutomationDemo } from '@/components/automation-demo';
 import { ItineraryProvider } from '@/contexts/ItineraryContext';
 import { featureFlags } from '@/lib/feature-flags';
@@ -30,16 +26,10 @@ interface EnhancedTravelDetails extends TravelDetails {
 
 export default function EnhancedHomePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [isMobile, setIsMobile] = useState(false);
   const [showAutomationDemo, setShowAutomationDemo] = useState(false);
   
-  // A/B testing metrics
-  const { trackEvent, trackConversion } = useABTestMetrics('itinerary_flow_test');
-  
-  // Check if we should use the itinerary flow (for non-A/B test scenarios)
-  const shouldUseItineraryFlow = featureFlags.shouldUseItineraryFlow();
-  const shouldShowEnhancedForm = featureFlags.shouldShowEnhancedForm();
+  // Feature flags
   const automationLevelsEnabled = featureFlags.isEnabled('automationLevels');
 
   useEffect(() => {
@@ -52,93 +42,33 @@ export default function EnhancedHomePage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Track page view
-  useEffect(() => {
-    trackEvent('page_view', { page: 'enhanced_home' });
-  }, [trackEvent]);
-
-  const handleFormSubmit = (details: EnhancedTravelDetails, useItineraryFlow: boolean = shouldUseItineraryFlow) => {
+  const handleFormSubmit = (details: EnhancedTravelDetails) => {
     if (!details.startDate || !details.endDate) return;
     
-    // Track form submission
-    trackEvent('form_submission', {
-      flow_type: useItineraryFlow ? 'itinerary' : 'search',
+    // Always use the itinerary flow
+    const params = new URLSearchParams({
+      departureLocation: details.departureLocation,
       destination: details.destination,
-      duration_days: Math.ceil((details.endDate.getTime() - details.startDate.getTime()) / (1000 * 60 * 60 * 24)),
-      travelers: details.travelers,
-      has_preferences: !!details.preferences
+      startDate: details.startDate.toISOString().split('T')[0],
+      endDate: details.endDate.toISOString().split('T')[0],
+      adults: details.adults.toString(),
+      children: details.children.toString(),
+      travelers: details.travelers.toString(),
     });
-    
-    if (useItineraryFlow) {
-      // Redirect to itinerary building flow
-      const params = new URLSearchParams({
-        departureLocation: details.departureLocation,
-        destination: details.destination,
-        startDate: details.startDate.toISOString().split('T')[0],
-        endDate: details.endDate.toISOString().split('T')[0],
-        adults: details.adults.toString(),
-        children: details.children.toString(),
-        travelers: details.travelers.toString(),
-      });
 
-      // Add preferences if available
-      if (details.preferences) {
-        if (details.preferences.budget) {
-          params.append('budget', details.preferences.budget);
-        }
-        if (details.preferences.activityTypes && details.preferences.activityTypes.length > 0) {
-          params.append('activityTypes', details.preferences.activityTypes.join(','));
-        }
+    // Add preferences if available
+    if (details.preferences) {
+      if (details.preferences.budget) {
+        params.append('budget', details.preferences.budget);
       }
-
-      // Track flow progression
-      trackEvent('flow_start', { flow_type: 'itinerary' });
-
-      // Redirect to itinerary building
-      router.push(`/itinerary/building?${params.toString()}`);
-    } else {
-      // Use traditional search flow
-      const searchParams = new URLSearchParams({
-        origin: details.departureLocation,
-        destination: details.destination,
-        departureDate: details.startDate.toISOString().split('T')[0],
-        returnDate: details.endDate.toISOString().split('T')[0],
-        passengers: details.travelers.toString(),
-        cabin: 'economy',
-        useAI: 'true'
-      });
-      
-      // Track flow progression
-      trackEvent('flow_start', { flow_type: 'search' });
-      
-      router.push(`/search?${searchParams.toString()}`);
+      if (details.preferences.activityTypes && details.preferences.activityTypes.length > 0) {
+        params.append('activityTypes', details.preferences.activityTypes.join(','));
+      }
     }
+
+    // Redirect to itinerary building
+    router.push(`/itinerary/building?${params.toString()}`);
   };
-
-  // Create the new itinerary flow component
-  const ItineraryFlow = () => (
-    <ItineraryProvider>
-      <EnhancedTravelInputForm
-        onSubmit={(details) => handleFormSubmit(details, true)}
-        isMobile={isMobile}
-        mode="itinerary"
-        showPreferences={true}
-      />
-    </ItineraryProvider>
-  );
-
-  // Create the legacy search flow component  
-  const LegacyFlow = () => (
-    <LegacyFallback
-      reason="ab_test"
-      onSwitchToNew={() => {
-        trackEvent('flow_switch', { from: 'legacy', to: 'itinerary' });
-        // Force reload with itinerary flow
-        window.location.href = '/enhanced-home?force_itinerary=true';
-      }}
-      searchParams={searchParams}
-    />
-  );
 
   // Automation demo section component
   const AutomationSection = () => {
@@ -178,10 +108,7 @@ export default function EnhancedHomePage() {
 
           {!showAutomationDemo ? (
             <Button 
-              onClick={() => {
-                setShowAutomationDemo(true);
-                trackEvent('automation_demo_open', { source: 'enhanced_home' });
-              }}
+              onClick={() => setShowAutomationDemo(true)}
               size="lg"
               className="mb-4"
             >
@@ -225,33 +152,17 @@ export default function EnhancedHomePage() {
     );
   };
 
-  // Use A/B testing framework to determine flow
+  // Always show the enhanced itinerary flow
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-secondary/20">
-      <FlowSelector
-        testName="itinerary_flow_test"
-        splitPercentage={50} // 50% get itinerary flow
-        enableABTesting={true}
-        itineraryFlow={<ItineraryFlow />}
-        legacyFlow={<LegacyFlow />}
-      >
-        {/* Default/fallback content */}
-        {shouldShowEnhancedForm ? (
-          <ItineraryProvider>
-            <EnhancedTravelInputForm
-              onSubmit={handleFormSubmit}
-              isMobile={isMobile}
-              mode={shouldUseItineraryFlow ? 'itinerary' : 'search'}
-              showPreferences={shouldUseItineraryFlow}
-            />
-          </ItineraryProvider>
-        ) : (
-          <TravelInputForm
-            onSubmit={(details) => handleFormSubmit(details, false)}
-            isMobile={isMobile}
-          />
-        )}
-      </FlowSelector>
+      <ItineraryProvider>
+        <EnhancedTravelInputForm
+          onSubmit={handleFormSubmit}
+          isMobile={isMobile}
+          mode="itinerary"
+          showPreferences={true}
+        />
+      </ItineraryProvider>
       
       {/* Automation Demo Section */}
       <AutomationSection />
