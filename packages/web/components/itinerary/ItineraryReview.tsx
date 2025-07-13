@@ -688,6 +688,25 @@ export default function ItineraryReview() {
     }
   }
 
+  /**
+   * Handle sharing the itinerary via email
+   */
+  function handleShare() {
+    const subject = encodeURIComponent(`Travel Itinerary for ${itinerary.destination}`);
+    // Compose a simple summary for the email body
+    const body = encodeURIComponent(
+      `Hi!\n\nHere's my travel itinerary for ${itinerary.destination}:\n\n` +
+      itinerary.days.map((day: any) => {
+        return `Day ${day.dayNumber}${day.title ? ` - ${day.title}` : ''} (${formatDate(day.date)}):\n` +
+          (day.items && day.items.length > 0
+            ? day.items.map((item: any) => `- ${item.time}: ${item.title}${item.description ? ` (${item.description})` : ''}${item.price ? ` [${item.price}]` : ''}`).join('\n')
+            : '  Rest Day (No activities scheduled)') + '\n';
+      }).join('\n') +
+      `\nTotal Cost: $${itinerary.totalCost}\n\nShared via TravelAgentic`
+    );
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+  }
+
   // AI Chat system prompt for itinerary review
   const aiSystemPrompt = `You are TravelAgentic's AI Travel Agent in ITINERARY REVIEW mode. Help users modify their itinerary through natural language.
 
@@ -755,7 +774,7 @@ LIMITATIONS:
                 </div>
                 
                 <div className="flex items-center gap-3">
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" onClick={handleShare}>
                     <Share className="h-4 w-4 mr-2" />
                     Share
                   </Button>
