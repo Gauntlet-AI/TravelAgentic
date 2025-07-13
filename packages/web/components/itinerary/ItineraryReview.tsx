@@ -359,27 +359,35 @@ export default function ItineraryReview() {
         let dayActivities: any[] = [];
         
         if (dayIndex === 0) {
-          // Day 1: Include arrival flights and hotel check-ins
+          // Day 1 (Arrival): Only include arrival flights and hotel check-ins
           dayActivities = [...arrivalFlights, ...hotelCheckins];
           
-          // Also include any other activities that were originally assigned to Day 1
-          const originalDay1Activities = otherActivities.filter(item => item.originalDayIndex === 0);
-          dayActivities = [...dayActivities, ...originalDay1Activities];
-          
-          console.log(`Day ${dayIndex + 1}: Adding ${arrivalFlights.length} arrival flights, ${hotelCheckins.length} hotel check-ins, and ${originalDay1Activities.length} original Day 1 activities`);
+          console.log(`Day ${dayIndex + 1}: Adding ${arrivalFlights.length} arrival flights and ${hotelCheckins.length} hotel check-ins only`);
         } else if (dayIndex === state.days.length - 1) {
-          // Last day: Include return flights and activities originally assigned to this day
+          // Last day (Departure): Only include return flights
           dayActivities = [...returnFlights];
           
-          const originalLastDayActivities = otherActivities.filter(item => item.originalDayIndex === dayIndex);
-          dayActivities = [...dayActivities, ...originalLastDayActivities];
-          
-          console.log(`Day ${dayIndex + 1}: Adding ${returnFlights.length} return flights and ${originalLastDayActivities.length} original activities`);
+          console.log(`Day ${dayIndex + 1}: Adding ${returnFlights.length} return flights only`);
         } else {
-          // Other days: Include activities originally assigned to this day (excluding arrival/return flights)
+          // Middle days: Include activities originally assigned to this day, plus any activities from Day 1 and last day
           dayActivities = otherActivities.filter(item => item.originalDayIndex === dayIndex);
           
-          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length} activities originally assigned to this day`);
+          // Redistribute activities from Day 1 and last day to middle days
+          const redistributedFromDay1 = otherActivities.filter(item => item.originalDayIndex === 0);
+          const redistributedFromLastDay = otherActivities.filter(item => item.originalDayIndex === state.days.length - 1);
+          
+          // Simple redistribution: spread activities evenly across middle days
+          const middleDayCount = Math.max(1, state.days.length - 2);
+          const currentMiddleDayIndex = dayIndex - 1; // 0-based index for middle days
+          
+          const redistributedActivities = [...redistributedFromDay1, ...redistributedFromLastDay];
+          const activitiesForThisDay = redistributedActivities.filter((_, index) => 
+            index % middleDayCount === currentMiddleDayIndex
+          );
+          
+          dayActivities = [...dayActivities, ...activitiesForThisDay];
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length - activitiesForThisDay.length} original activities and ${activitiesForThisDay.length} redistributed activities`);
         }
 
         // Sort activities by time using JSON-based sorting
