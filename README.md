@@ -70,6 +70,56 @@ TravelAgentic/
 | **Voice Calls**        | Twilio + ElevenLabs + OpenAI    |
 | **Deployment**         | Docker Containers               |
 
+## 🌐 Amadeus API Integration
+
+TravelAgentic integrates with the **Amadeus Travel API** as the primary data source for flights, hotels, and activities. This provides access to real-time travel data from the world's largest travel marketplace.
+
+### **Features**
+
+- **✈️ Flight Search**: Real-time flight offers with pricing and availability
+- **🏨 Hotel Search**: Hotel listings with offers and availability
+- **🎯 Activity Search**: Points of interest and tours/activities
+- **🔐 OAuth2 Authentication**: Automatic token refresh with 1-minute buffer
+- **⚡ Rate Limiting**: Respects API limits (10 TPS test, 40 TPS production)
+- **🛡️ Error Handling**: Comprehensive error handling with retry logic
+- **🔄 Fallback Support**: Graceful fallback to mock services if API fails
+
+### **Configuration**
+
+```bash
+# Phase 2: Amadeus API Configuration
+AMADEUS_CLIENT_ID=your_amadeus_client_id
+AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
+AMADEUS_ENVIRONMENT=test  # or 'production'
+
+# Phase Control
+USE_MOCK_APIS=false
+DEVELOPMENT_PHASE=2
+```
+
+### **Service Integration**
+
+The Amadeus services automatically integrate with the TravelAgentic service factory:
+
+- **Phase 1**: Uses mock services (`USE_MOCK_APIS=true`)  
+- **Phase 2**: Uses real Amadeus API when credentials are provided
+- **Fallback**: Gracefully falls back to mocks if configuration fails
+
+### **Testing**
+
+Test the integration without TypeScript compilation:
+
+```bash
+# Start Next.js dev server
+npm run dev
+
+# Run HTTP-based integration test  
+cd packages/web
+node test-amadeus-integration.js
+```
+
+For detailed Amadeus integration documentation, see: [`packages/web/lib/amadeus/README.md`](packages/web/lib/amadeus/README.md)
+
 ## 🎯 Phase-Based Development Strategy
 
 TravelAgentic follows a strategic 3-phase development approach that balances rapid MVP delivery with production-ready scalability:
@@ -83,7 +133,7 @@ TravelAgentic follows a strategic 3-phase development approach that balances rap
 ### **Phase 2: Enhanced Features (Days 3-4)**
 
 - **Focus**: Real API integration + browser automation fallbacks
-- **APIs**: Tequila (flights), Booking.com (hotels), Viator (activities)
+- **APIs**: Amadeus (primary), Tequila (flights), Booking.com (hotels), Viator (activities)
 - **Fallbacks**: Playwright + browser-use automation for API failures
 
 ### **Phase 3: Production Ready (Days 5-6)**
@@ -164,15 +214,21 @@ npm run clean            # Clean all node_modules and build artifacts
 - Docker & Docker Compose
 - Supabase CLI
 
-#### Enhanced Environment Variables (Planned)
+#### Enhanced Environment Variables
 
 ```bash
-# Phase-based configuration (planned approach)
+# Phase-based configuration
 USE_MOCK_APIS=true
+DEVELOPMENT_PHASE=1
 SUPABASE_URL=your_supabase_url
 LANGFLOW_API_KEY=your_langflow_key
 
-# Phase 2: Add travel APIs (optional)
+# Phase 2: Amadeus API (primary travel API)
+AMADEUS_CLIENT_ID=your_amadeus_client_id
+AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
+AMADEUS_ENVIRONMENT=test
+
+# Phase 2: Alternative/fallback travel APIs (optional)
 TEQUILA_API_KEY=your_tequila_key
 BOOKING_API_KEY=your_booking_key
 VIATOR_API_KEY=your_viator_key
@@ -251,18 +307,29 @@ Supabase database schema and migrations.
 
 ### **Current Testing State**
 
-- **Status**: Test suite in development
-- **Available**: Basic linting with `npm run lint`
-- **Planned**: Comprehensive testing with mock APIs
+- **Status**: HTTP-based integration testing available
+- **Available**: Basic linting with `npm run lint`, Amadeus API integration tests
+- **Implemented**: Mock API system with comprehensive fallback testing
 
 ### **Planned Testing Implementation**
 
-#### Run Tests with Mock APIs (Planned)
+#### Run Integration Tests (Available Now)
 
 ```bash
+# Start Next.js development server
+npm run dev
+
+# Run HTTP-based Amadeus integration test  
+cd packages/web
+node test-amadeus-integration.js
+
 # Enable mock mode for OSS-friendly development
 export USE_MOCK_APIS=true
+```
 
+#### Run Full Test Suite (Planned)
+
+```bash
 # Run all tests (when implemented)
 npm run test
 
@@ -435,18 +502,21 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### 🔄 **Phase 1: Architecture Migration (In Progress)**
 
-- [ ] Migrate to packages/web structure
-- [ ] Implement mock API system
+- [x] Migrate to packages/web structure
+- [x] Implement mock API system
+- [x] Add comprehensive Amadeus API integration
 - [ ] Add comprehensive travel search flow
 - [ ] Integrate Langflow for AI orchestration
 - [ ] Add database integration (Supabase)
 
-### 📋 **Phase 2: Enhanced Features (Planned)**
+### 📋 **Phase 2: Enhanced Features (Partially Complete)**
 
-- [ ] Real API integration (Tequila, Booking.com, Viator)
+- [x] Amadeus API integration (flights, hotels, activities)
+- [x] Comprehensive error handling and fallback system  
+- [x] Service factory pattern for API switching
+- [ ] Alternative API integration (Tequila, Booking.com, Viator)
 - [ ] Browser automation fallbacks (Playwright + browser-use)
 - [ ] Advanced activity filtering and personalization
-- [ ] Enhanced error handling and user feedback
 - [ ] Improved UI/UX with loading states
 
 ### 🚀 **Phase 3: Production Ready (Planned)**

@@ -15,7 +15,13 @@ import { MockHotelService } from '../services/hotel-service';
 import { MockActivityService } from '../services/activity-service';
 import { MockPaymentService } from '../services/payment-service';
 
-// Real API services (to be implemented in Phase 2)
+// Amadeus API services (Primary Phase 2 implementation)
+import { AmadeusFlightService } from '../../amadeus/services/flight-service';
+import { AmadeusHotelService } from '../../amadeus/services/hotel-service';
+import { AmadeusActivityService } from '../../amadeus/services/activity-service';
+import { createAmadeusClient } from '../../amadeus/client';
+
+// Alternative real API services (Fallback Phase 2 implementation)
 // import { TequilaFlightService } from '../../real-apis/tequila-flight-service';
 // import { BookingHotelService } from '../../real-apis/booking-hotel-service';
 // import { ViatorActivityService } from '../../real-apis/viator-activity-service';
@@ -73,10 +79,16 @@ export class ServiceFactory {
       return new MockFlightService(this.config.mockConfig);
     }
 
-    // Phase 2: Real flight API (Tequila)
-    // if (this.config.developmentPhase >= 2) {
-    //   return new TequilaFlightService();
-    // }
+    // Phase 2: Real flight API (Amadeus primary, Tequila fallback)
+    if (this.config.developmentPhase >= 2) {
+      try {
+        const amadeusClient = createAmadeusClient();
+        return new AmadeusFlightService(amadeusClient);
+      } catch (error) {
+        console.warn('Amadeus client creation failed, falling back to mock service:', error);
+        return new MockFlightService(this.config.mockConfig);
+      }
+    }
 
     // Fallback to mock service
     return new MockFlightService(this.config.mockConfig);
@@ -90,10 +102,16 @@ export class ServiceFactory {
       return new MockHotelService(this.config.mockConfig);
     }
 
-    // Phase 2: Real hotel API (Booking.com)
-    // if (this.config.developmentPhase >= 2) {
-    //   return new BookingHotelService();
-    // }
+    // Phase 2: Real hotel API (Amadeus primary, Booking.com fallback)
+    if (this.config.developmentPhase >= 2) {
+      try {
+        const amadeusClient = createAmadeusClient();
+        return new AmadeusHotelService(amadeusClient);
+      } catch (error) {
+        console.warn('Amadeus client creation failed, falling back to mock service:', error);
+        return new MockHotelService(this.config.mockConfig);
+      }
+    }
 
     // Fallback to mock service
     return new MockHotelService(this.config.mockConfig);
@@ -107,10 +125,16 @@ export class ServiceFactory {
       return new MockActivityService(this.config.mockConfig);
     }
 
-    // Phase 2: Real activity API (Viator)
-    // if (this.config.developmentPhase >= 2) {
-    //   return new ViatorActivityService();
-    // }
+    // Phase 2: Real activity API (Amadeus primary, Viator fallback)
+    if (this.config.developmentPhase >= 2) {
+      try {
+        const amadeusClient = createAmadeusClient();
+        return new AmadeusActivityService(amadeusClient);
+      } catch (error) {
+        console.warn('Amadeus client creation failed, falling back to mock service:', error);
+        return new MockActivityService(this.config.mockConfig);
+      }
+    }
 
     // Fallback to mock service
     return new MockActivityService(this.config.mockConfig);
