@@ -1,6 +1,6 @@
 'use client';
 
-import { TravelInputForm } from '@/components/travel-input-form';
+import { EnhancedTravelInputForm } from '@/components/enhanced-travel-input-form';
 import type { TravelDetails } from '@/lib/mock-data';
 import { useRouter } from 'next/navigation';
 
@@ -11,7 +11,7 @@ import { useRouter } from 'next/navigation';
 export function SearchFormWrapper() {
   const router = useRouter();
 
-  const handleSubmit = (details: TravelDetails) => {
+  const handleSubmit = (details: TravelDetails | any) => {
     // Handle new search submission by redirecting to search page
     if (!details.startDate || !details.endDate) return;
     
@@ -30,5 +30,6 @@ export function SearchFormWrapper() {
     router.push(`/search?${params.toString()}`);
   };
 
-  return <TravelInputForm onSubmit={handleSubmit} />;
+  // Use the enhanced form in search mode without showing extended preferences
+  return <EnhancedTravelInputForm onSubmit={handleSubmit} mode="search" showPreferences={false} />;
 } 
