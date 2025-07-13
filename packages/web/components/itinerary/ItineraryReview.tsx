@@ -202,9 +202,14 @@ export default function ItineraryReview() {
         status: 'reviewing' as const,
         totalCost: 0,
         destination: state.travelDetails?.destination || '',
-        days: []
+        days: [],
+        removedDuplicates: 0
       };
     }
+
+    // Track seen activities to prevent duplicates across all days
+    const seenActivities = new Set<string>();
+    let removedDuplicates = 0;
 
     // Convert context data to display format with proper null checks
     const convertedDays = state.days
@@ -226,7 +231,27 @@ export default function ItineraryReview() {
         );
         const sortedItems = sortItineraryItemsJSON(itemsWithTime);
 
-        const items = sortedItems.map((item: any) => {
+        // Filter out duplicates based on activity name/title
+        const uniqueItems = sortedItems.filter((item: any) => {
+          const activityKey = `${item.type}-${item.name}`.toLowerCase();
+          
+          // Always allow flights and hotels (they can be repeated legitimately)
+          if (item.type === 'flight' || item.type === 'hotel') {
+            return true;
+          }
+          
+          // For activities and restaurants, check for duplicates
+          if (seenActivities.has(activityKey)) {
+            removedDuplicates++;
+            console.log(`Removed duplicate activity: ${item.name} on Day ${dayIndex + 1}`);
+            return false;
+          }
+          
+          seenActivities.add(activityKey);
+          return true;
+        });
+
+        const items = uniqueItems.map((item: any) => {
           // Use timezone-aware time display if available
           const timeDisplay = item.timezoneInfo?.displayTime 
             ? `${new Date(item.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ${item.timezoneInfo.abbreviation}`
@@ -277,7 +302,7 @@ export default function ItineraryReview() {
           };
         });
 
-        const totalCost = dayItems.reduce((sum: number, item: any) => sum + (item?.price || 0), 0);
+        const totalCost = uniqueItems.reduce((sum: number, item: any) => sum + (item?.price || 0), 0);
         
         return {
           date: dayDate,
@@ -297,7 +322,8 @@ export default function ItineraryReview() {
       status: 'reviewing' as const,
       totalCost,
       destination: state.travelDetails?.destination || '',
-      days: convertedDays
+      days: convertedDays,
+      removedDuplicates
          };
    }, [state.days, state.travelDetails]);
 
@@ -440,6 +466,16 @@ export default function ItineraryReview() {
           <RefreshCw className="h-4 w-4 animate-spin" />
           <AlertDescription>
             Processing your modification request...
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Duplicate Removal Alert */}
+      {(itinerary.removedDuplicates || 0) > 0 && (
+        <Alert className="border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {itinerary.removedDuplicates || 0} duplicate {(itinerary.removedDuplicates || 0) === 1 ? 'activity was' : 'activities were'} automatically removed from your itinerary to avoid repetition.
           </AlertDescription>
         </Alert>
       )}
