@@ -739,7 +739,7 @@ LIMITATIONS:
       </div>
 
       {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
-      <div className="hidden lg:block fixed right-6 top-6 bottom-6 w-96 z-50">
+      <div className="hidden lg:block fixed right-6 top-36 bottom-6 w-96 z-50">
         <ChatInterface
           customSystemPrompt={aiSystemPrompt}
           customPlaceholder="Ask me to modify your itinerary..."
