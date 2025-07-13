@@ -1,7 +1,7 @@
 /**
  * Activity Edit Dialog Component
- * Allows users to edit individual activities in their itinerary
- * Supports removing, moving to another day, or finding AI-generated replacements
+ * Allows users to edit individual items (activities, flights, hotels) in their itinerary
+ * Supports removing, moving to another day (activities only), or finding AI-generated replacements
  */
 
 'use client';
@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Trash2, MoveHorizontal, Sparkles, Calendar, Clock, MapPin, DollarSign, AlertCircle, CheckCircle } from 'lucide-react';
+import { Loader2, Trash2, MoveHorizontal, Sparkles, Calendar, Clock, MapPin, DollarSign, AlertCircle, CheckCircle, Plane, Hotel, Activity } from 'lucide-react';
 
 interface ActivityEditDialogProps {
   isOpen: boolean;
@@ -93,31 +93,59 @@ export function ActivityEditDialog({
     setError(null);
     
     try {
-      // Call the activities API to find a replacement
-      const response = await fetch('/api/activities/search', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      let apiEndpoint = '/api/activities/search';
+      let searchBody = {};
+      
+      if (activity.type === 'flight') {
+        apiEndpoint = '/api/flights/search';
+        searchBody = {
+          origin: activity.metadata?.origin || activity.origin,
+          destination: activity.metadata?.destination || activity.destination,
+          departureDate: activity.metadata?.departureDate || activity.date,
+          passengers: activity.metadata?.passengers || 1,
+          excludeIds: [activity.id],
+          maxResults: 3
+        };
+      } else if (activity.type === 'hotel') {
+        apiEndpoint = '/api/hotels/search';
+        searchBody = {
+          destination: activity.location || activity.metadata?.location,
+          checkIn: activity.metadata?.checkIn || activity.startDate,
+          checkOut: activity.metadata?.checkOut || activity.endDate,
+          guests: activity.metadata?.guests || 2,
+          excludeIds: [activity.id],
+          maxResults: 3
+        };
+      } else {
+        // Default to activities
+        searchBody = {
           destination: activity.location,
           preferences: activity.metadata?.categories || ['culture'],
           excludeIds: [activity.id],
           maxResults: 1
-        }),
+        };
+      }
+      
+      // Call the appropriate API to find a replacement
+      const response = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchBody),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to find replacement activity');
+        throw new Error(`Failed to find replacement ${activity.type || 'activity'}`);
       }
 
       const data = await response.json();
       
       if (data.success && data.data && data.data.length > 0) {
-        const newActivity = data.data[0];
-        setReplacementActivity(newActivity);
+        const newItem = data.data[0];
+        setReplacementActivity(newItem);
       } else {
-        setError('No alternative activities found. Please try again later.');
+        setError(`No alternative ${activity.type === 'flight' ? 'flights' : activity.type === 'hotel' ? 'hotels' : 'activities'} found. Please try again later.`);
       }
     } catch (err) {
       setError('Failed to find replacement activity. Please try again.');
@@ -160,9 +188,9 @@ export function ActivityEditDialog({
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Edit Activity</DialogTitle>
+          <DialogTitle>Edit {activity.type === 'flight' ? 'Flight' : activity.type === 'hotel' ? 'Hotel' : 'Activity'}</DialogTitle>
           <DialogDescription>
-            Choose what you'd like to do with this activity
+            Choose what you'd like to do with this {activity.type || 'activity'}
           </DialogDescription>
         </DialogHeader>
 
@@ -171,7 +199,9 @@ export function ActivityEditDialog({
           <CardContent className="p-4">
             <div className="flex items-start gap-3">
               <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
-                <Calendar className="h-5 w-5" />
+                {activity.type === 'flight' ? <Plane className="h-5 w-5" /> : 
+                 activity.type === 'hotel' ? <Hotel className="h-5 w-5" /> : 
+                 <Activity className="h-5 w-5" />}
               </div>
               <div className="flex-1">
                 <h3 className="font-semibold text-gray-900 mb-1">
@@ -233,15 +263,17 @@ export function ActivityEditDialog({
               Remove from itinerary
             </Button>
             
-            <Button
-              onClick={() => setSelectedAction('move')}
-              variant="outline"
-              className="w-full justify-start"
-              disabled={isLoading}
-            >
-              <MoveHorizontal className="h-4 w-4 mr-2" />
-              Move to another day
-            </Button>
+            {activity.type === 'activity' && (
+              <Button
+                onClick={() => setSelectedAction('move')}
+                variant="outline"
+                className="w-full justify-start"
+                disabled={isLoading}
+              >
+                <MoveHorizontal className="h-4 w-4 mr-2" />
+                Move to another day
+              </Button>
+            )}
             
             <Button
               onClick={() => setSelectedAction('replace')}
@@ -250,7 +282,7 @@ export function ActivityEditDialog({
               disabled={isLoading}
             >
               <Sparkles className="h-4 w-4 mr-2" />
-              Find a new activity
+              Find alternative {activity.type === 'flight' ? 'flights' : activity.type === 'hotel' ? 'hotels' : 'activities'}
             </Button>
           </div>
         )}
@@ -261,7 +293,7 @@ export function ActivityEditDialog({
             <Alert className="border-red-200 bg-red-50">
               <AlertCircle className="h-4 w-4 text-red-600" />
               <AlertDescription className="text-red-800">
-                Are you sure you want to remove this activity from your itinerary? This action cannot be undone.
+                Are you sure you want to remove this {activity.type || 'activity'} from your itinerary? This action cannot be undone.
               </AlertDescription>
             </Alert>
             
@@ -343,7 +375,7 @@ export function ActivityEditDialog({
             <Alert className="border-purple-200 bg-purple-50">
               <Sparkles className="h-4 w-4 text-purple-600" />
               <AlertDescription className="text-purple-800">
-                Our AI will find a new activity that matches your preferences and fits your itinerary.
+                Our AI will find {activity.type === 'flight' ? 'alternative flights' : activity.type === 'hotel' ? 'alternative hotels' : 'a new activity'} that matches your preferences and fits your itinerary.
               </AlertDescription>
             </Alert>
             
@@ -359,7 +391,7 @@ export function ActivityEditDialog({
                     Finding...
                   </>
                 ) : (
-                  'Find New Activity'
+                  `Find New ${activity.type === 'flight' ? 'Flight' : activity.type === 'hotel' ? 'Hotel' : 'Activity'}`
                 )}
               </Button>
               <Button
