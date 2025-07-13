@@ -146,20 +146,53 @@ export default function ItineraryReview() {
       // Find the activity in the current day
       const currentDay = state.days[fromDayIndex];
       const activityToMove = currentDay?.items.find(item => item.id === activityId);
-      
+
       if (!activityToMove) {
         throw new Error('Activity not found');
       }
 
+      // Calculate a non-conflicting time slot on the target day ----------------------------------
+      const targetDay = state.days[toDayIndex];
+      const existingTimes = (targetDay?.items || [])
+        .filter(item => item.startTime)
+        .map(item => new Date(item.startTime as string | number | Date));
+
+      let proposedStart = activityToMove.startTime ? new Date(activityToMove.startTime) : new Date();
+      let originalDuration = 2 * 60 * 60 * 1000; // default 2h
+      if (activityToMove.startTime && activityToMove.endTime) {
+        originalDuration = new Date(activityToMove.endTime as string | number | Date).getTime() - new Date(activityToMove.startTime as string | number | Date).getTime();
+      }
+
+      // Helper to check if a time conflict exists (same hour & minute)
+      const hasConflict = (date: Date) => {
+        return existingTimes.some(t => t.getHours() === date.getHours() && t.getMinutes() === date.getMinutes());
+      };
+
+      // Iterate in 30-minute increments until we find a free slot (max 24h iterations to prevent
+      // endless loops)
+      let iterations = 0;
+      while (hasConflict(proposedStart) && iterations < 48) {
+        proposedStart = new Date(proposedStart.getTime() + 30 * 60 * 1000);
+        iterations += 1;
+      }
+
+      // Set the new times on a clone of the activity
+      const updatedActivity = {
+        ...activityToMove,
+        startTime: proposedStart,
+        endTime: new Date(proposedStart.getTime() + originalDuration),
+        lastModified: new Date().toISOString(),
+      };
+
       // Remove from current day
       removeItineraryItem(fromDayIndex, activityId);
-      
-      // Add to new day
-      addItineraryItem(toDayIndex, activityToMove);
-      
+
+      // Add to new day with updated time
+      addItineraryItem(toDayIndex, updatedActivity);
+
       handleModification({
         type: 'move',
-        description: `Moved activity from Day ${fromDayIndex + 1} to Day ${toDayIndex + 1}`,
+        description: `Moved activity from Day ${fromDayIndex + 1} to Day ${toDayIndex + 1}` + (iterations ? ` (new time ${proposedStart.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})` : ''),
         itemId: activityId
       });
     } catch (error) {
