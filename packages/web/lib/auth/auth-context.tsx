@@ -40,6 +40,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  // Track whether we already processed an initial sign-in to prevent unwanted redirects on token refresh.
+  const initialSignInHandled = React.useRef(false);
 
   useEffect(() => {
     setMounted(true);
@@ -69,9 +71,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           async (event: AuthChangeEvent, newSession: Session | null) => {
             setUser(newSession?.user ?? null);
 
-            // Redirect after sign-in
-            if (event === 'SIGNED_IN' && newSession?.user) {
-              if (window.location.pathname !== '/welcome') {
+            // Redirect after explicit sign-in (not token refresh)
+            if (event === 'SIGNED_IN' && newSession?.user && !initialSignInHandled.current) {
+              initialSignInHandled.current = true; // Mark handled so future refresh events won't redirect
+
+              // Redirect only if user is on an auth-related or public page
+              const currentPath = window.location.pathname;
+              const shouldRedirect = [
+                '/',
+                '/new-landing-page',
+                '/login',
+                '/signup',
+              ].includes(currentPath);
+
+              if (shouldRedirect) {
                 window.location.href = '/welcome';
               }
             }

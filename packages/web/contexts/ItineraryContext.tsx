@@ -103,6 +103,9 @@ type ItineraryAction =
   | { type: 'RESET_ITINERARY' }
   | { type: 'UNDO_LAST_CHANGE' };
 
+// Storage key for persisting itinerary state in the current browser session
+const ITINERARY_STORAGE_KEY = 'travelagentic_itinerary_state_v1';
+
 // Initial state
 const initialState: ItineraryState = {
   days: [],
@@ -418,7 +421,44 @@ const ItineraryContext = createContext<ItineraryContextType | undefined>(undefin
  * Wraps the app to provide itinerary state management
  */
 export function ItineraryProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(itineraryReducer, initialState);
+  // Lazy initializer to restore state from sessionStorage when available
+  const loadPersistedState = (): ItineraryState => {
+    if (typeof window === 'undefined') return initialState;
+
+    try {
+      const stored = sessionStorage.getItem(ITINERARY_STORAGE_KEY);
+      if (!stored) return initialState;
+
+      const parsed = JSON.parse(stored);
+
+      // Revive Date objects that were stringified during storage
+      if (parsed.travelDetails) {
+        if (parsed.travelDetails.startDate) parsed.travelDetails.startDate = new Date(parsed.travelDetails.startDate);
+        if (parsed.travelDetails.endDate) parsed.travelDetails.endDate = new Date(parsed.travelDetails.endDate);
+      }
+
+      if (Array.isArray(parsed.days)) {
+        parsed.days = parsed.days.map((day: any) => ({
+          ...day,
+          date: day.date ? new Date(day.date) : new Date(),
+          items: Array.isArray(day.items)
+            ? day.items.map((item: any) => ({
+                ...item,
+                startTime: item.startTime ? new Date(item.startTime) : undefined,
+                endTime: item.endTime ? new Date(item.endTime) : undefined,
+              }))
+            : [],
+        }));
+      }
+
+      return { ...initialState, ...parsed } as ItineraryState;
+    } catch (error) {
+      console.warn('Failed to load persisted itinerary state:', error);
+      return initialState;
+    }
+  };
+
+  const [state, dispatch] = useReducer(itineraryReducer, undefined as any, loadPersistedState);
 
   // Convenience methods
   const setTravelDetails = (details: BasicTravelDetails) => {
@@ -497,6 +537,17 @@ export function ItineraryProvider({ children }: { children: ReactNode }) {
     isBuilding,
     canUndo,
   };
+
+  // Persist state to sessionStorage whenever it changes
+  React.useEffect(() => {
+    try {
+      // Persist a subset of the state to keep payload small and avoid deep nesting
+      const { modificationHistory, ...stateToPersist } = state;
+      sessionStorage.setItem(ITINERARY_STORAGE_KEY, JSON.stringify(stateToPersist));
+    } catch (error) {
+      console.warn('Failed to persist itinerary state:', error);
+    }
+  }, [state]);
 
   return (
     <ItineraryContext.Provider value={value}>

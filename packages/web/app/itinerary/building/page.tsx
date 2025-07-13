@@ -37,6 +37,34 @@ interface BuildingStep {
   details?: string[];
 }
 
+// Key for persisting building progress across soft reloads (tab discard/restore)
+const BUILD_STORAGE_KEY = 'travelagentic_itinerary_build_state_v1';
+
+// Utility hook: disable Next.js route refresh on window focus/visibility to keep long operations alive
+function useDisableRouteRefresh() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // 1. Monkey-patch router.refresh to a no-op for this page lifespan
+    //    (Next.js triggers this on visibilitychange internally).
+    const originalRefresh = (router as any).refresh?.bind(router);
+    (router as any).refresh = () => {};
+
+    // 2. Stop visibilitychange event propagation in capture phase so Next.js’s
+    //    internal handler never sees it.
+    const stopper = (e: Event) => {
+      e.stopImmediatePropagation();
+    };
+    document.addEventListener('visibilitychange', stopper, true);
+
+    return () => {
+      // Restore original behaviour when navigating away from this page.
+      if (originalRefresh) (router as any).refresh = originalRefresh;
+      document.removeEventListener('visibilitychange', stopper, true);
+    };
+  }, [router]);
+}
+
 export default function ItineraryBuildingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -104,12 +132,33 @@ export default function ItineraryBuildingPage() {
     },
   ]);
 
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
-  const [totalElapsedTime, setTotalElapsedTime] = useState(0);
+  // Initialize state from sessionStorage only if this isn't a fresh start
+  const getInitialState = () => {
+    if (typeof window === 'undefined') return null;
+    
+    // Check if we have URL parameters indicating fresh navigation from preferences
+    const urlParams = Object.fromEntries(searchParams.entries());
+    const hasTravelParams = urlParams.destination || urlParams.startDate || urlParams.endDate;
+    
+    if (hasTravelParams) {
+      // Fresh navigation with new travel details - clear existing state
+      sessionStorage.removeItem(BUILD_STORAGE_KEY);
+      return null;
+    }
+    
+    // No URL params - likely a tab restore, use persisted state
+    const persisted = sessionStorage.getItem(BUILD_STORAGE_KEY);
+    return persisted ? JSON.parse(persisted) : null;
+  };
+  
+  const initialPersisted = getInitialState();
+
+  const [currentStepIndex, setCurrentStepIndex] = useState(initialPersisted?.currentStepIndex ?? 0);
+  const [totalElapsedTime, setTotalElapsedTime] = useState(initialPersisted?.totalElapsedTime ?? 0);
   const [isSimulationRunning, setIsSimulationRunning] = useState(false);
-  const [hasGeneratedItinerary, setHasGeneratedItinerary] = useState(false);
+  const [hasGeneratedItinerary, setHasGeneratedItinerary] = useState(initialPersisted?.hasGeneratedItinerary ?? false);
   const [isGenerating, setIsGenerating] = useState(false); // New lock state
-  const buildingInitialized = useRef(false); // Prevent React Strict Mode double execution
+  const buildingInitialized = useRef(initialPersisted?.hasGeneratedItinerary ?? false); // Only if building was completed
 
   // Generate dynamic itinerary data when building completes
   const addMockItineraryData = async () => {
@@ -228,30 +277,61 @@ export default function ItineraryBuildingPage() {
     }
   };
 
-  // Start building process on page load
+  // Start or resume building process on page load
   useEffect(() => {
-    if (buildingStatus === 'idle' && !isSimulationRunning && !hasGeneratedItinerary && !buildingInitialized.current) {
-      console.log('🎬 Starting building process (first time)...');
+    if (hasGeneratedItinerary && buildingStatus === 'completed') {
+      // Already done, jump to view
+      router.push('/itinerary/view');
+      return;
+    }
+
+    if (!isSimulationRunning && !hasGeneratedItinerary && !buildingInitialized.current) {
+      console.log('🎬 Starting/resuming building process...');
       buildingInitialized.current = true;
       setIsSimulationRunning(true);
-      startBuilding();
+      
+      // Reset state for fresh start
+      if (!initialPersisted) {
+        dispatch({ type: 'RESET_ITINERARY' });
+        // Reset local building state
+        setCurrentStepIndex(0);
+        setTotalElapsedTime(0);
+        setHasGeneratedItinerary(false);
+        setIsGenerating(false);
+      }
+      
+      if (buildingStatus === 'idle') {
+        startBuilding();
+      }
       simulateBuildingProcess();
     }
 
-    // Cleanup function to reset states on unmount
-    return () => {
-      console.log('🧹 Cleaning up building process...');
-      // Note: Don't reset buildingInitialized.current here to prevent re-execution
-      setIsSimulationRunning(false);
-      setHasGeneratedItinerary(false);
-    };
-  }, [buildingStatus, hasGeneratedItinerary]); // Removed isSimulationRunning from deps to prevent loops
+    // No cleanup that resets progress; keep data persisted
+  }, [buildingStatus, hasGeneratedItinerary, initialPersisted, dispatch]);
+
+  // Persist critical build state whenever it changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      sessionStorage.setItem(
+        BUILD_STORAGE_KEY,
+        JSON.stringify({
+          currentStepIndex,
+          totalElapsedTime,
+          hasGeneratedItinerary,
+          buildingStatus,
+        })
+      );
+    } catch (err) {
+      console.warn('Failed to persist build state:', err);
+    }
+  }, [currentStepIndex, totalElapsedTime, hasGeneratedItinerary, buildingStatus]);
 
   // Track elapsed time
   useEffect(() => {
     if (isBuilding) {
       const interval = setInterval(() => {
-        setTotalElapsedTime(prev => prev + 1);
+        setTotalElapsedTime((prev: number) => prev + 1);
       }, 1000);
       return () => clearInterval(interval);
     }
@@ -332,6 +412,11 @@ export default function ItineraryBuildingPage() {
 
     // Building complete
     completeBuilding();
+
+    // Clean persisted interim state
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem(BUILD_STORAGE_KEY);
+    }
     
     // Generate dynamic itinerary based on user's travel details
     await addMockItineraryData();
