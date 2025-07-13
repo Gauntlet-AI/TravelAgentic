@@ -69,8 +69,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           // Handle redirect after sign out – only redirect if we're not on the landing page already
           if (event === 'SIGNED_OUT') {
-            if (window.location.pathname !== '/') {
-              window.location.href = '/';
+            if (window.location.pathname !== '/new-landing-page') {
+              window.location.href = '/new-landing-page';
             }
           }
         });
