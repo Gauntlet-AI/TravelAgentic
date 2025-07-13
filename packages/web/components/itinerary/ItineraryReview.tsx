@@ -514,217 +514,224 @@ LIMITATIONS:
   }
 
   return (
-    <div className="relative min-h-screen">
-      {/* Main Content Area with margin for chat panel */}
-      <div className="lg:mr-[384px] space-y-6 p-6">
-        {/* Header */}
-        <div className="flex items-center justify-between sticky top-0 z-10 bg-white border p-6">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Review Your Itinerary
-            </h1>
-            <p className="text-lg text-gray-600">
-              Customize your {state.travelDetails.destination} trip
-            </p>
+    <>
+      <div className="relative">
+        {/* Container for proper layout alignment */}
+        <div className="lg:mr-[384px]">
+          {/* Floating Header */}
+          <div className="sticky top-0 z-20 pb-6">
+            <div className="p-6 bg-white border rounded-lg shadow-sm">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                    Review Your Itinerary
+                  </h1>
+                  <p className="text-lg text-gray-600">
+                    Customize your {state.travelDetails.destination} trip
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Dialog open={showHistory} onOpenChange={setShowHistory}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <History className="h-4 w-4 mr-2" />
+                        History
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-4xl max-h-[80vh]">
+                      <DialogHeader>
+                        <DialogTitle>Modification History</DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="h-[60vh]">
+                        <div className="p-4 text-center text-gray-500">
+                          Modification History - Coming in Phase 4
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                  
+                  <Button variant="outline" size="sm">
+                    <Share className="h-4 w-4 mr-2" />
+                    Share
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export PDF
+                  </Button>
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700"
+                    onClick={() => {
+                      // Navigate to finalization page with itinerary data
+                      const itineraryId = itinerary.id;
+                      router.push(`/itinerary/finalize?itineraryId=${itineraryId}&mode=finalize`);
+                    }}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Confirm & Book
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-          
-          <div className="flex items-center gap-3">
-            <Dialog open={showHistory} onOpenChange={setShowHistory}>
-              <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <History className="h-4 w-4 mr-2" />
-                  History
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-4xl max-h-[80vh]">
-                <DialogHeader>
-                  <DialogTitle>Modification History</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="h-[60vh]">
-                  <div className="p-4 text-center text-gray-500">
-                    Modification History - Coming in Phase 4
+
+          {/* Main Content Area */}
+          <div className="space-y-6">
+            {/* Status Alert */}
+            {isModifying && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <RefreshCw className="h-4 w-4 animate-spin" />
+                <AlertDescription>
+                  Processing your modification request...
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Duplicate Removal Alert */}
+            {(itinerary.removedDuplicates || 0) > 0 && (
+              <Alert className="border-orange-200 bg-orange-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>
+                  {itinerary.removedDuplicates || 0} duplicate {(itinerary.removedDuplicates || 0) === 1 ? 'activity was' : 'activities were'} automatically removed from your itinerary to avoid repetition.
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Trip Summary */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <MapPin className="h-8 w-8 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Destination</p>
+                      <p className="font-semibold">{state.travelDetails.destination}</p>
+                    </div>
                   </div>
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
-            
-            <Button variant="outline" size="sm">
-              <Share className="h-4 w-4 mr-2" />
-              Share
-            </Button>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 mr-2" />
-              Export PDF
-            </Button>
-            <Button 
-              size="sm" 
-              className="bg-green-600 hover:bg-green-700"
-              onClick={() => {
-                // Navigate to finalization page with itinerary data
-                const itineraryId = itinerary.id;
-                router.push(`/itinerary/finalize?itineraryId=${itineraryId}&mode=finalize`);
-              }}
-            >
-              <CheckCircle className="h-4 w-4 mr-2" />
-              Confirm & Book
-            </Button>
-          </div>
-        </div>
+                </CardContent>
+              </Card>
 
-        {/* Status Alert */}
-        {isModifying && (
-          <Alert className="border-blue-200 bg-blue-50">
-            <RefreshCw className="h-4 w-4 animate-spin" />
-            <AlertDescription>
-              Processing your modification request...
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Duplicate Removal Alert */}
-        {(itinerary.removedDuplicates || 0) > 0 && (
-          <Alert className="border-orange-200 bg-orange-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>
-              {itinerary.removedDuplicates || 0} duplicate {(itinerary.removedDuplicates || 0) === 1 ? 'activity was' : 'activities were'} automatically removed from your itinerary to avoid repetition.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {/* Trip Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <MapPin className="h-8 w-8 text-blue-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Destination</p>
-                  <p className="font-semibold">{state.travelDetails.destination}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Calendar className="h-8 w-8 text-green-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Duration</p>
-                  <p className="font-semibold">{itinerary.days.length} days</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Users className="h-8 w-8 text-purple-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Travelers</p>
-                  <p className="font-semibold">{state.travelDetails.travelers} people</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3">
-                <Activity className="h-8 w-8 text-orange-600" />
-                <div>
-                  <p className="text-sm text-gray-600">Total Cost</p>
-                  <p className="font-semibold">${itinerary.totalCost}</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Itinerary Days */}
-        <div className="space-y-6">
-          {itinerary.days.map((day, dayIndex) => (
-            <Card key={dayIndex} className="overflow-hidden">
-              <CardHeader className="bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg">
-                      Day {day.dayNumber}{day.title ? ` - ${day.title}` : ''}
-                    </CardTitle>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {formatDate(day.date)}
-                    </p>
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Calendar className="h-8 w-8 text-green-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Duration</p>
+                      <p className="font-semibold">{itinerary.days.length} days</p>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <Badge variant="outline">
-                      {day.items.length} activities
-                    </Badge>
-                    <Badge variant="outline">
-                      ${day.totalCost}
-                    </Badge>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Users className="h-8 w-8 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Travelers</p>
+                      <p className="font-semibold">{state.travelDetails.travelers} people</p>
+                    </div>
                   </div>
-                </div>
-              </CardHeader>
-              
-              <CardContent className="p-0">
-                <div className="divide-y">
-                  {day.items.map((item, itemIndex) => (
-                    <div 
-                      key={item.id} 
-                      className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => item.type === 'activity' ? handleActivityEdit(item, dayIndex) : setSelectedItem(item)}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
-                          {getTypeIcon(item.type)}
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-center gap-3 mb-1">
-                            <h3 className="font-semibold text-gray-900">
-                              {item.title}
-                            </h3>
-                            <div className="flex items-center gap-1 text-sm text-gray-500">
-                              <Clock className="h-3 w-3" />
-                              {item.time}
-                            </div>
-                            <Badge 
-                              className={`text-xs ${getStatusColor(item.status)}`}
-                            >
-                              {item.status.replace('_', ' ')}
-                            </Badge>
-                            {item.price && (
-                              <Badge variant="outline" className="text-xs">
-                                {item.price}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {item.description}
-                          </p>
-                          {item.lastModified && (
-                            <p className="text-xs text-gray-400 mt-1">
-                              Last modified: {new Date(item.lastModified).toLocaleString()}
-                            </p>
-                          )}
-                        </div>
-                        
-                        <div className="flex-shrink-0">
-                          <Button variant="ghost" size="sm">
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                        </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <Activity className="h-8 w-8 text-orange-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Total Cost</p>
+                      <p className="font-semibold">${itinerary.totalCost}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Itinerary Days */}
+            <div className="space-y-6">
+              {itinerary.days.map((day, dayIndex) => (
+                <Card key={dayIndex} className="overflow-hidden">
+                  <CardHeader className="bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">
+                          Day {day.dayNumber}{day.title ? ` - ${day.title}` : ''}
+                        </CardTitle>
+                        <p className="text-sm text-gray-600 mt-1">
+                          {formatDate(day.date)}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4">
+                        <Badge variant="outline">
+                          {day.items.length} activities
+                        </Badge>
+                        <Badge variant="outline">
+                          ${day.totalCost}
+                        </Badge>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                  </CardHeader>
+                  
+                  <CardContent className="p-0">
+                    <div className="divide-y">
+                      {day.items.map((item, itemIndex) => (
+                        <div 
+                          key={item.id} 
+                          className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => item.type === 'activity' ? handleActivityEdit(item, dayIndex) : setSelectedItem(item)}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-blue-100 text-blue-600">
+                              {getTypeIcon(item.type)}
+                            </div>
+                            
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-1">
+                                <h3 className="font-semibold text-gray-900">
+                                  {item.title}
+                                </h3>
+                                <div className="flex items-center gap-1 text-sm text-gray-500">
+                                  <Clock className="h-3 w-3" />
+                                  {item.time}
+                                </div>
+                                <Badge 
+                                  className={`text-xs ${getStatusColor(item.status)}`}
+                                >
+                                  {item.status.replace('_', ' ')}
+                                </Badge>
+                                {item.price && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {item.price}
+                                  </Badge>
+                                )}
+                              </div>
+                              <p className="text-sm text-gray-600">
+                                {item.description}
+                              </p>
+                              {item.lastModified && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                  Last modified: {new Date(item.lastModified).toLocaleString()}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <div className="flex-shrink-0">
+                              <Button variant="ghost" size="sm">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
 
-        {/* Last Modified Info */}
+                    {/* Last Modified Info */}
         <div className="flex items-center justify-between text-sm text-gray-500 pt-4 border-t">
           <div className="flex items-center gap-2">
             <Info className="h-4 w-4" />
@@ -737,44 +744,46 @@ LIMITATIONS:
           </div>
         </div>
       </div>
-
-      {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
-      <div className="hidden lg:block fixed right-0 top-0 bottom-0 w-96 z-50 border-l bg-white">
-        <ChatInterface
-          customSystemPrompt={aiSystemPrompt}
-          customPlaceholder="Ask me to modify your itinerary..."
-          customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
-          onTripInfoUpdate={() => {}} // Not needed for review mode
-          tripInfoComplete={false} // Don't show completion message in review mode
-          className="h-full"
-        />
-      </div>
-
-      {/* Mobile AI Chat Bubble (visible on mobile only) */}
-      <div className="lg:hidden">
-        <MobileChatBubble
-          customSystemPrompt={aiSystemPrompt}
-          customPlaceholder="Ask me to modify your itinerary..."
-          customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
-          onTripInfoUpdate={() => {}} // Not needed for review mode
-          tripInfoComplete={false} // Don't show completion message in review mode
-          defaultOpen={false}
-        />
-      </div>
-
-      {/* Activity Edit Dialog */}
-      {editingActivity && (
-        <ActivityEditDialog
-          isOpen={editDialogOpen}
-          onClose={() => setEditDialogOpen(false)}
-          activity={editingActivity.item}
-          currentDayIndex={editingActivity.dayIndex}
-          totalDays={itinerary.days.length}
-          onRemove={handleRemoveActivity}
-          onMove={handleMoveActivity}
-          onReplace={handleReplaceActivity}
-        />
-      )}
     </div>
+  </div>
+
+  {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
+  <div className="hidden lg:block fixed right-0 top-0 bottom-0 w-96 z-50 border-l bg-white">
+    <ChatInterface
+      customSystemPrompt={aiSystemPrompt}
+      customPlaceholder="Ask me to modify your itinerary..."
+      customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
+      onTripInfoUpdate={() => {}} // Not needed for review mode
+      tripInfoComplete={false} // Don't show completion message in review mode
+      className="h-full"
+    />
+  </div>
+
+  {/* Mobile AI Chat Bubble (visible on mobile only) */}
+  <div className="lg:hidden">
+    <MobileChatBubble
+      customSystemPrompt={aiSystemPrompt}
+      customPlaceholder="Ask me to modify your itinerary..."
+      customEmptyStateMessage="I can help you modify your itinerary! Try saying 'remove the museum visit' or 'add more outdoor activities'."
+      onTripInfoUpdate={() => {}} // Not needed for review mode
+      tripInfoComplete={false} // Don't show completion message in review mode
+      defaultOpen={false}
+    />
+  </div>
+
+  {/* Activity Edit Dialog */}
+  {editingActivity && (
+    <ActivityEditDialog
+      isOpen={editDialogOpen}
+      onClose={() => setEditDialogOpen(false)}
+      activity={editingActivity.item}
+      currentDayIndex={editingActivity.dayIndex}
+      totalDays={itinerary.days.length}
+      onRemove={handleRemoveActivity}
+      onMove={handleMoveActivity}
+      onReplace={handleReplaceActivity}
+    />
+  )}
+    </>
   );
 } 
