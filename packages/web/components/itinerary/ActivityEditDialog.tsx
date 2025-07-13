@@ -279,15 +279,17 @@ export function ActivityEditDialog({
         {/* Action Selection */}
         {!selectedAction && !replacementActivity && (
           <div className="space-y-3">
-            <Button
-              onClick={() => setSelectedAction('remove')}
-              variant="outline"
-              className="w-full justify-start text-red-600 hover:bg-red-50 border-red-200"
-              disabled={isLoading}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Remove from itinerary
-            </Button>
+            {activity.type === 'activity' && (
+              <Button
+                onClick={() => setSelectedAction('remove')}
+                variant="outline"
+                className="w-full justify-start text-red-600 hover:bg-red-50 border-red-200"
+                disabled={isLoading}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Remove from itinerary
+              </Button>
+            )}
             
             {activity.type === 'activity' && (
               <Button
