@@ -1,7 +1,7 @@
 /**
  * Feature Flag Wrapper Component
  * Conditionally renders content based on feature flags
- * Foundation for A/B testing and gradual rollouts
+ * Foundation for gradual rollouts
  */
 
 'use client';
