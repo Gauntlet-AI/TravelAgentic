@@ -1,12 +1,4 @@
-import { redirect } from 'next/navigation';
+// Re-export the EnhancedHomePage so that it is now served at the root URL ("/")
+// This gives users immediate access to the enhanced-travel-input-form when they visit http://localhost:3000/
 
-/**
- * Root route redirect
- * The original VacationPlanner UI has been removed from the core workflow.
- * We keep the "/" route functional by forwarding visitors to the new
- * enhanced landing page instead.
- */
-export default function Home() {
-  // Server-side redirect to the new landing page
-  redirect('/enhanced-home');
-}
+export { default } from './enhanced-home/page';
