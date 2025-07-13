@@ -357,11 +357,48 @@ export default function WelcomePage() {
 
   // Handle proceed to itinerary
   const handleProceedToItinerary = () => {
-    if (hasEnoughInformation()) {
-      // Navigate to itinerary page or trigger next step
-      console.log('Proceeding to itinerary with:', tripInformation);
-      // TODO: Navigate to itinerary page
+    if (!hasEnoughInformation()) return;
+
+    // Persist the latest trip information to localStorage for the itinerary builder page
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tripInformation));
+      } catch {
+        // ignore storage errors (quota, serialization)
+      }
     }
+
+    // Build query parameters for itinerary builder so it can preload details
+    const params = new URLSearchParams();
+    if (tripInformation.departureLocation) params.append('departureLocation', tripInformation.departureLocation);
+    if (tripInformation.destination) params.append('destination', tripInformation.destination);
+
+    // Convert departureDate to ISO startDate
+    if (tripInformation.departureDate) {
+      const startDateISO = new Date(tripInformation.departureDate).toISOString();
+      params.append('startDate', startDateISO);
+
+      // Approximate endDate using duration if available (assuming numeric days)
+      if (tripInformation.duration) {
+        const match = tripInformation.duration.match(/(\d+)/);
+        const days = match ? parseInt(match[1], 10) : 5;
+        const endDate = new Date(startDateISO);
+        endDate.setDate(endDate.getDate() + days);
+        params.append('endDate', endDate.toISOString());
+      }
+    }
+
+    if (tripInformation.travelers !== undefined) params.append('travelers', String(tripInformation.travelers));
+    if (tripInformation.children !== undefined) params.append('children', String(tripInformation.children));
+
+    // adults = travelers - children (fallback to travelers)
+    if (tripInformation.travelers !== undefined) {
+      const adults = (tripInformation.travelers || 0) - (tripInformation.children || 0);
+      params.append('adults', String(Math.max(adults, 0)));
+    }
+
+    const query = params.toString();
+    router.push(`/itinerary/building${query ? `?${query}` : ''}`);
   };
 
   // Update trip information based on chat messages

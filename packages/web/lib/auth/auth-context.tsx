@@ -6,7 +6,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { User, AuthChangeEvent, Session, Subscription } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase/client';
 
 interface AuthContextType {
@@ -48,43 +48,56 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!mounted) return;
 
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Reference to the auth subscription so we can clean it up on unmount
+    let authListener: Subscription | null = null;
 
-        // Listen for auth changes
+    /**
+     * Initialize auth state: get the current session and subscribe to future changes
+     */
+    const initAuth = async () => {
+      try {
+        // 1. Get the initial session
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+
+        // 2. Listen for auth state changes
         const {
           data: { subscription: authSubscription },
-        } = supabase.auth.onAuthStateChange(async (event: AuthChangeEvent, session: Session | null) => {
-          setUser(session?.user ?? null);
+        } = supabase.auth.onAuthStateChange(
+          async (event: AuthChangeEvent, newSession: Session | null) => {
+            setUser(newSession?.user ?? null);
 
-          // Handle redirect after sign in – only redirect if we're not already on the welcome page
-          if (event === 'SIGNED_IN' && session?.user) {
-            if (window.location.pathname !== '/welcome') {
-              window.location.href = '/welcome';
+            // Redirect after sign-in
+            if (event === 'SIGNED_IN' && newSession?.user) {
+              if (window.location.pathname !== '/welcome') {
+                window.location.href = '/welcome';
+              }
             }
-          }
 
-          // Handle redirect after sign out – only redirect if we're not on the landing page already
-          if (event === 'SIGNED_OUT') {
-            if (window.location.pathname !== '/new-landing-page') {
-              window.location.href = '/new-landing-page';
+            // Redirect after sign-out
+            if (event === 'SIGNED_OUT') {
+              if (window.location.pathname !== '/new-landing-page') {
+                window.location.href = '/new-landing-page';
+              }
             }
-          }
-        });
+          },
+        );
 
-        subscription = authSubscription;
+        authListener = authSubscription;
       } catch (error) {
-        console.error('Error getting session:', error);
+        console.error('Error initializing authentication:', error);
       } finally {
         setLoading(false);
       }
-    }, 100);
+    };
 
+    initAuth();
+
+    // Cleanup subscription on unmount
     return () => {
-      subscription.unsubscribe();
+      authListener?.unsubscribe();
     };
   }, [mounted]);
 
