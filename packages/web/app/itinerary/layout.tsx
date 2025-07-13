@@ -16,7 +16,7 @@ export default function ItineraryLayout({ children }: ItineraryLayoutProps) {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="border-b bg-white shadow-sm">
+      <header className="relative z-50 border-b bg-white shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-16 items-center justify-between">
             <div className="flex items-center gap-4">
@@ -47,7 +47,7 @@ export default function ItineraryLayout({ children }: ItineraryLayoutProps) {
       </header>
 
       {/* Progress Indicator */}
-      <div className="border-b bg-white">
+      <div className="relative z-40 border-b bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-center py-4">
             <div className="flex items-center space-x-8">

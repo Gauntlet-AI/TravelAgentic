@@ -90,7 +90,24 @@ export default function ItineraryReview() {
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<{ item: any; dayIndex: number } | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const isMobile = useIsMobile();
+
+  // Handle scroll to adjust chat panel position
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      // Adjust based on header height (140px = 64px header + 76px progress)
+      setIsScrolled(scrollPosition > 140);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll(); // Check initial scroll position
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   /**
    * Handle opening the edit dialog for an activity
@@ -748,7 +765,11 @@ LIMITATIONS:
   </div>
 
   {/* Desktop AI Chat Interface - Right Panel (hidden on mobile) */}
-  <div className="hidden lg:block fixed right-0 top-0 bottom-0 w-96 z-50 border-l bg-white">
+  <div 
+    className={`hidden lg:block fixed right-0 bottom-0 w-96 z-40 border-l bg-white transition-all duration-300 ${
+      isScrolled ? 'top-0' : 'top-[140px]'
+    }`}
+  >
     <ChatInterface
       customSystemPrompt={aiSystemPrompt}
       customPlaceholder="Ask me to modify your itinerary..."
