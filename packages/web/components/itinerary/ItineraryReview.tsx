@@ -215,7 +215,7 @@ export default function ItineraryReview() {
         
         const dayTitle = dayIndex === 0 ? "Arrival Day" : 
                          dayIndex === state.days.length - 1 ? "Departure Day" :
-                         `Day ${dayIndex + 1}`;
+                         "";
 
         // Ensure day.items exists and is an array
         const dayItems = Array.isArray(day.items) ? day.items : [];
@@ -521,7 +521,7 @@ export default function ItineraryReview() {
                   <div className="flex items-center justify-between">
                     <div>
                       <CardTitle className="text-lg">
-                        Day {day.dayNumber} - {day.title}
+                        Day {day.dayNumber}{day.title ? ` - ${day.title}` : ''}
                       </CardTitle>
                       <p className="text-sm text-gray-600 mt-1">
                         {formatDate(day.date)}
