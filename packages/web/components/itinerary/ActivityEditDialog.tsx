@@ -28,6 +28,13 @@ interface ActivityEditDialogProps {
   activity: any;
   currentDayIndex: number;
   totalDays: number;
+  tripDetails?: {
+    origin: string;
+    destination: string;
+    startDate: Date;
+    endDate: Date;
+    travelers: number;
+  };
   onRemove: (activityId: string, dayIndex: number) => void;
   onMove: (activityId: string, fromDayIndex: number, toDayIndex: number) => void;
   onReplace: (activityId: string, dayIndex: number, newActivity: any) => void;
@@ -39,6 +46,7 @@ export function ActivityEditDialog({
   activity,
   currentDayIndex,
   totalDays,
+  tripDetails,
   onRemove,
   onMove,
   onReplace
@@ -97,30 +105,48 @@ export function ActivityEditDialog({
       let searchBody = {};
       
       if (activity.type === 'flight') {
+        // Parse flight information from title and description
+        // Title format: "Flight to Barcelona" or similar
+        const destinationMatch = activity.title?.match(/Flight to (.+)/i);
+        const destination = destinationMatch ? destinationMatch[1] : activity.location || 'Unknown';
+        
+        // Use trip details if available, otherwise use defaults
+        const currentDay = new Date(tripDetails?.startDate || new Date());
+        currentDay.setDate(currentDay.getDate() + currentDayIndex);
+        
         apiEndpoint = '/api/flights/search';
         searchBody = {
-          origin: activity.metadata?.origin || activity.origin,
-          destination: activity.metadata?.destination || activity.destination,
-          departureDate: activity.metadata?.departureDate || activity.date,
-          passengers: activity.metadata?.passengers || 1,
+          origin: tripDetails?.origin || 'AUS',
+          destination: destination,
+          departureDate: currentDay.toISOString().split('T')[0],
+          passengers: { adults: tripDetails?.travelers || 1, children: 0, infants: 0 },
           excludeIds: [activity.id],
           maxResults: 3
         };
       } else if (activity.type === 'hotel') {
+        // Parse hotel information from title and location
+        // Title format: "Check-in at Business Center Barcelona"
+        const hotelLocation = activity.location || tripDetails?.destination || 'Unknown';
+        
+        // Calculate check-in and check-out dates based on trip dates
+        const checkInDate = new Date(tripDetails?.startDate || new Date());
+        checkInDate.setDate(checkInDate.getDate() + currentDayIndex);
+        const checkOutDate = new Date(tripDetails?.endDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000));
+        
         apiEndpoint = '/api/hotels/search';
         searchBody = {
-          destination: activity.location || activity.metadata?.location,
-          checkIn: activity.metadata?.checkIn || activity.startDate,
-          checkOut: activity.metadata?.checkOut || activity.endDate,
-          guests: activity.metadata?.guests || 2,
+          destination: hotelLocation,
+          checkIn: checkInDate.toISOString().split('T')[0],
+          checkOut: checkOutDate.toISOString().split('T')[0],
+          guests: tripDetails?.travelers || 2,
           excludeIds: [activity.id],
           maxResults: 3
         };
       } else {
         // Default to activities
         searchBody = {
-          destination: activity.location,
-          preferences: activity.metadata?.categories || ['culture'],
+          destination: activity.location || tripDetails?.destination || 'Unknown',
+          preferences: ['culture', 'adventure', 'food'],
           excludeIds: [activity.id],
           maxResults: 1
         };
@@ -223,7 +249,7 @@ export function ActivityEditDialog({
                   {activity.price && (
                     <div className="flex items-center gap-1">
                       <DollarSign className="h-3 w-3" />
-                      <span>{activity.price}</span>
+                      <span>{activity.price.replace('$', '')}</span>
                     </div>
                   )}
                 </div>
@@ -310,7 +336,7 @@ export function ActivityEditDialog({
                     Removing...
                   </>
                 ) : (
-                  'Remove Activity'
+                  `Remove ${activity.type === 'flight' ? 'Flight' : activity.type === 'hotel' ? 'Hotel' : 'Activity'}`
                 )}
               </Button>
               <Button
@@ -434,7 +460,7 @@ export function ActivityEditDialog({
                         {replacementActivity.price && (
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-3 w-3" />
-                            <span>${replacementActivity.price.amount}</span>
+                            <span>{replacementActivity.price.amount}</span>
                           </div>
                         )}
                       </div>
@@ -456,7 +482,7 @@ export function ActivityEditDialog({
                     Replacing...
                   </>
                 ) : (
-                  'Replace Activity'
+                  `Replace ${activity.type === 'flight' ? 'Flight' : activity.type === 'hotel' ? 'Hotel' : 'Activity'}`
                 )}
               </Button>
               <Button

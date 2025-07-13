@@ -25,7 +25,8 @@ import {
   CheckCircle,
   AlertCircle,
   Info,
-  Bot
+  Bot,
+  Plus
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,7 @@ import { useItinerary } from '@/contexts/ItineraryContext';
 import { useRouter } from 'next/navigation';
 import { sortItineraryItemsJSON } from '@/lib/utils';
 import { ActivityEditDialog } from './ActivityEditDialog';
+import { AddActivityDialog } from './AddActivityDialog';
 import { ChatInterface } from '@/components/chat-interface';
 import { MobileChatBubble } from '@/components/mobile-chat-bubble';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -90,6 +92,8 @@ export default function ItineraryReview() {
   const [selectedItem, setSelectedItem] = useState<ItineraryItem | null>(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editingActivity, setEditingActivity] = useState<{ item: any; dayIndex: number } | null>(null);
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [addingToDayIndex, setAddingToDayIndex] = useState<number | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const isMobile = useIsMobile();
 
@@ -162,6 +166,29 @@ export default function ItineraryReview() {
       console.error('Failed to move activity:', error);
       throw error;
     }
+  }
+
+  /**
+   * Handle adding a new activity to a specific day
+   */
+  function handleAddActivity(dayIndex: number) {
+    setAddingToDayIndex(dayIndex);
+    setAddDialogOpen(true);
+  }
+
+  /**
+   * Handle actually adding the activity from the dialog
+   */
+  function handleActivityAdded(dayIndex: number, activity: any) {
+    // Add the activity to the itinerary
+    addItineraryItem(dayIndex, activity);
+    
+    // Track the modification
+    handleModification({
+      type: 'addition',
+      description: `Added activity to Day ${dayIndex + 1}`,
+      itemId: activity.id
+    });
   }
 
   /**
@@ -375,6 +402,20 @@ export default function ItineraryReview() {
             enhancedDescription += ` • ${travelMethod} ${item.travelToNext.duration}min to next${travelCost}`;
           }
           
+          // Calculate price based on item type
+          let displayPrice;
+          if (item.price) {
+            if (item.type === 'hotel') {
+              // For hotels, multiply per-night rate by number of nights
+              // Use the actual number of days from the itinerary - 1 for nights
+              const nights = Math.max(1, state.days.length - 1);
+              const totalHotelCost = item.price * nights;
+              displayPrice = `$${totalHotelCost} (${nights} nights)`;
+            } else {
+              displayPrice = `$${item.price}`;
+            }
+          }
+          
           return {
             id: item.id || `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             type: item.type || 'activity',
@@ -385,7 +426,7 @@ export default function ItineraryReview() {
                   item.type === 'hotel' ? <Hotel className="h-4 w-4" /> :
                   <Activity className="h-4 w-4" />,
             status: item.status || 'suggested',
-            price: item.price ? `$${item.price}` : undefined,
+            price: displayPrice,
             duration: item.duration?.description || 
               (item.startTime && item.endTime ? 
                 `${Math.round((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / (1000 * 60))}m` : 
@@ -398,7 +439,17 @@ export default function ItineraryReview() {
           };
         });
 
-        const totalCost = uniqueItems.reduce((sum: number, item: any) => sum + (item?.price || 0), 0);
+        const totalCost = uniqueItems.reduce((sum: number, item: any) => {
+          if (!item?.price) return sum;
+          
+          // Calculate actual cost for hotels (multiply by nights)
+          if (item.type === 'hotel') {
+            const nights = Math.max(1, state.days.length - 1);
+            return sum + (item.price * nights);
+          }
+          
+          return sum + item.price;
+        }, 0);
         
         return {
           date: dayDate,
@@ -679,13 +730,36 @@ LIMITATIONS:
                         <Badge variant="outline">
                           ${day.totalCost}
                         </Badge>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleAddActivity(dayIndex)}
+                          title="Add activity"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
                   </CardHeader>
                   
                   <CardContent className="p-0">
-                    <div className="divide-y">
-                      {day.items.map((item, itemIndex) => (
+                    {day.items.length === 0 ? (
+                      <div className="p-6 flex items-center justify-between">
+                        <p className="text-gray-400 text-sm">Rest Day (No activities scheduled)</p>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                          onClick={() => handleAddActivity(dayIndex)}
+                          title="Add activity"
+                        >
+                          <Plus className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="divide-y">
+                        {day.items.map((item, itemIndex) => (
                         <div 
                           key={item.id} 
                           className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
@@ -735,6 +809,7 @@ LIMITATIONS:
                         </div>
                       ))}
                     </div>
+                  )}
                   </CardContent>
                 </Card>
               ))}
@@ -792,11 +867,34 @@ LIMITATIONS:
       activity={editingActivity.item}
       currentDayIndex={editingActivity.dayIndex}
       totalDays={itinerary.days.length}
+      tripDetails={{
+        origin: 'AUS', // TODO: Get from user's actual origin
+        destination: state.travelDetails?.destination || '',
+        startDate: state.travelDetails?.startDate || new Date(),
+        endDate: state.travelDetails?.endDate || new Date(),
+        travelers: state.travelDetails?.travelers || 1
+      }}
       onRemove={handleRemoveActivity}
       onMove={handleMoveActivity}
       onReplace={handleReplaceActivity}
     />
   )}
+
+  {/* Add Activity Dialog */}
+  <AddActivityDialog
+    isOpen={addDialogOpen}
+    onClose={() => {
+      setAddDialogOpen(false);
+      setAddingToDayIndex(null);
+    }}
+    dayIndex={addingToDayIndex || 0}
+    tripDetails={{
+      destination: state.travelDetails?.destination || '',
+      startDate: state.travelDetails?.startDate || new Date(),
+      endDate: state.travelDetails?.endDate || new Date()
+    }}
+    onAdd={handleActivityAdded}
+  />
     </>
   );
 } 
