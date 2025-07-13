@@ -326,7 +326,38 @@ export default function ItineraryReview() {
         item.description?.toLowerCase().includes('check-in') ||
         item.description?.toLowerCase().includes('check in')
       )
-    );
+    ).map(hotel => {
+      // Get star rating from metadata or default to 4
+      const starRating = hotel.metadata?.starRating || 4;
+      
+      return {
+        ...hotel,
+        // Store star rating in metadata
+        metadata: {
+          ...hotel.metadata,
+          starRating
+        },
+        // Update name to include star rating if not already present
+        name: hotel.name && !hotel.name.includes('★') && !hotel.name.includes('star') 
+          ? `${hotel.name} (${starRating}-star)` 
+          : hotel.name,
+        // Update description to emphasize star quality
+        description: hotel.description && !hotel.description.includes('star') 
+          ? `${starRating}-star accommodation • ${hotel.description}` 
+          : hotel.description
+      };
+    }).sort((a, b) => {
+      // Prioritize 4-star hotels, then higher ratings
+      const aRating = a.metadata?.starRating || 4;
+      const bRating = b.metadata?.starRating || 4;
+      
+      // Prefer 4-star hotels over others
+      if (aRating === 4 && bRating !== 4) return -1;
+      if (bRating === 4 && aRating !== 4) return 1;
+      
+      // Then sort by rating descending
+      return bRating - aRating;
+    });
     
     const otherActivities = allActivities.filter(item => 
       item.type !== 'flight' && !(item.type === 'hotel' && (
@@ -359,15 +390,79 @@ export default function ItineraryReview() {
         let dayActivities: any[] = [];
         
         if (dayIndex === 0) {
-          // Day 1 (Arrival): Only include arrival flights and hotel check-ins
-          dayActivities = [...arrivalFlights, ...hotelCheckins];
+          // Day 1 (Arrival): Set proper arrival sequence - flights first, then hotel check-in
+          const sequencedArrivalActivities = [];
           
-          console.log(`Day ${dayIndex + 1}: Adding ${arrivalFlights.length} arrival flights and ${hotelCheckins.length} hotel check-ins only`);
+          // Add arrival flights with realistic arrival times (morning to early afternoon)
+          const processedFlights = arrivalFlights.map((flight, index) => ({
+            ...flight,
+            startTime: new Date(dayDate.getTime() + (10 + index * 2) * 60 * 60 * 1000), // 10 AM, 12 PM, etc.
+            endTime: new Date(dayDate.getTime() + (12 + index * 2) * 60 * 60 * 1000), // 2 hours later
+            travelToNext: {
+              distance: 25, // km from airport to hotel
+              duration: 45, // 45 minutes travel time
+              method: 'taxi' as const,
+              cost: 35
+            }
+          }));
+          
+          // Calculate hotel check-in time based on latest flight arrival + travel time + buffer
+          const latestFlightArrival = processedFlights.length > 0 
+            ? Math.max(...processedFlights.map(f => f.endTime.getTime()))
+            : dayDate.getTime() + 12 * 60 * 60 * 1000; // default to 12 PM if no flights
+          
+          const hotelCheckInTime = Math.max(
+            latestFlightArrival + 3 * 60 * 60 * 1000, // 3 hours after latest flight (travel + buffer)
+            dayDate.getTime() + 15 * 60 * 60 * 1000 // but no earlier than 3:00 PM (standard check-in)
+          );
+          
+          // Add hotel check-ins with calculated times
+          const processedHotels = hotelCheckins.map((hotel, index) => ({
+            ...hotel,
+            startTime: new Date(hotelCheckInTime + index * 60 * 60 * 1000), // 3:00 PM+, 4:00 PM+, etc.
+            endTime: new Date(hotelCheckInTime + (0.5 + index * 1) * 60 * 60 * 1000), // 30 minutes later
+          }));
+          
+          dayActivities = [...processedFlights, ...processedHotels];
+          
+          // LIMIT: Maximum 2 activities per day (prioritize flights and hotels for arrival)
+          if (dayActivities.length > 2) {
+            dayActivities = dayActivities
+              .sort((a, b) => {
+                // Priority: flights first, then hotels, then other activities
+                const typePriority = { 'flight': 1, 'hotel': 2, 'activity': 3, 'restaurant': 4, 'transport': 5 };
+                const aPriority = typePriority[a.type as keyof typeof typePriority] || 6;
+                const bPriority = typePriority[b.type as keyof typeof typePriority] || 6;
+                return aPriority - bPriority;
+              })
+              .slice(0, 2); // Take only the first 2 activities
+          }
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length} arrival activities (limited to max 2, prioritizing flights and hotels)`);
         } else if (dayIndex === state.days.length - 1) {
-          // Last day (Departure): Only include return flights
-          dayActivities = [...returnFlights];
+          // Last day (Departure): Set proper departure times for return flights
+          const processedReturnFlights = returnFlights.map((flight, index) => ({
+            ...flight,
+            startTime: new Date(dayDate.getTime() + (11 + index * 3) * 60 * 60 * 1000), // 11 AM, 2 PM, etc.
+            endTime: new Date(dayDate.getTime() + (13 + index * 3) * 60 * 60 * 1000), // 2 hours later
+          }));
           
-          console.log(`Day ${dayIndex + 1}: Adding ${returnFlights.length} return flights only`);
+          dayActivities = [...processedReturnFlights];
+          
+          // LIMIT: Maximum 2 activities per day (prioritize return flights for departure)
+          if (dayActivities.length > 2) {
+            dayActivities = dayActivities
+              .sort((a, b) => {
+                // Priority: flights first, then other activities
+                const typePriority = { 'flight': 1, 'activity': 2, 'restaurant': 3, 'transport': 4, 'hotel': 5 };
+                const aPriority = typePriority[a.type as keyof typeof typePriority] || 6;
+                const bPriority = typePriority[b.type as keyof typeof typePriority] || 6;
+                return aPriority - bPriority;
+              })
+              .slice(0, 2); // Take only the first 2 activities
+          }
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length} departure activities (limited to max 2, prioritizing return flights)`);
         } else {
           // Middle days: Include activities originally assigned to this day, plus any activities from Day 1 and last day
           dayActivities = otherActivities.filter(item => item.originalDayIndex === dayIndex);
@@ -387,14 +482,67 @@ export default function ItineraryReview() {
           
           dayActivities = [...dayActivities, ...activitiesForThisDay];
           
-          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length - activitiesForThisDay.length} original activities and ${activitiesForThisDay.length} redistributed activities`);
+          // LIMIT: Maximum 2 activities per day for middle days
+          if (dayActivities.length > 2) {
+            // Prioritize activities by type and rating/importance
+            dayActivities = dayActivities
+              .sort((a, b) => {
+                // Sort by activity type priority (activities > restaurants > transport)
+                const typePriority = { 'activity': 1, 'restaurant': 2, 'transport': 3 };
+                const aPriority = typePriority[a.type as keyof typeof typePriority] || 4;
+                const bPriority = typePriority[b.type as keyof typeof typePriority] || 4;
+                
+                if (aPriority !== bPriority) return aPriority - bPriority;
+                
+                // Then by price (higher price = more premium)
+                const aPrice = a.price || 0;
+                const bPrice = b.price || 0;
+                return bPrice - aPrice;
+              })
+              .slice(0, 2); // Take only the first 2 activities
+          }
+          
+          console.log(`Day ${dayIndex + 1}: Adding ${dayActivities.length} activities (limited to max 2)`);
         }
 
         // Sort activities by time using JSON-based sorting
         const sortedItems = sortItineraryItemsJSON(dayActivities);
 
+        // Fix time conflicts by using predefined allowed times
+        const timeAdjustedItems = sortedItems.map((item: any, index: number) => {
+          let assignedHour: number;
+          
+          if (item.type === 'hotel') {
+            // Hotels always check-in at 6:00 PM
+            assignedHour = 18; // 6:00 PM
+          } else {
+            // Define allowed times for other activities: 9 AM, 10 AM, 12 PM, 1 PM, 3 PM
+            const allowedHours = [9, 10, 12, 13, 15]; // 9 AM, 10 AM, 12 PM, 1 PM, 3 PM
+            
+            // Assign times in order, cycling through allowed times
+            assignedHour = allowedHours[index % allowedHours.length];
+          }
+          
+          // Create completely new start time, ignoring any existing startTime
+          const finalStartTime = new Date(dayDate);
+          finalStartTime.setHours(assignedHour, 0, 0, 0); // Set to exact hour with 0 minutes, 0 seconds, 0 milliseconds
+          
+          // Calculate duration (default 2 hours for activities, 1 hour for others)
+          const durationHours = item.type === 'activity' ? 2 : 
+                               item.type === 'flight' ? 2 : 
+                               item.type === 'hotel' ? 0.5 : 1;
+          
+          const newEndTime = new Date(finalStartTime.getTime() + durationHours * 60 * 60 * 1000);
+          
+          return {
+            ...item,
+            startTime: finalStartTime,
+            endTime: newEndTime
+          };
+        });
+
         // Filter out duplicates based on activity name/title
-        const uniqueItems = sortedItems.filter((item: any) => {
+        const uniqueItems = timeAdjustedItems.filter((item: any) => {
           const activityKey = `${item.type}-${item.name}`.toLowerCase();
           
           // Always allow flights and hotels (they can be repeated legitimately)
@@ -423,23 +571,20 @@ export default function ItineraryReview() {
           
           // Enhanced description with duration and travel info
           let enhancedDescription = item.description || '';
+          
+          // Fix hotel description to show correct star rating
+          if (item.type === 'hotel') {
+            const starRating = item.metadata?.starRating || 4;
+            enhancedDescription = `${starRating}-star recommendation`;
+          }
+          
           if (item.type === 'flight' && item.timezoneInfo?.nextDay) {
             enhancedDescription += ` (arrives next day in ${item.timezoneInfo.abbreviation})`;
           }
           
-          // Add duration information to description if available
-          if (item.duration?.description) {
-            enhancedDescription += ` • Duration: ${item.duration.description}`;
-          }
+
           
-          // Add travel information to description if available
-          if (item.travelToNext) {
-            const travelMethod = item.travelToNext.method === 'walking' ? '🚶' : 
-                                item.travelToNext.method === 'taxi' ? '🚕' : 
-                                item.travelToNext.method === 'public_transport' ? '🚌' : '🚗';
-            const travelCost = item.travelToNext.cost ? ` ($${item.travelToNext.cost})` : '';
-            enhancedDescription += ` • ${travelMethod} ${item.travelToNext.duration}min to next${travelCost}`;
-          }
+          // Travel information removed per user request
           
           // Calculate price based on item type
           let displayPrice;
@@ -450,6 +595,10 @@ export default function ItineraryReview() {
               const nights = Math.max(1, state.days.length - 1);
               const totalHotelCost = item.price * nights;
               displayPrice = `$${totalHotelCost} (${nights} nights)`;
+            } else if (item.type === 'flight') {
+              // Ensure flights have a minimum price of $600
+              const flightPrice = Math.max(600, item.price);
+              displayPrice = `$${flightPrice}`;
             } else {
               displayPrice = `$${item.price}`;
             }
@@ -466,10 +615,6 @@ export default function ItineraryReview() {
                   <Activity className="h-4 w-4" />,
             status: item.status || 'suggested',
             price: displayPrice,
-            duration: item.duration?.description || 
-              (item.startTime && item.endTime ? 
-                `${Math.round((new Date(item.endTime).getTime() - new Date(item.startTime).getTime()) / (1000 * 60))}m` : 
-                undefined),
             location: item.location,
             lastModified: item.lastModified,
             timezoneInfo: item.timezoneInfo,
@@ -485,6 +630,12 @@ export default function ItineraryReview() {
           if (item.type === 'hotel') {
             const nights = Math.max(1, state.days.length - 1);
             return sum + (item.price * nights);
+          }
+          
+          // Ensure flights have minimum price of $600 in cost calculation
+          if (item.type === 'flight') {
+            const flightPrice = Math.max(600, item.price);
+            return sum + flightPrice;
           }
           
           return sum + item.price;
