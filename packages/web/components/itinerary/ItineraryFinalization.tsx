@@ -495,6 +495,41 @@ function PaymentStep({
   onPaymentMethodChange: (method: PaymentMethod) => void;
   totalCost: number;
 }) {
+  /**
+   * Format card number with spaces every 4 digits
+   */
+  const formatCardNumber = (value: string): string => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    // Limit to 16 digits
+    const limited = cleaned.slice(0, 16);
+    // Add spaces every 4 digits
+    return limited.replace(/(\d{4})(?=\d)/g, '$1 ');
+  };
+
+  /**
+   * Format expiry date with slash between MM and YY
+   */
+  const formatExpiryDate = (value: string): string => {
+    // Remove all non-digit characters
+    const cleaned = value.replace(/\D/g, '');
+    // Limit to 4 digits
+    const limited = cleaned.slice(0, 4);
+    // Add slash after first 2 digits
+    if (limited.length >= 2) {
+      return limited.slice(0, 2) + '/' + limited.slice(2);
+    }
+    return limited;
+  };
+
+  /**
+   * Format CVV to only numbers
+   */
+  const formatCVV = (value: string): string => {
+    // Remove all non-digit characters and limit to 3 digits
+    return value.replace(/\D/g, '').slice(0, 3);
+  };
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -519,10 +554,14 @@ function PaymentStep({
                 id="cardNumber"
                 placeholder="1234 5678 9012 3456"
                 value={paymentMethod.details.cardNumber || ''}
-                onChange={(e) => onPaymentMethodChange({
-                  ...paymentMethod,
-                  details: { ...paymentMethod.details, cardNumber: e.target.value }
-                })}
+                maxLength={19} // 16 digits + 3 spaces
+                onChange={(e) => {
+                  const formattedValue = formatCardNumber(e.target.value);
+                  onPaymentMethodChange({
+                    ...paymentMethod,
+                    details: { ...paymentMethod.details, cardNumber: formattedValue }
+                  });
+                }}
               />
             </div>
             <div>
@@ -543,10 +582,14 @@ function PaymentStep({
                 id="expiry"
                 placeholder="MM/YY"
                 value={paymentMethod.details.expiryDate || ''}
-                onChange={(e) => onPaymentMethodChange({
-                  ...paymentMethod,
-                  details: { ...paymentMethod.details, expiryDate: e.target.value }
-                })}
+                maxLength={5} // 4 digits + 1 slash
+                onChange={(e) => {
+                  const formattedValue = formatExpiryDate(e.target.value);
+                  onPaymentMethodChange({
+                    ...paymentMethod,
+                    details: { ...paymentMethod.details, expiryDate: formattedValue }
+                  });
+                }}
               />
             </div>
             <div>
@@ -555,10 +598,14 @@ function PaymentStep({
                 id="cvv"
                 placeholder="123"
                 value={paymentMethod.details.cvv || ''}
-                onChange={(e) => onPaymentMethodChange({
-                  ...paymentMethod,
-                  details: { ...paymentMethod.details, cvv: e.target.value }
-                })}
+                maxLength={3}
+                onChange={(e) => {
+                  const formattedValue = formatCVV(e.target.value);
+                  onPaymentMethodChange({
+                    ...paymentMethod,
+                    details: { ...paymentMethod.details, cvv: formattedValue }
+                  });
+                }}
               />
             </div>
           </div>
