@@ -32,14 +32,12 @@ TravelAgentic is an **active** open-source AI-first travel planning platform tha
 ```
 TravelAgentic/
 ├── packages/
-│   ├── langflow/       → AI workflow orchestration
-│   ├── web/           → Next.js full-stack app (frontend + API routes)
-│   ├── database/      → Supabase schema & migrations
-│   ├── mocks/         → Mock API responses for testing
-│   ├── test_flows/    → Langflow test flows
-│   └── seed/          → Database seed data
+│   ├── langgraph/     → LangGraph AI orchestration (4,391-line unified orchestrator)
+│   ├── web/           → Next.js full-stack app (frontend + 16 API route groups)
+│   ├── mocks/         → Comprehensive mock API system with service factory
+│   └── seed/          → Database schema & initialization (21-table PostgreSQL)
+├── _docs/             → Consolidated documentation (6 core files)
 ├── .github/           → CI/CD workflows
-├── _docs/             → Documentation
 ├── Dockerfile         → Production container build
 ├── docker-compose.yml → Development environment
 └── docker-compose.prod.yml → Production deployment
@@ -62,7 +60,7 @@ TravelAgentic/
 
 | Component              | Technology                      |
 | ---------------------- | ------------------------------- |
-| **AI Orchestration**   | Langflow                        |
+| **AI Orchestration**   | LangGraph                       |
 | **Database**           | Supabase Cloud                  |
 | **Authentication**     | Supabase Auth                   |
 | **PDF Generation**     | React-PDF (@react-pdf/renderer) |
@@ -383,39 +381,43 @@ TravelAgentic implements a 5-layer fallback hierarchy to ensure maximum booking 
 - **Respectful Automation**: Rate limiting, human-like behavior, proper user agents
 - **Fallback Coverage**: Flights, hotels, restaurants, activities
 
-## 📁 Planned Package Structure
+## 📁 Current Package Structure
 
-### 🧠 Langflow Package (Planned)
+### 🧠 LangGraph Package (✅ Complete)
 
 AI workflow orchestration for travel planning logic.
 
-- **Location**: `packages/langflow/` (to be created)
-- **Purpose**: Visual AI workflows for user preferences, search coordination, and booking automation
-- **Key Features**: User intake flows, search orchestration, booking fallback strategies
+- **Location**: `packages/langgraph/` (4,391-line unified orchestrator)
+- **Purpose**: LangGraph-based AI workflows for travel planning
+- **Key Features**: Travel orchestrator, conversation state management, agent collaboration
+- **Status**: Production-ready with comprehensive testing
 
-### 🔗 Edge Functions Package (Planned)
+### 🌐 Web Package (✅ Complete)
 
-Serverless API endpoints for external integrations.
+Next.js frontend application with full-stack API routes.
 
-- **Location**: `packages/edge-functions/` (to be created)
-- **Purpose**: API orchestration for flights, hotels, activities, and bookings
-- **Key Features**: Rate limiting, error handling, mock API support
+- **Location**: `packages/web/` (Next.js 14 with App Router)
+- **Purpose**: User interface and API layer for travel planning
+- **Key Features**: Real-time components, 16 API route groups, authentication, responsive design
+- **Status**: Complete implementation with SSE and LangGraph integration
 
-### 🌐 Web Package (Planned)
+### 🧪 Mock Services Package (✅ Complete)
 
-Next.js frontend application.
+Comprehensive mock API layer for development.
 
-- **Location**: `packages/web/` (to be created)
-- **Purpose**: User interface for travel planning and booking
-- **Key Features**: Responsive design, authentication, real-time search
+- **Location**: `packages/mocks/` (Service factory pattern)
+- **Purpose**: Mock implementations of all travel services
+- **Key Features**: Realistic data, configurable failures, environment-based switching
+- **Status**: Complete with identical interfaces to real APIs
 
-### 🗄️ Database Package (Planned)
+### 🗄️ Database Schema Package (✅ Complete)
 
-Supabase database schema and migrations.
+Database initialization and schema management.
 
-- **Location**: `packages/database/` (to be created)
-- **Purpose**: Database structure, migrations, and seed data
-- **Key Features**: RLS policies, TypeScript types, performance optimization
+- **Location**: `packages/seed/` (21-table PostgreSQL schema)
+- **Purpose**: Database structure, initialization, and seed data
+- **Key Features**: Comprehensive travel schema, JSONB preferences, performance optimization
+- **Status**: Production-ready schema with migration scripts
 
 ## 🧪 Testing Strategy
 
@@ -450,7 +452,7 @@ npm run test
 # Run specific package tests (planned)
 npm run test:web
 npm run test:edge-functions
-npm run test:langflow
+npm run test:langgraph
 
 # Test browser automation fallbacks (planned)
 npm run test:playwright
@@ -479,23 +481,17 @@ npm run test:browser-automation
 
 ### **Main Documentation**
 
-- **[Complete Architecture](_docs/Architecture.md)** - Full technical specification with user flows and Langflow architecture
+- **[Complete Architecture](_docs/ARCHITECTURE.md)** - Comprehensive technical architecture documentation (current implementation)
+- **[Setup Guide](_docs/SETUP.md)** - Complete development environment setup
 - **[Product Requirements](_docs/PRD.md)** - Complete product vision with user stories and enterprise features
-- **[MVP PRD](_docs/MVP_PRD.md)** - 6-day development plan with specific deliverables
-- **[API Strategy](_docs/API.md)** - Comprehensive API comparison and phase-based integration
-- **[Phase 1 Setup](_docs/setup_phase_1.md)** - Complete development setup guide
 - **[Contributing Guide](CONTRIBUTING.md)** - Development workflow and guidelines
-
-### **Detailed Design Documentation**
-
-- **[Travel Preferences](_docs/notes/travel_preferences.md)** - Context-based preference collection system
-- **[Profile Preferences](_docs/notes/profile_preferences.md)** - User profile and system interaction preferences
-- **[User Flow Design](_docs/notes/flow.md)** - Detailed user stories and flow specifications
-- **[Langflow Architecture](_docs/notes/langflow_architecture.md)** - Comprehensive Langflow implementation with context management
 
 ### **Package Documentation**
 
-- **[Package READMEs](packages/)** - Detailed documentation for each package (when implemented)
+- **[Web Frontend](packages/web/README.md)** - Next.js frontend application
+- **[LangGraph Service](packages/langgraph/README.md)** - LangGraph AI service
+- **[Mock Services](packages/mocks/README.md)** - Mock API layer
+- **[Database Schema](packages/seed/README.md)** - Database initialization and schema
 
 ## 🔧 Development
 
@@ -620,7 +616,7 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 - [x] Implement mock API system
 - [x] Add comprehensive Amadeus API integration
 - [ ] Add comprehensive travel search flow
-- [ ] Integrate Langflow for AI orchestration
+- [x] Integrate LangGraph for AI orchestration
 - [ ] Add database integration (Supabase)
 
 ### 📋 **Phase 2: Enhanced Features (Partially Complete)**
@@ -655,7 +651,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 💡 Philosophy
 
-**AI-First Architecture**: Built for seamless integration with AI tools, from Langflow workflows to browser-use automation.
+**AI-First Architecture**: Built for seamless integration with AI tools, from LangGraph workflows to browser-use automation.
 
 **Phase-Based Development**: Strategic 3-phase approach balancing rapid MVP delivery with production scalability.
 
@@ -676,7 +672,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙏 Acknowledgments
 
-- **Langflow**: For visual AI workflow orchestration
+- **LangGraph**: For multi-agent AI workflow orchestration
 - **Supabase**: For database and authentication infrastructure
 - **Docker**: For containerized deployment
 - **OpenAI**: For AI capabilities and natural language processing
@@ -691,17 +687,9 @@ We have a **working v0 prototype** and are enhancing it with comprehensive archi
 
 ### **Core Documentation**
 
-- [📋 Complete PRD](_docs/PRD.md) - Full product requirements with user stories and enterprise features
-- [📋 MVP PRD](_docs/MVP_PRD.md) - 6-day development plan with specific deliverables
-- [🏗️ Architecture](_docs/Architecture.md) - Complete technical specifications with Langflow architecture
-- [🔌 API Strategy](_docs/API.md) - Comprehensive API comparison and phase-based integration strategy
-- [⚙️ Phase 1 Setup](_docs/setup_phase_1.md) - Complete development setup guide
-
-### **Detailed Design**
-
-- [🎯 Travel Preferences](_docs/notes/travel_preferences.md) - Context-based preference collection system
-- [👤 Profile Preferences](_docs/notes/profile_preferences.md) - User profile and system interaction preferences
-- [🔄 User Flow Design](_docs/notes/flow.md) - Detailed user stories and flow specifications
-- [🧠 Langflow Architecture](_docs/notes/langflow_architecture.md) - Comprehensive Langflow implementation with context management, shopping cart, and backtracking
+- [🏗️ Complete Architecture](_docs/ARCHITECTURE.md) - Comprehensive technical architecture documentation (current implementation)
+- [⚙️ Setup Guide](_docs/SETUP.md) - Complete development environment setup
+- [📋 Product Requirements](_docs/PRD.md) - Full product requirements with user stories and enterprise features
+- [🤝 Contributing Guide](CONTRIBUTING.md) - Development workflow and guidelines
 
 **Development is active with working v0 prototype - contributions welcome!**

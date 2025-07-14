@@ -8,7 +8,7 @@ This guide covers deploying TravelAgentic containers to various platforms while 
 
 - **Frontend + API**: Docker container (Next.js full-stack app)
 - **Database**: Supabase Cloud (managed PostgreSQL)
-- **AI Workflows**: Langflow (containerized)
+- **AI Workflows**: LangGraph (containerized)
 - **Cache**: Redis (containerized)
 - **Files**: Supabase Storage
 
@@ -45,7 +45,7 @@ ELEVENLABS_API_KEY=your_elevenlabs_key
 
 # Container-specific
 REDIS_URL=redis://redis:6379
-LANGFLOW_URL=http://langflow:7860
+LANGGRAPH_URL=http://langgraph:8000
 ```
 
 ---
@@ -587,6 +587,6 @@ echo $SUPABASE_ANON_KEY
 - [ ] Monitor application metrics
 - [ ] Update dependencies regularly
 - [ ] Scale resources based on usage
-- [ ] Backup Langflow flows and data
+- [ ] Backup LangGraph configurations and data
 - [ ] Monitor Supabase usage and costs
 - [ ] Keep SSL certificates updated

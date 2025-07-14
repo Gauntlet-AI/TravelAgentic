@@ -132,7 +132,7 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 
 - Next.js 14+ frontend with TypeScript
 - Supabase backend with edge functions
-- Langflow AI workflow orchestration
+- LangGraph AI workflow orchestration
 - Mock API integration for all services
 - Vercel deployment with CI/CD
 
@@ -371,14 +371,14 @@ TravelAgentic is the world's first fully AI-powered travel planning platform tha
 
 - **Supabase**: PostgreSQL database, authentication, real-time subscriptions
 - **Vercel Edge Functions**: Serverless API layer
-- **Langflow**: AI workflow orchestration
+- **LangGraph**: AI workflow orchestration
 - **Redis**: Caching and session management
 - **Cloudflare**: CDN and security
 
 ### **AI & ML Stack**
 
 - **OpenAI GPT**: Natural language processing and generation
-- **Langflow**: Visual AI workflow builder
+- **LangGraph**: Multi-agent conversation workflows
 - **TensorFlow**: Custom ML models for personalization
 - **Pinecone**: Vector database for similarity search
 - **Anthropic Claude**: Advanced reasoning and planning

@@ -32,7 +32,7 @@ cp .env.example .env.local
 echo "USE_MOCK_APIS=true" >> .env.local
 echo "OPENAI_API_KEY=your_openai_key" >> .env.local
 
-# Start all services (Web App, Langflow, Redis, Local DB)
+# Start all services (Web App, LangGraph, Redis)
 docker-compose up -d
 
 # View running services
@@ -44,7 +44,7 @@ docker-compose ps
 ```bash
 # Check that all services are running
 curl http://localhost:3000/api/health
-curl http://localhost:7860/health
+curl http://localhost:8000/health
 
 # Validate code quality
 npm run validate
@@ -56,7 +56,7 @@ npm run test
 Access the application at:
 
 - **Web App**: http://localhost:3000
-- **Langflow UI**: http://localhost:7860
+- **LangGraph API**: http://localhost:8000
 - **Local PostgreSQL**: localhost:5432 (for database access)
 - **Redis**: localhost:6379 (for cache debugging)
 
@@ -76,7 +76,7 @@ We use a fast, CI/CD-driven **trunk-based development model**:
 - Open PRs **directly against `main`**.
 - Every PR must pass:
   - Tests (using mock APIs)
-  - Langflow flow validation
+  - LangGraph validation
   - Linting
 
 ### ✅ Preview Deployments
@@ -146,10 +146,10 @@ TravelAgentic/
 ├── node_modules/           # Hoisted dependencies (shared)
 ├── packages/
 │   ├── web/               # Next.js 15 App Router application
-│   ├── langflow/          # AI workflow orchestration
+│   ├── langgraph/         # AI workflow orchestration
 │   ├── database/          # Supabase schema & migrations
 │   ├── mocks/             # Mock API responses
-│   ├── test_flows/        # Langflow test flows
+│   ├── mocks/             # Mock API services
 │   └── seed/              # Database seed data
 ├── package.json           # Root workspace configuration
 ├── .gitignore             # Single gitignore for entire project
@@ -259,9 +259,9 @@ export const searchFlights = async (params: any) => {
 
 ## 🎯 Contributing to Specific Packages
 
-### Contributing to Langflow (`packages/langflow/`)
+### Contributing to LangGraph (`packages/langgraph/`)
 
-1. **Design flows** in the Langflow UI (http://localhost:7860)
+1. **Work with LangGraph** service (http://localhost:8000)
 2. **Export flows** as JSON to the `flows/` directory
 3. **Create test flows** with mock data
 4. **Update documentation** in the package README
@@ -292,23 +292,73 @@ export const searchFlights = async (params: any) => {
 
 ## 🧾 Commit Guidelines
 
-Follow conventional commits:
+We follow the **Conventional Commits** specification for consistent, readable git history:
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+### Types
+
+| Type       | Description                           | Example                                              |
+| ---------- | ------------------------------------- | ---------------------------------------------------- |
+| `feat`     | New feature                           | `feat: add flight search component`                  |
+| `fix`      | Bug fix                               | `fix: resolve booking form validation error`         |
+| `docs`     | Documentation changes                 | `docs: update API documentation`                     |
+| `style`    | Code style changes (formatting, etc.) | `style: format user preference components`           |
+| `refactor` | Code refactoring                      | `refactor: improve error handling in edge functions` |
+| `test`     | Adding or fixing tests                | `test: add unit tests for booking flow`              |
+| `chore`    | Maintenance tasks                     | `chore: update dependencies`                         |
+| `perf`     | Performance improvements              | `perf: optimize flight search queries`               |
+| `ci`       | CI/CD changes                         | `ci: add deployment workflow`                        |
+| `revert`   | Revert previous commit                | `revert: remove experimental voice feature`          |
+
+### Scopes
+
+| Scope      | Description                |
+| ---------- | -------------------------- |
+| `web`      | Frontend application       |
+| `api`      | Edge functions/API         |
+| `database` | Database schema/migrations |
+| `langgraph` | AI workflows               |
+| `docs`     | Documentation              |
+| `config`   | Configuration files        |
+
+### Writing Guidelines
+
+- Use **lowercase** for the description
+- Use **present tense** ("add" not "added")
+- Use **imperative mood** ("fix" not "fixes")
+- No period at the end
+- Keep under **50 characters** (72 is hard limit)
+- Body lines wrapped at **72 characters**
+
+### Examples
 
 ```bash
-# Feature
-git commit -m "feat: add flight search component"
+# ✅ Good
+feat(web): add user preference collection form
+fix(api): handle rate limiting for external APIs
+docs: update contributing guidelines
 
-# Bug fix
-git commit -m "fix: resolve booking form validation"
+# ❌ Bad
+fix: stuff
+update: things
+add flight search component that allows users to search for flights
+```
 
-# Documentation
-git commit -m "docs: update API documentation"
+### Breaking Changes
 
-# Refactor
-git commit -m "refactor: improve error handling"
+For breaking changes, use the footer:
 
-# Test
-git commit -m "test: add unit tests for booking flow"
+```bash
+feat(api): redesign booking response format
+
+BREAKING CHANGE: booking API now returns nested objects instead of flat structure
 ```
 
 ## 🔄 Pull Request Process

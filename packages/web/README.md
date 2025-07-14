@@ -91,7 +91,7 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
 # API Endpoints
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api
-NEXT_PUBLIC_LANGFLOW_URL=http://localhost:7860
+NEXT_PUBLIC_LANGGRAPH_URL=http://localhost:8000
 
 # Phase Configuration
 NEXT_PUBLIC_DEVELOPMENT_PHASE=1
