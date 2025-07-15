@@ -71,11 +71,22 @@ class UserIntakeGraph(BaseTravelGraph):
         system_prompt = """You are TravelAgentic's intelligent preference collection agent. Based on the provided travel details, generate 3-5 contextually relevant multiple choice questions to understand the user's travel preferences better.
 
 Focus on:
-1. Travel style (adventure, relaxation, cultural, business, mixed)
-2. Accommodation preferences (hotel, Airbnb, hostel, resort, boutique)
-3. Activity interests based on destination (outdoor, museums, nightlife, food, shopping, culture)
-4. Budget allocation priorities (luxury accommodations, unique experiences, fine dining, balanced)
-5. Special requirements (dietary, accessibility, pets, group dynamics)
+1. **Component Selection**: Which travel components are needed (flights, accommodation, activities)
+2. Travel style (adventure, relaxation, cultural, business, mixed)
+3. Accommodation preferences (hotel, Airbnb, hostel, resort, boutique)
+4. Activity interests based on destination (outdoor, museums, nightlife, food, shopping, culture)
+5. Budget allocation priorities (luxury accommodations, unique experiences, fine dining, balanced)
+6. Special requirements (dietary, accessibility, pets, group dynamics)
+
+ALWAYS include a component selection question as the first question to understand what the user needs:
+{
+  "id": "components_needed",
+  "question": "Which travel components do you need help with?",
+  "options": ["Flights + Hotels + Activities", "Hotels + Activities (I have my own transportation)", "Flights + Activities (I have accommodation)", "Activities only (I have flights and hotels)", "Flights + Hotels (just need transport and accommodation)", "Flights only (just need transportation)"],
+  "required": true,
+  "category": "components",
+  "help_text": "This helps us focus on what you actually need"
+}
 
 For specific destinations, add contextually relevant questions:
 - Tokyo/Japan: Traditional culture, modern technology, cuisine, pop culture, nature

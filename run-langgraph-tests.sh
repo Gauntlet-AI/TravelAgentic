@@ -13,6 +13,8 @@ TESTS=(
     "test_amadeus_only.py"
     "test_orchestrator_webserver.py"
     "test_amadeus_validation.py"
+    "test_component_selection.py"
+    "test_simple_flight.py"
 )
 
 # Colors for output

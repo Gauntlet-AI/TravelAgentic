@@ -79,14 +79,18 @@ async def test_orchestrator():
                 
             if "shopping_cart" in output:
                 cart = output["shopping_cart"]
-                print(f"🛒 Shopping cart items: {len(cart)}")
+                print(f"🛒 Shopping cart structure: {list(cart.keys())}")
                 
+                # Handle component selection - components can be None if not needed
                 if "flights" in cart:
-                    print(f"   ✈️  Flights: {len(cart['flights'])}")
+                    flights = cart['flights']
+                    print(f"   ✈️  Flights: {len(flights) if flights is not None else 'Not requested'}")
                 if "hotels" in cart:
-                    print(f"   🏨 Hotels: {len(cart['hotels'])}")
+                    hotels = cart['hotels']
+                    print(f"   🏨 Hotels: {len(hotels) if hotels is not None else 'Not requested'}")
                 if "activities" in cart:
-                    print(f"   🎯 Activities: {len(cart['activities'])}")
+                    activities = cart['activities']
+                    print(f"   🎯 Activities: {len(activities) if activities is not None else 'Not requested'}")
                     
             if "progress" in output:
                 progress = output["progress"]

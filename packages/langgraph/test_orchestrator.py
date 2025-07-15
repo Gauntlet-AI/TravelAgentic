@@ -81,16 +81,22 @@ async def test_orchestrator():
             shopping_cart = data.get('shopping_cart', {})
             if shopping_cart:
                 print("\n🛒 Shopping Cart:")
-                print(f"Flights: {len(shopping_cart.get('flights', []))}")
-                print(f"Hotels: {len(shopping_cart.get('hotels', []))}")
-                print(f"Activities: {len(shopping_cart.get('activities', []))}")
                 
-                if shopping_cart.get('flights'):
-                    flight = shopping_cart['flights'][0]
+                # Handle component selection - components can be None if not needed
+                flights = shopping_cart.get('flights')
+                hotels = shopping_cart.get('hotels')
+                activities = shopping_cart.get('activities')
+                
+                print(f"Flights: {len(flights) if flights is not None else 'Not requested'}")
+                print(f"Hotels: {len(hotels) if hotels is not None else 'Not requested'}")
+                print(f"Activities: {len(activities) if activities is not None else 'Not requested'}")
+                
+                if flights and len(flights) > 0:
+                    flight = flights[0]
                     print(f"Selected flight: {flight.get('airline', 'Unknown')} - ${flight.get('price', 0)}")
                 
-                if shopping_cart.get('hotels'):
-                    hotel = shopping_cart['hotels'][0]
+                if hotels and len(hotels) > 0:
+                    hotel = hotels[0]
                     print(f"Selected hotel: {hotel.get('name', 'Unknown')} - ${hotel.get('nightly_rate', 0)}/night")
         else:
             print(f"❌ Error: {result.get('error', 'Unknown error')}")

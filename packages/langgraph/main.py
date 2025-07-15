@@ -80,12 +80,19 @@ class ItineraryGenerationRequest(BaseModel):
     bookings: Dict[str, Any]
     preferences: Dict[str, Any]
 
+class ComponentSelection(BaseModel):
+    """Model for travel component selection"""
+    flights: bool = Field(True, description="Whether flights are needed")
+    hotels: bool = Field(True, description="Whether hotels are needed")
+    activities: bool = Field(True, description="Whether activities are needed")
+
 class OrchestratorRequest(BaseModel):
     """Request model for orchestrator conversations"""
     message: Optional[str] = None
     conversation_id: Optional[str] = None
     automation_level: int = Field(1, ge=1, le=4, description="Automation level (1-4)")
     user_preferences: Optional[Dict[str, Any]] = None
+    components_needed: Optional[ComponentSelection] = Field(None, description="Which travel components are needed")
     action: Optional[str] = Field(None, description="Action type: start, continue, modify, backtrack")
     modify_section: Optional[str] = Field(None, description="Section to modify: flights, hotels, activities")
     
@@ -305,6 +312,16 @@ async def invoke_orchestrator(request: OrchestratorRequest):
         # Add user preferences
         if request.user_preferences:
             input_data["preferences"] = request.user_preferences
+        
+        # Handle component selection
+        if request.components_needed:
+            if "preferences" not in input_data:
+                input_data["preferences"] = {}
+            input_data["preferences"]["components_needed"] = {
+                "flights": request.components_needed.flights,
+                "hotels": request.components_needed.hotels,
+                "activities": request.components_needed.activities
+            }
         
         # Handle conversation resumption
         if request.conversation_id:
