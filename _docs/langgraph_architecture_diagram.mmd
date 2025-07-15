@@ -1,0 +1,145 @@
+graph TD
+    %% User Input Entry Points
+    A[User Input] --> B{Input Type}
+    B -->|Conversational| C[Conversational Handler]
+    B -->|Structured Form| D[Structured Handler]
+    
+    %% Initial Processing
+    C --> E[Welcome User]
+    D --> E
+    E --> F[Collect Preferences]
+    F --> G[Parse Travel Requirements]
+    G --> H{Complete Info?}
+    H -->|Missing| I[Request Missing Info]
+    I --> F
+    H -->|Complete| J[Orchestrator Agent]
+    
+    %% Component Selection
+    J --> K[Component Selection]
+    K --> L[Flight Component?]
+    K --> M[Hotel Component?] 
+    K --> N[Activity Component?]
+    
+    %% Parallel Agent Coordination
+    L --> O[Parallel Search Coordinator]
+    M --> O
+    N --> O
+    O --> P[Launch Parallel Agents]
+    
+    %% Individual Agents Running in Parallel
+    P --> Q[Flight Agent]
+    P --> R[Lodging Agent]
+    P --> S[Activities Agent]
+    
+    %% Flight Agent Process
+    Q --> Q1[Search Flights via Amadeus]
+    Q1 --> Q2[Filter by Automation Level]
+    Q2 --> Q3[Share Flight Context]
+    
+    %% Hotel Agent Process
+    R --> R1[Search Hotels via Amadeus]
+    R1 --> R2[Use Flight Context for Location]
+    R2 --> R3[Filter by Automation Level]
+    
+    %% Activities Agent Process
+    S --> S1[Search Activities]
+    S1 --> S2[Use Hotel Context for Proximity]
+    S2 --> S3[Filter by Automation Level]
+    
+    %% Results Processing
+    Q3 --> T[Progressive Filter]
+    R3 --> T
+    S3 --> T
+    T --> U[Results Aggregator]
+    
+    %% Automation Level Routing
+    U --> V{Automation Level}
+    V -->|Level 1: Manual| W[Present All Options]
+    V -->|Level 2: Preselect| X[Highlight Best Options]
+    V -->|Level 3: Auto + Review| Y[Auto Select with Review]
+    V -->|Level 4: Full Auto| Z[Auto Book Everything]
+    
+    %% Shopping Cart Management
+    W --> AA[Shopping Cart]
+    X --> AA
+    Y --> AA
+    Z --> AA
+    
+    AA --> BB{User Decision}
+    BB -->|Modify Flights| Q
+    BB -->|Modify Hotels| R
+    BB -->|Modify Activities| S
+    BB -->|Confirm| CC[Booking Execution]
+    
+    %% 5-Layer Booking Fallback System
+    CC --> DD[Safety Checkpoint]
+    DD --> EE[Layer 1: Primary API]
+    EE --> FF{Success?}
+    FF -->|No| GG[Layer 2: Secondary API]
+    GG --> HH{Success?}
+    HH -->|No| II[Layer 3: Browser Automation]
+    II --> JJ{Success?}
+    JJ -->|No| KK[Layer 4: Voice Calling]
+    KK --> LL{Success?}
+    LL -->|No| MM[Layer 5: Manual Process]
+    
+    FF -->|Yes| NN[Booking Confirmed]
+    HH -->|Yes| NN
+    JJ -->|Yes| NN
+    LL -->|Yes| NN
+    MM --> NN
+    
+    %% Final Itinerary Generation
+    NN --> OO[Itinerary Generation]
+    OO --> PP[Complete Travel Plan]
+    
+    %% Backtracking Support
+    J --> QQ[Save Context Snapshot]
+    U --> QQ
+    AA --> QQ
+    QQ --> RR[Backtrack History]
+    RR -.-> AA
+    
+    %% Real-time UI Updates
+    Q --> SS[UI Updates]
+    R --> SS
+    S --> SS
+    AA --> SS
+    CC --> SS
+    SS --> TT[Live Progress Display]
+    
+    %% State Management Layer
+    UU[Conversation State]
+    UU --> VV[Agent Communications]
+    UU --> WW[Shopping Cart State]
+    UU --> XX[Progress Tracking]
+    UU --> YY[User Preferences]
+    
+    %% External API Integration
+    ZZ[Web Server API Client]
+    ZZ --> AAA[Amadeus Flight API]
+    ZZ --> BBB[Amadeus Hotel API]
+    ZZ --> CCC[Activity APIs]
+    ZZ --> DDD[Payment Processing]
+    
+    Q1 -.-> ZZ
+    R1 -.-> ZZ
+    S1 -.-> ZZ
+    CC -.-> ZZ
+    
+    %% Component Styling
+    classDef userInput fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef orchestrator fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef agents fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef automation fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    classDef booking fill:#ffebee,stroke:#b71c1c,stroke-width:2px
+    classDef apis fill:#f1f8e9,stroke:#33691e,stroke-width:2px
+    classDef state fill:#f5f5f5,stroke:#424242,stroke-width:2px
+    
+    class A,B,C,D userInput
+    class E,F,G,H,I,J,O,P orchestrator
+    class Q,R,S,Q1,Q2,Q3,R1,R2,R3,S1,S2,S3,T,U agents
+    class V,W,X,Y,Z automation
+    class CC,DD,EE,GG,II,KK,MM,NN booking
+    class ZZ,AAA,BBB,CCC,DDD apis
+    class UU,VV,WW,XX,YY,QQ,RR,SS,TT state

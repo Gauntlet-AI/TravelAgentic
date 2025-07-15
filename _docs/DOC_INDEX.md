@@ -30,11 +30,21 @@
   - Troubleshooting guide
 
 ### **AI Implementation**
+- **[LANGGRAPH_ARCHITECTURE.md](LANGGRAPH_ARCHITECTURE.md)** - **LANGGRAPH FLOW DIAGRAM & DOCUMENTATION**
+  - Complete LangGraph architecture flow diagram
+  - Multi-agent orchestrator system
+  - Automation levels 1-4 implementation
+  - Parallel agent execution
+  - 5-layer booking fallback system
+  - Real-time UI updates and state management
+- **Architecture Diagram Files:**
+  - **[langgraph_architecture_diagram.png](langgraph_architecture_diagram.png)** - High-resolution PNG image (246KB)
+  - **[langgraph_architecture_diagram.svg](langgraph_architecture_diagram.svg)** - Scalable SVG image (117KB)
+  - **[langgraph_architecture_diagram.mmd](langgraph_architecture_diagram.mmd)** - Mermaid source code
 - **[ARCHITECTURE.md](ARCHITECTURE.md)** - See AI Orchestration Layer section
   - Complete LangGraph orchestrator implementation
   - Agent collaboration architecture
   - Conversation state management
-  - Real-time UI updates
 
 ## 📋 **Product Documentation**
 
