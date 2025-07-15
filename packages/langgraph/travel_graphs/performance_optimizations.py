@@ -208,6 +208,11 @@ class PerformanceOptimizationMixin:
             
             # Rating factor
             rating = flight.get("rating", 3.0)
+            # Handle different rating formats (API returns dict, mock returns number)
+            if isinstance(rating, dict):
+                rating = rating.get("score", 3.0) or 3.0  # Default if score is None
+            elif rating is None:
+                rating = 3.0
             rating_factor = rating / 5.0
             score += rating_factor * 0.2
             
@@ -241,6 +246,11 @@ class PerformanceOptimizationMixin:
             
             # Rating factor
             rating = hotel.get("rating", 3.0)
+            # Handle different rating formats (API returns dict, mock returns number)
+            if isinstance(rating, dict):
+                rating = rating.get("score", 3.0) or 3.0  # Default if score is None
+            elif rating is None:
+                rating = 3.0
             rating_factor = rating / 5.0
             score += rating_factor * 0.3
             
@@ -284,6 +294,11 @@ class PerformanceOptimizationMixin:
             
             # Rating factor
             rating = activity.get("rating", 3.0)
+            # Handle different rating formats (API returns dict, mock returns number)
+            if isinstance(rating, dict):
+                rating = rating.get("score", 3.0) or 3.0  # Default if score is None
+            elif rating is None:
+                rating = 3.0
             rating_factor = rating / 5.0
             score += rating_factor * 0.3
             

@@ -328,8 +328,8 @@ class TravelOrchestratorGraph(BaseTravelGraph, PerformanceOptimizationMixin):
         """Handle conversational input (User Story 2)"""
         input_data = state["input_data"]
         
-        # Extract conversational data
-        message = input_data.get("message", "")
+        # Extract conversational data - check multiple possible keys
+        message = input_data.get("message", "") or input_data.get("user_input", "")
         preferences = state["user_preferences"]
         preferences.update({
             "input_type": "conversational",
@@ -339,7 +339,26 @@ class TravelOrchestratorGraph(BaseTravelGraph, PerformanceOptimizationMixin):
         # Use LLM to extract preferences from conversation
         if message:
             try:
-                system_prompt = "Extract travel preferences from user message. Return JSON with destination, dates, budget, travelers if mentioned."
+                system_prompt = """Extract travel preferences from user message. Return JSON with exactly these fields (use null if not mentioned):
+
+{
+  "destination": "city name",
+  "start_location": "departure city", 
+  "origin": "departure city",
+  "start_date": "YYYY-MM-DD",
+  "end_date": "YYYY-MM-DD", 
+  "travelers": number,
+  "budget": number,
+  "trip_type": "leisure|business|family|romantic",
+  "interests": ["category1", "category2"],
+  "components_needed": {
+    "flights": true,
+    "hotels": true, 
+    "activities": true
+  }
+}
+
+IMPORTANT: For dates, always use FUTURE dates in 2025 or later to ensure API compatibility. If user mentions "August 5th to August 9th", convert to "2025-08-05" and "2025-08-09". Never use past dates as they will be rejected by booking APIs."""
                 
                 messages = [
                     SystemMessage(content=system_prompt),
@@ -352,7 +371,10 @@ class TravelOrchestratorGraph(BaseTravelGraph, PerformanceOptimizationMixin):
                 import json
                 try:
                     extracted = json.loads(response.content)
-                    preferences.update(extracted)
+                    # Clean up null values
+                    cleaned = {k: v for k, v in extracted.items() if v is not None}
+                    preferences.update(cleaned)
+                    logger.info(f"Successfully extracted preferences: {cleaned}")
                 except json.JSONDecodeError:
                     logger.warning("Failed to parse LLM response as JSON")
                     
@@ -1071,6 +1093,9 @@ Begin by asking: "Welcome to your personal travel planner. Please enter your aut
         
         # Save snapshot after preferences collection
         self._save_context_snapshot(state, "preferences_collected")
+        
+        # Copy user_preferences to output_data for test access
+        state["output_data"]["user_preferences"] = state.get("user_preferences", {})
         
         state["current_step"] = "orchestrator"
         state["step_count"] += 1
@@ -2276,6 +2301,7 @@ Return JSON with activity options based on automation level {automation_level}."
         state["output_data"]["shopping_cart"] = state.get("shopping_cart", {})
         state["output_data"]["parallel_search"] = state.get("parallel_search", {})
         state["output_data"]["agent_status"] = state.get("agent_status", {})
+        state["output_data"]["user_preferences"] = state.get("user_preferences", {})
         state["output_data"]["flight_results"] = state.get("flight_results", [])
         state["output_data"]["lodging_results"] = state.get("lodging_results", [])
         state["output_data"]["activities_results"] = state.get("activities_results", [])
