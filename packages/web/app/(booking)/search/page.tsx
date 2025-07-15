@@ -165,70 +165,42 @@ function generateAIHotels(preferences: any, params: any) {
 /**
  * Flight search function (server-side) - Now uses integrated mock APIs
  */
-async function searchFlights(params: any): Promise<
-  Array<{
-    id: string;
-    airline: string;
-    flightNumber: string;
-    origin: string;
-    destination: string;
-    departure: string;
-    arrival: string;
-    duration: string;
-    price: number;
-    currency: string;
-    stops: number;
-    source: 'api' | 'browser' | 'voice' | 'manual';
-  }>
-> {
+async function searchFlights(params: any): Promise<{
+  flightOffers: any[];
+  dictionaries: any;
+  source: 'api' | 'browser' | 'voice' | 'manual' | 'ai';
+}> {
   try {
-    const originInfo = parseLocation(params.origin);
-    const destinationInfo = parseLocation(params.destination);
-    
-    // Make API call to our integrated mock service
-    const response = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/flights/search`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/flights/search`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
-        origin: originInfo.code,
-        destination: destinationInfo.code,
-        departureDate: params.departureDate || '2025-12-15',
+        originLocationCode: params.origin,
+        destinationLocationCode: params.destination,
+        departureDate: params.departureDate,
         returnDate: params.returnDate,
-        passengers: parseInt(params.passengers) || 1,
-        cabin: params.cabin || 'economy'
+        adults: parseInt(params.passengers || '1'),
+        travelClass: params.cabin?.toUpperCase() || 'ECONOMY',
       }),
     });
 
-    const data = await response.json();
-    
-    if (data.success && data.data) {
-      // Transform the API response to match the expected format
-      return data.data.map((flight: any) => {
-        const firstSegment = flight.segments?.[0];
-        const lastSegment = flight.segments?.[flight.segments.length - 1];
-        
-        return {
-          id: flight.id,
-          airline: firstSegment?.airline || 'Unknown Airline',
-          flightNumber: firstSegment?.flightNumber || 'Unknown',
-          origin: firstSegment?.departure?.airport?.code || originInfo.code,
-          destination: lastSegment?.arrival?.airport?.code || destinationInfo.code,
-          departure: firstSegment?.departure?.time || `${params.departureDate || '2025-12-15'}T08:00:00Z`,
-          arrival: lastSegment?.arrival?.time || `${params.departureDate || '2025-12-15'}T12:00:00Z`,
-          duration: flight.totalDuration || '4h 0m',
-          price: flight.price?.amount || 299,
-          currency: flight.price?.currency || 'USD',
-          stops: flight.segments?.length - 1 || 0,
-          source: 'api',
-        };
-      });
+    if (!response.ok) {
+      console.error('Flight search failed:', response.statusText);
+      return { flightOffers: [], dictionaries: {}, source: 'api' };
     }
-  } catch (error) {
-    console.error('Flight search API error:', error);
-  }
 
-  // Fallback to empty array if API fails
-  return [];
+    const data = await response.json();
+    return {
+      flightOffers: data.data?.data || [],
+      dictionaries: data.data?.dictionaries || {},
+      source: 'api'
+    };
+  } catch (error) {
+    console.error('Flight search error:', error);
+    return { flightOffers: [], dictionaries: {}, source: 'api' };
+  }
 }
 
 /**
@@ -363,18 +335,38 @@ async function FlightSearchSection({ searchParams }: { searchParams: {
   cabin?: string;
   useAI?: string;
 } }) {
-  let flights = [];
+  let apiResults: {
+    flightOffers: any[];
+    dictionaries: any;
+    source: 'api' | 'browser' | 'voice' | 'manual' | 'ai';
+  } = { 
+    flightOffers: [], 
+    dictionaries: { locations: {}, aircraft: {}, currencies: {}, carriers: {} }, 
+    source: 'api' 
+  };
   
   if (searchParams.useAI === 'true') {
     // Use AI-powered search
     const aiResults = await searchWithAI(searchParams);
-    flights = aiResults?.flights || [];
+    // For now, AI results still use the old format, so we'll return empty
+    // TODO: Update AI search to return Amadeus format
+    apiResults = { 
+      flightOffers: [], 
+      dictionaries: { locations: {}, aircraft: {}, currencies: {}, carriers: {} }, 
+      source: 'ai' 
+    };
   } else {
     // Use regular API search
-    flights = await searchFlights(searchParams);
+    apiResults = await searchFlights(searchParams);
   }
   
-  return <FlightSearchResults flights={flights} />;
+  return (
+    <FlightSearchResults 
+      flightOffers={apiResults.flightOffers} 
+      dictionaries={apiResults.dictionaries}
+      source={apiResults.source}
+    />
+  );
 }
 
 /**

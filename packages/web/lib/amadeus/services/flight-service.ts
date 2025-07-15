@@ -1,25 +1,46 @@
 import { AmadeusClient } from '../client';
 import { 
-  IFlightService, 
-  FlightSearchParams, 
-  FlightResult, 
-  ServiceResponse, 
-  FlightSegment, 
-  Location, 
-  Price 
-} from '@/lib/mocks/types';
-import { 
   AmadeusFlightOffer, 
   AmadeusFlightSearchParams, 
-  AmadeusSegment, 
-  AmadeusLocation 
+  AmadeusFlightSearchResponse
 } from '../types';
+
+// Simplified flight search parameters (only what we need for Amadeus)
+export interface FlightSearchParams {
+  origin: string;
+  destination: string;
+  departureDate: string;
+  returnDate?: string;
+  passengers: {
+    adults: number;
+    children?: number;
+    infants?: number;
+  };
+  cabin: string;
+  directFlightsOnly?: boolean;
+  preferredAirlines?: string[];
+  maxStops?: number;
+  filters?: {
+    priceRange?: [number, number];
+    sortBy?: 'price' | 'duration';
+    sortOrder?: 'asc' | 'desc';
+  };
+}
+
+// Simplified service response
+export interface FlightSearchResult {
+  success: boolean;
+  data?: AmadeusFlightSearchResponse;
+  error?: string;
+  fallbackUsed: 'api' | 'fallback';
+  responseTime: number;
+}
 
 /**
  * Amadeus Flight Service
- * Implements IFlightService interface using Amadeus API
+ * Returns raw Amadeus API responses without transformation
  */
-export class AmadeusFlightService implements IFlightService {
+export class AmadeusFlightService {
   private client: AmadeusClient;
 
   constructor(client: AmadeusClient) {
@@ -28,11 +49,14 @@ export class AmadeusFlightService implements IFlightService {
 
   /**
    * Search for flights using Amadeus API
+   * Returns raw Amadeus response format
    */
-  async search(params: FlightSearchParams): Promise<ServiceResponse<FlightResult[]>> {
+  async search(params: FlightSearchParams): Promise<FlightSearchResult> {
     const startTime = Date.now();
 
     try {
+      console.log('🚀 [AMADEUS-FLIGHT-SERVICE] Starting search with params:', params);
+
       // Transform TravelAgentic params to Amadeus params
       const amadeusParams: AmadeusFlightSearchParams = {
         originLocationCode: params.origin,
@@ -45,31 +69,42 @@ export class AmadeusFlightService implements IFlightService {
         travelClass: this.mapCabinClass(params.cabin),
         nonStop: params.directFlightsOnly,
         maxPrice: params.filters?.priceRange?.[1],
-        max: 50, // Limit results
+        max: 10, // Limit results to 10 for better performance
         currencyCode: 'USD',
         includedAirlineCodes: params.preferredAirlines,
       };
 
-      // Make API call
+      console.log('📡 [AMADEUS-FLIGHT-SERVICE] Amadeus API params:', amadeusParams);
+
+      // Make API call and get raw response
       const response = await this.client.searchFlights(amadeusParams);
 
-      // Transform response
-      const flightResults = response.data.map(offer => 
-        this.transformFlightOffer(offer, response.dictionaries)
-      );
+      console.log('📥 [AMADEUS-FLIGHT-SERVICE] Raw Amadeus response:', {
+        success: !!response.data,
+        dataLength: response.data?.length || 0,
+        meta: response.meta,
+        hasDictionaries: !!response.dictionaries
+      });
 
-      // Apply filters
-      const filteredResults = this.applyFilters(flightResults, params);
+      // Apply basic filtering if needed
+      let filteredData = response.data;
+      if (params.filters) {
+        filteredData = this.applyFilters(response.data, params.filters);
+      }
 
+      // Return raw Amadeus response structure
       return {
         success: true,
-        data: filteredResults,
+        data: {
+          ...response,
+          data: filteredData
+        },
         fallbackUsed: 'api',
         responseTime: Date.now() - startTime,
       };
 
     } catch (error) {
-      console.error('Amadeus flight search error:', error);
+      console.error('❌ [AMADEUS-FLIGHT-SERVICE] Flight search error:', error);
       
       return {
         success: false,
@@ -83,7 +118,7 @@ export class AmadeusFlightService implements IFlightService {
   /**
    * Get flight details by ID
    */
-  async getDetails(flightId: string): Promise<ServiceResponse<FlightResult>> {
+  async getDetails(flightId: string): Promise<FlightSearchResult> {
     // For now, return error as Amadeus doesn't have a direct flight details endpoint
     // This would typically be implemented by searching with specific criteria
     return {
@@ -97,7 +132,7 @@ export class AmadeusFlightService implements IFlightService {
   /**
    * Check flight availability
    */
-  async checkAvailability(flightId: string): Promise<ServiceResponse<boolean>> {
+  async checkAvailability(flightId: string): Promise<{ success: boolean; data?: boolean; error?: string; fallbackUsed: string; responseTime: number }> {
     // This would typically require the flight offer data to confirm pricing
     // For now, return a placeholder response
     return {
@@ -131,213 +166,44 @@ export class AmadeusFlightService implements IFlightService {
   }
 
   /**
-   * Transform Amadeus flight offer to TravelAgentic format
-   */
-  private transformFlightOffer(
-    offer: AmadeusFlightOffer,
-    dictionaries: any
-  ): FlightResult {
-    const itinerary = offer.itineraries[0]; // Use first itinerary
-    
-    // Transform segments
-    const segments: FlightSegment[] = itinerary.segments.map(segment => 
-      this.transformSegment(segment, dictionaries)
-    );
-
-    // Calculate layovers
-    const layovers = this.calculateLayovers(itinerary.segments, dictionaries);
-
-    return {
-      id: offer.id,
-      segments,
-      price: this.transformPrice(offer.price),
-      totalDuration: this.formatDuration(itinerary.duration),
-      stops: segments.length - 1,
-      layovers,
-      baggage: {
-        carry: '1 carry-on bag',
-        checked: offer.travelerPricings[0]?.fareDetailsBySegment[0]?.includedCheckedBags?.quantity 
-          ? `${offer.travelerPricings[0].fareDetailsBySegment[0].includedCheckedBags.quantity} checked bag(s)`
-          : 'No checked bags included',
-      },
-      cancellationPolicy: 'Standard cancellation policy applies',
-      source: 'api',
-      bookingUrl: `https://test.api.amadeus.com/v1/booking/flight-orders`,
-      deepLink: offer.id,
-    };
-  }
-
-  /**
-   * Transform Amadeus segment to TravelAgentic format
-   */
-  private transformSegment(
-    segment: AmadeusSegment,
-    dictionaries: any
-  ): FlightSegment {
-    const departureLocation = this.transformLocation(
-      segment.departure.iataCode,
-      dictionaries.locations
-    );
-    
-    const arrivalLocation = this.transformLocation(
-      segment.arrival.iataCode,
-      dictionaries.locations
-    );
-
-    return {
-      airline: dictionaries.carriers[segment.carrierCode] || segment.carrierCode,
-      flightNumber: `${segment.carrierCode}${segment.number}`,
-      aircraft: dictionaries.aircraft[segment.aircraft.code]?.name || segment.aircraft.code,
-      departure: {
-        airport: departureLocation,
-        time: segment.departure.at,
-        terminal: segment.departure.terminal,
-      },
-      arrival: {
-        airport: arrivalLocation,
-        time: segment.arrival.at,
-        terminal: segment.arrival.terminal,
-      },
-      duration: this.formatDuration(segment.duration),
-      cabin: 'Economy', // Default - could be enhanced with actual cabin mapping
-      timezoneInfo: {
-        departureTimezone: 'UTC', // Would need timezone service for accurate data
-        arrivalTimezone: 'UTC',
-        timezoneChange: 0,
-        nextDay: false,
-      },
-    };
-  }
-
-  /**
-   * Transform Amadeus location to TravelAgentic format
-   */
-  private transformLocation(
-    iataCode: string,
-    locations: Record<string, AmadeusLocation>
-  ): Location {
-    const location = locations[iataCode];
-    
-    return {
-      code: iataCode,
-      name: iataCode, // Amadeus doesn't provide airport names in this response
-      city: location?.cityCode || iataCode,
-      country: location?.countryCode || 'Unknown',
-      coordinates: {
-        latitude: 0, // Not available in flight search response
-        longitude: 0,
-      },
-    };
-  }
-
-  /**
-   * Transform Amadeus price to TravelAgentic format
-   */
-  private transformPrice(price: any): Price {
-    return {
-      amount: parseFloat(price.total),
-      currency: price.currency,
-      displayPrice: `${price.currency} ${price.total}`,
-    };
-  }
-
-  /**
-   * Calculate layovers between segments
-   */
-  private calculateLayovers(
-    segments: AmadeusSegment[],
-    dictionaries: any
-  ): Array<{ airport: Location; duration: string }> {
-    const layovers = [];
-
-    for (let i = 0; i < segments.length - 1; i++) {
-      const currentSegment = segments[i];
-      const nextSegment = segments[i + 1];
-
-      // Calculate layover duration
-      const arrivalTime = new Date(currentSegment.arrival.at);
-      const departureTime = new Date(nextSegment.departure.at);
-      const layoverDuration = departureTime.getTime() - arrivalTime.getTime();
-
-      layovers.push({
-        airport: this.transformLocation(
-          currentSegment.arrival.iataCode,
-          dictionaries.locations
-        ),
-        duration: this.formatDuration(layoverDuration),
-      });
-    }
-
-    return layovers;
-  }
-
-  /**
-   * Format duration from ISO 8601 or milliseconds to human-readable format
-   */
-  private formatDuration(duration: string | number): string {
-    if (typeof duration === 'number') {
-      const hours = Math.floor(duration / (1000 * 60 * 60));
-      const minutes = Math.floor((duration % (1000 * 60 * 60)) / (1000 * 60));
-      return `${hours}h ${minutes}m`;
-    }
-
-    // Parse ISO 8601 duration (PT2H30M)
-    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
-    if (matches) {
-      const hours = parseInt(matches[1] || '0');
-      const minutes = parseInt(matches[2] || '0');
-      return `${hours}h ${minutes}m`;
-    }
-
-    return duration;
-  }
-
-  /**
-   * Apply filters to flight results
+   * Apply basic filters to flight offers
    */
   private applyFilters(
-    flights: FlightResult[],
-    params: FlightSearchParams
-  ): FlightResult[] {
+    flights: AmadeusFlightOffer[],
+    filters: FlightSearchParams['filters']
+  ): AmadeusFlightOffer[] {
+    if (!filters) return flights;
+
     let filtered = [...flights];
 
     // Price range filter
-    if (params.filters?.priceRange) {
-      const [minPrice, maxPrice] = params.filters.priceRange;
-      filtered = filtered.filter(flight => 
-        flight.price.amount >= minPrice && flight.price.amount <= maxPrice
-      );
-    }
-
-    // Direct flights only
-    if (params.directFlightsOnly) {
-      filtered = filtered.filter(flight => flight.stops === 0);
-    }
-
-    // Max stops filter
-    if (params.maxStops !== undefined) {
-      filtered = filtered.filter(flight => flight.stops <= params.maxStops!);
+    if (filters.priceRange) {
+      const [minPrice, maxPrice] = filters.priceRange;
+      filtered = filtered.filter(flight => {
+        const price = parseFloat(flight.price.total);
+        return price >= minPrice && price <= maxPrice;
+      });
     }
 
     // Sort results
-    if (params.filters?.sortBy) {
+    if (filters.sortBy) {
       filtered.sort((a, b) => {
         let aValue, bValue;
 
-        switch (params.filters!.sortBy) {
+        switch (filters.sortBy) {
           case 'price':
-            aValue = a.price.amount;
-            bValue = b.price.amount;
+            aValue = parseFloat(a.price.total);
+            bValue = parseFloat(b.price.total);
             break;
           case 'duration':
-            aValue = this.parseDuration(a.totalDuration);
-            bValue = this.parseDuration(b.totalDuration);
+            aValue = this.parseDuration(a.itineraries[0].duration);
+            bValue = this.parseDuration(b.itineraries[0].duration);
             break;
           default:
             return 0;
         }
 
-        const order = params.filters!.sortOrder === 'desc' ? -1 : 1;
+        const order = filters.sortOrder === 'desc' ? -1 : 1;
         return (aValue - bValue) * order;
       });
     }
@@ -349,9 +215,11 @@ export class AmadeusFlightService implements IFlightService {
    * Parse duration string to minutes for sorting
    */
   private parseDuration(duration: string): number {
-    const matches = duration.match(/(\d+)h\s*(\d+)m/);
+    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?/);
     if (matches) {
-      return parseInt(matches[1]) * 60 + parseInt(matches[2]);
+      const hours = parseInt(matches[1] || '0');
+      const minutes = parseInt(matches[2] || '0');
+      return hours * 60 + minutes;
     }
     return 0;
   }

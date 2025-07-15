@@ -256,7 +256,49 @@ class LangGraphService {
         throw new Error(`Failed to continue conversation: ${response.status}`);
       }
 
-      // Events will come through existing stream
+      // Process the streaming response like startConversation does
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder();
+      
+      if (!reader) {
+        throw new Error('No response body available');
+      }
+
+      // Read the stream and process events
+      const processStream = async () => {
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split('\n');
+            
+            for (const line of lines) {
+              if (line.startsWith('data: ')) {
+                try {
+                  const data = JSON.parse(line.slice(6));
+                  onEvent(data);
+                } catch (e) {
+                  // Ignore parsing errors
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error processing stream:', error);
+          onEvent({
+            type: 'error',
+            error: 'Stream processing failed'
+          });
+        } finally {
+          reader.releaseLock();
+        }
+      };
+
+      // Start processing the stream
+      await processStream();
+
     } catch (error) {
       console.error('Error continuing conversation:', error);
       throw error;

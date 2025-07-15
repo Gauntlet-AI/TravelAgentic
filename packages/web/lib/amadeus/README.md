@@ -1,331 +1,249 @@
-# Amadeus API Integration
+# Amadeus API Integration - Unified Parameter Mapping System
 
-This module provides comprehensive integration with the Amadeus Travel API, including flight search, hotel search, and activity/POI search capabilities.
+## Overview
 
-## Features
+This system proactively solves parameter mapping and location conversion issues across all Amadeus APIs (Flights, Hotels, Activities) by providing a unified interface that handles the common problems we encountered with the flight API.
 
-- **OAuth2 Authentication**: Automatic token refresh with 1-minute buffer
-- **Rate Limiting**: Respects API limits (10 TPS for test, 40 TPS for production)
-- **Error Handling**: Comprehensive error handling with retry logic
-- **Service Compatibility**: Implements TravelAgentic service interfaces
-- **Environment Support**: Works with both test and production environments
-- **Fallback Integration**: Gracefully falls back to mock services if configuration fails
+## Problems Solved
 
-## Quick Start
+### 1. **Parameter Naming Inconsistencies**
+- **Flight API**: `origin` → `originLocationCode`, `passengers` → `adults`, `budget` → `maxPrice`
+- **Hotel API**: `destination` → `cityCode`, `checkin` → `checkInDate`, `guests` → `adults`
+- **Activity API**: `destination` → `latitude/longitude`, `duration` → `minimumDuration/maximumDuration`
 
-### 1. Environment Setup
+### 2. **Location Format Requirements**
+- **Flights**: City names → Airport codes (JFK, LHR, etc.)
+- **Hotels**: City names → City codes (NYC, LON, etc.)
+- **Activities**: City names → Geographic coordinates (40.7128, -74.0060)
 
-Add your Amadeus credentials to your environment variables:
+### 3. **Date Format Standardization**
+- All APIs require YYYY-MM-DD format
+- Users might provide various formats
+- System handles conversion automatically
 
-```bash
-# Required
-AMADEUS_CLIENT_ID=your_amadeus_client_id
-AMADEUS_CLIENT_SECRET=your_amadeus_client_secret
+## System Architecture
 
-# Optional (defaults to 'test')
-AMADEUS_ENVIRONMENT=test  # or 'production'
+### Core Components
 
-# Phase configuration
-USE_MOCK_APIS=false
-DEVELOPMENT_PHASE=2
-```
-
-### 2. Basic Usage
+#### 1. `LocationService` (`location-service.ts`)
+Handles all location format conversions:
 
 ```typescript
-import { createAmadeusClient, AmadeusFlightService } from '@/lib/amadeus';
+// Convert city name to airport code (flights)
+LocationService.cityToAirportCode('New York') // → 'JFK'
 
-// Create client
-const client = createAmadeusClient();
+// Convert city name to city code (hotels)  
+LocationService.cityToCityCode('New York') // → 'NYC'
 
-// Create service
-const flightService = new AmadeusFlightService(client);
+// Convert city name to coordinates (activities)
+LocationService.cityToCoordinates('New York') // → { latitude: 40.7128, longitude: -74.0060 }
 
-// Search flights
-const results = await flightService.search({
-  origin: 'NYC',
-  destination: 'LAX', 
-  departureDate: '2024-08-01',
-  passengers: { adults: 1, children: 0, infants: 0 },
-  cabin: 'economy'
+// Get all location info at once
+LocationService.getLocationInfo('New York') // → Complete location object
+```
+
+#### 2. `Parameter Mappers` (`parameter-mapper.ts`)
+Handle API-specific parameter mapping:
+
+```typescript
+// Flight parameter mapping
+const flightParams = FlightParameterMapper.mapParameters({
+  origin: 'New York',
+  destination: 'London', 
+  passengers: 2,
+  budget: 1000
 });
+// Results in: { originLocationCode: 'JFK', destinationLocationCode: 'LHR', adults: 2, maxPrice: 1000 }
 
-if (results.success) {
-  console.log(`Found ${results.data.length} flights`);
-  results.data.forEach(flight => {
-    console.log(`${flight.segments[0].airline} - ${flight.price.displayPrice}`);
+// Hotel parameter mapping
+const hotelParams = HotelParameterMapper.mapParameters({
+  destination: 'New York',
+  checkin: '2025-09-15',
+  guests: 2,
+  budget: 500
+});
+// Results in: { cityCode: 'NYC', checkInDate: '2025-09-15', adults: 2, maxPrice: 500 }
+
+// Activity parameter mapping
+const activityParams = ActivityParameterMapper.mapParameters({
+  destination: 'New York',
+  startDate: '2025-09-15',
+  groupSize: 4
+});
+// Results in: { latitude: 40.7128, longitude: -74.0060, startDate: '2025-09-15', groupSize: 4 }
+```
+
+#### 3. `Validation & Error Handling`
+Each mapper includes validation:
+
+```typescript
+const validation = FlightParameterMapper.validateParameters(mappedParams);
+if (!validation.isValid) {
+  console.log(validation.errors); // Array of specific error messages
+}
+```
+
+## Usage Examples
+
+### Flight API Integration
+```typescript
+import { FlightParameterMapper } from '@/lib/amadeus/parameter-mapper';
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  
+  // Map user parameters to Amadeus format
+  const mappedParams = FlightParameterMapper.mapParameters({
+    origin: body.from,           // User says "from"
+    destination: body.to,        // User says "to"
+    passengers: body.travelers,  // User says "travelers"
+    budget: body.maxPrice       // User says "maxPrice"
   });
+  
+  // Validate parameters
+  const validation = FlightParameterMapper.validateParameters(mappedParams);
+  if (!validation.isValid) {
+    return NextResponse.json({ errors: validation.errors }, { status: 400 });
+  }
+  
+  // Call Amadeus API with correctly formatted parameters
+  const response = await amadeusClient.searchFlights(mappedParams);
 }
 ```
 
-### 3. Service Factory Integration
-
-The services are automatically integrated with the TravelAgentic service factory:
-
+### Hotel API Integration
 ```typescript
-import { getFlightService } from '@/lib/mocks';
+import { HotelParameterMapper } from '@/lib/amadeus/parameter-mapper';
 
-// Automatically uses Amadeus when DEVELOPMENT_PHASE >= 2 and USE_MOCK_APIS=false
-const flightService = getFlightService();
-const results = await flightService.search(params);
-```
-
-## API Documentation
-
-### Flight Search
-
-```typescript
-interface FlightSearchParams {
-  origin: string;              // IATA airport code
-  destination: string;         // IATA airport code
-  departureDate: string;       // YYYY-MM-DD format
-  returnDate?: string;         // YYYY-MM-DD format
-  passengers: {
-    adults: number;
-    children: number;
-    infants: number;
-  };
-  cabin: 'economy' | 'premium' | 'business' | 'first';
-  directFlightsOnly?: boolean;
-  maxStops?: number;
-  preferredAirlines?: string[];
-  filters?: SearchFilters;
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  
+  // Map user parameters to Amadeus format
+  const mappedParams = HotelParameterMapper.mapParameters({
+    destination: body.city,      // Converts city name to city code
+    checkin: body.checkIn,       // Ensures proper date format
+    checkout: body.checkOut,     // Ensures proper date format
+    guests: body.adults,         // Maps guest count
+    budget: body.priceLimit      // Maps budget parameter
+  });
+  
+  // Validate parameters
+  const validation = HotelParameterMapper.validateParameters(mappedParams);
+  if (!validation.isValid) {
+    return NextResponse.json({ errors: validation.errors }, { status: 400 });
+  }
+  
+  // Call Amadeus API with correctly formatted parameters
+  const response = await amadeusClient.searchHotels(mappedParams);
 }
 ```
 
-### Hotel Search
-
+### Activity API Integration
 ```typescript
-interface HotelSearchParams {
-  destination: string;         // City name
-  checkIn: string;            // YYYY-MM-DD format
-  checkOut: string;           // YYYY-MM-DD format
-  guests: {
-    adults: number;
-    children: number;
-    rooms: number;
-  };
-  starRating?: number[];      // [3, 4, 5]
-  amenities?: string[];       // ['WIFI', 'POOL', 'PARKING']
-  propertyTypes?: string[];   // ['HOTEL', 'RESORT']
-  maxDistance?: number;       // km from city center
-  filters?: SearchFilters;
+import { ActivityParameterMapper } from '@/lib/amadeus/parameter-mapper';
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  
+  // Map user parameters to Amadeus format
+  const mappedParams = ActivityParameterMapper.mapParameters({
+    destination: body.location,  // Converts city name to coordinates
+    startDate: body.date,        // Ensures proper date format
+    categories: body.interests,  // Maps activity categories
+    groupSize: body.people       // Maps group size
+  });
+  
+  // Validate parameters
+  const validation = ActivityParameterMapper.validateParameters(mappedParams);
+  if (!validation.isValid) {
+    return NextResponse.json({ errors: validation.errors }, { status: 400 });
+  }
+  
+  // Call Amadeus API with correctly formatted parameters
+  const response = await amadeusClient.searchActivities(mappedParams);
 }
 ```
 
-### Activity Search
+## Error Prevention
 
+### 1. **Location Errors**
 ```typescript
-interface ActivitySearchParams {
-  destination: string;         // City name
-  startDate?: string;         // YYYY-MM-DD format
-  endDate?: string;           // YYYY-MM-DD format
-  categories?: string[];      // ['SIGHTSEEING', 'CULTURAL']
-  duration?: {
-    min?: number;             // hours
-    max?: number;             // hours
-  };
-  groupSize?: number;
-  accessibility?: string[];
-  timeOfDay?: 'morning' | 'afternoon' | 'evening' | 'night';
-  filters?: SearchFilters;
-  excludeIds?: string[];
-  preferences?: string[];
-  maxResults?: number;
-}
+// Before: User enters "New York" → API fails because it needs "JFK"
+// After: LocationService.cityToAirportCode('New York') → 'JFK'
+
+// Before: User enters "London" → Hotel API fails because it needs "LON"  
+// After: LocationService.cityToCityCode('London') → 'LON'
+
+// Before: User enters "Paris" → Activity API fails because it needs coordinates
+// After: LocationService.cityToCoordinates('Paris') → { latitude: 48.8566, longitude: 2.3522 }
 ```
 
-## Rate Limiting
-
-The client automatically enforces rate limits:
-
-- **Test Environment**: 10 TPS (1 request every 100ms)
-- **Production Environment**: 40 TPS (1 request every 25ms)
-
-The client includes automatic retry logic with exponential backoff for rate limit and temporary errors.
-
-## Error Handling
-
-All services return a consistent response format:
-
+### 2. **Parameter Naming Errors**
 ```typescript
-interface ServiceResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  fallbackUsed?: 'api' | 'browser' | 'voice' | 'manual';
-  responseTime?: number;
-}
+// Before: { origin: 'JFK', passengers: 2 } → API fails
+// After: { originLocationCode: 'JFK', adults: 2 } → API succeeds
+
+// Before: { destination: 'NYC', checkin: '2025-09-15' } → API fails
+// After: { cityCode: 'NYC', checkInDate: '2025-09-15' } → API succeeds
 ```
 
-Common error scenarios:
-- **Authentication failures**: Automatic token refresh
-- **Rate limiting**: Automatic retry with backoff
-- **Network errors**: Configurable retry attempts
-- **Invalid requests**: Detailed error messages
+### 3. **Date Format Errors**
+```typescript
+// Before: { departureDate: '9/15/2025' } → API fails
+// After: { departureDate: '2025-09-15' } → API succeeds
+```
 
 ## Testing
 
-### Manual Testing
+Test endpoints have been created to demonstrate the system:
 
-Use the provided test script to verify your integration:
+- **`/api/test/flights`** - Flight parameter mapping (already working)
+- **`/api/test/hotels`** - Hotel parameter mapping (demonstrates city→cityCode)
+- **`/api/test/activities`** - Activity parameter mapping (demonstrates city→coordinates)
 
-```bash
-# Set environment variables
-export AMADEUS_CLIENT_ID=your_client_id
-export AMADEUS_CLIENT_SECRET=your_client_secret
-export AMADEUS_ENVIRONMENT=test
-
-# Run test
-node test-amadeus-integration.js
-```
-
-### Unit Testing
-
-```typescript
-import { AmadeusFlightService } from '@/lib/amadeus';
-
-// Mock the client for testing
-const mockClient = {
-  searchFlights: jest.fn(),
-  searchHotels: jest.fn(),
-  // ... other methods
-};
-
-const flightService = new AmadeusFlightService(mockClient);
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `AMADEUS_CLIENT_ID` | Yes | - | Your Amadeus API client ID |
-| `AMADEUS_CLIENT_SECRET` | Yes | - | Your Amadeus API client secret |
-| `AMADEUS_ENVIRONMENT` | No | `test` | API environment (`test` or `production`) |
-
-### Client Configuration
-
-```typescript
-const client = new AmadeusClient({
-  clientId: 'your_client_id',
-  clientSecret: 'your_client_secret',
-  baseUrl: 'https://test.api.amadeus.com', // or production URL
-  timeout: 30000,           // Request timeout in ms
-  retryAttempts: 3,         // Number of retry attempts
-  retryDelay: 1000,         // Base retry delay in ms
-  rateLimitDelay: 100,      // Delay between requests in ms
-});
-```
-
-## Advanced Features
-
-### Custom Error Handling
-
-```typescript
-try {
-  const results = await flightService.search(params);
-} catch (error) {
-  if (error.message.includes('Authentication failed')) {
-    // Handle auth error
-  } else if (error.message.includes('Rate limited')) {
-    // Handle rate limit
-  }
-}
-```
-
-### Rate Limit Monitoring
-
-```typescript
-const rateLimitState = client.getRateLimitState();
-console.log(`Requests made: ${rateLimitState.requestCount}`);
-console.log(`Reset time: ${new Date(rateLimitState.resetTime)}`);
-```
-
-### Configuration Validation
-
-```typescript
-import { validateAmadeusConfig, getAmadeusConfig } from '@/lib/amadeus';
-
-if (!validateAmadeusConfig()) {
-  console.error('Amadeus not configured properly');
-  process.exit(1);
-}
-
-const config = getAmadeusConfig();
-console.log(`Using ${config.environment} environment`);
-```
-
-## API Endpoints Used
-
-### Flight Search
-- `GET /v2/shopping/flight-offers` - Search for flight offers
-- `POST /v1/shopping/flight-offers/pricing` - Confirm flight pricing
-
-### Hotel Search
-- `GET /v1/reference-data/locations/hotels/by-city` - Search hotels by city
-- `GET /v3/shopping/hotel-offers` - Get hotel offers
-
-### Activity Search
-- `GET /v1/reference-data/locations/pois` - Search points of interest
-- `GET /v1/shopping/activities` - Search tours and activities
-
-## Limitations
-
-### Test Environment
-- Limited cached data (not real-time)
-- 10 TPS rate limit
-- Free monthly quota
-
-### Data Completeness
-- Some fields may not be available in all responses
-- Airport names require additional lookup service
-- Timezone information needs separate service
-- Limited activity data compared to specialized providers
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Error**
-   - Check your client ID and secret
-   - Ensure environment variables are set correctly
-   - Verify your Amadeus account is active
-
-2. **Rate Limit Exceeded**
-   - Reduce request frequency
-   - Implement proper retry logic
-   - Consider caching responses
-
-3. **No Results Found**
-   - Verify search parameters are valid
-   - Check date formats (YYYY-MM-DD)
-   - Ensure airport codes are correct IATA codes
-
-4. **Network Errors**
-   - Check internet connection
-   - Verify API endpoint URLs
-   - Check for firewall/proxy issues
-
-### Debug Mode
-
-Enable verbose logging:
+### Example Test Requests
 
 ```bash
-export DEBUG=amadeus:*
-export VERBOSE_LOGGING=true
+# Test flight mapping
+curl -X POST /api/test/flights \
+  -H "Content-Type: application/json" \
+  -d '{"origin": "New York", "destination": "London", "passengers": 2, "budget": 1000}'
+
+# Test hotel mapping  
+curl -X POST /api/test/hotels \
+  -H "Content-Type: application/json" \
+  -d '{"destination": "New York", "checkin": "2025-09-15", "guests": 2, "budget": 500}'
+
+# Test activity mapping
+curl -X POST /api/test/activities \
+  -H "Content-Type: application/json" \
+  -d '{"destination": "New York", "startDate": "2025-09-15", "groupSize": 4}'
 ```
 
-## Support
+## Supported Cities
 
-For issues specific to this integration, check:
-1. Environment configuration
-2. API credentials
-3. Network connectivity
-4. Rate limiting
+The system supports 100+ major cities worldwide across all continents. See the mappings in `location-service.ts` for the complete list.
 
-For Amadeus API issues, consult:
-- [Amadeus Developer Portal](https://developers.amadeus.com/)
-- [API Documentation](https://developers.amadeus.com/self-service/apis-docs)
-- [Support Portal](https://developers.amadeus.com/support) 
+## Future Enhancements
+
+1. **Dynamic City Resolution**: Add API calls to resolve cities not in our static mapping
+2. **Airline-Specific Airport Preferences**: Some cities have multiple airports
+3. **Regional Hotel Codes**: More granular hotel location codes
+4. **Activity Category Mapping**: Map user interests to Amadeus activity categories
+5. **Currency Conversion**: Handle different currency formats across APIs
+
+## Integration Guidelines
+
+### For New Agents
+1. Import the appropriate parameter mapper for your API
+2. Use `LocationService` for any location-related conversions
+3. Always validate parameters before making API calls
+4. Handle errors gracefully with user-friendly messages
+
+### For Existing Agents
+1. Replace existing parameter mapping with the unified system
+2. Update location conversion to use `LocationService`
+3. Add parameter validation using the mapper's `validateParameters()` method
+4. Update error handling to use `AmadeusErrorHandler`
+
+This unified system ensures that the same parameter mapping and location conversion issues that occurred with flights will never happen with hotels, activities, or any future agents. 

@@ -52,22 +52,49 @@ export async function POST(request: NextRequest) {
     // Create or load conversation state
     let conversationState: ConversationState;
     
-    if (body.conversation_id) {
-      // Load existing conversation
-      const { data: existing, error } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('id', body.conversation_id)
-        .single();
-      
-      if (error || !existing) {
-        return NextResponse.json(
-          { error: 'Conversation not found' },
-          { status: 404 }
-        );
+        if (body.conversation_id) {
+      // Load existing conversation if database is available
+      try {
+        if (process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_KEY) {
+          const { data: existing, error } = await supabase
+            .from('conversations')
+            .select('*')
+            .eq('id', body.conversation_id)
+            .single();
+          
+          if (existing && !error) {
+            conversationState = existing.state;
+            console.log('Loaded existing conversation from database');
+          } else {
+            console.warn('Conversation not found in database, creating new state');
+            throw new Error('Conversation not found');
+          }
+        } else {
+          throw new Error('Database not configured');
+        }
+      } catch (dbError) {
+        console.error('Database error loading conversation:', dbError);
+        
+        // Fallback: create a new conversation with the provided ID
+        const conversationId = body.conversation_id;
+        conversationState = {
+          conversation_id: conversationId,
+          messages: [],
+          current_step: 'welcome',
+          user_preferences: body.user_preferences || {},
+          automation_level: body.automation_level || 1,
+          agent_communications: [],
+          agent_status: {},
+          shopping_cart: {},
+          cart_version: 1,
+          backtrack_history: [],
+          context_snapshots: {},
+          ui_updates: [],
+          progress: {}
+        };
+        
+        console.log('Created fallback conversation state for ID:', conversationId);
       }
-      
-      conversationState = existing.state;
     } else {
       // Create new conversation
       const conversationId = crypto.randomUUID();
@@ -98,7 +125,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Save conversation state immediately so it's available for GET requests
-    await saveConversationState(conversationState);
+    // Make this non-blocking so conversation can continue even if database save fails
+    saveConversationState(conversationState).catch(saveError => {
+      console.error('Failed to save conversation state (non-blocking):', saveError);
+      // Don't throw - allow conversation to continue without database persistence
+    });
 
     // Create readable stream for Server-Sent Events
     const stream = new ReadableStream({
@@ -198,8 +229,10 @@ async function startOrchestratorConversation(
               state.shopping_cart = data.cart;
               state.cart_version += 1;
             } else if (data.type === 'conversation_complete') {
-              // Save final conversation state
-              await saveConversationState(state);
+              // Save final conversation state (non-blocking)
+              saveConversationState(state).catch(error => {
+                console.error('Final save failed (non-blocking):', error);
+              });
             }
 
           } catch (parseError) {
@@ -238,23 +271,52 @@ async function handleItineraryUpdate(state: ConversationState, update: any) {
     state.progress[update.section] = update.status;
   }
 
-  // Save conversation state periodically
+  // Save conversation state periodically (non-blocking)
   if (state.ui_updates.length % 5 === 0) {
-    await saveConversationState(state);
+    saveConversationState(state).catch(error => {
+      console.error('Periodic save failed (non-blocking):', error);
+    });
   }
 }
 
 async function saveConversationState(state: ConversationState) {
   try {
-    await supabase
+    console.log('Saving conversation state for ID:', state.conversation_id);
+    
+    // Check if Supabase is properly configured
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+      console.warn('Supabase not configured, skipping database save');
+      return;
+    }
+    
+    const { data, error } = await supabase
       .from('conversations')
       .upsert({
         id: state.conversation_id,
         state: state,
         updated_at: new Date().toISOString()
+      })
+      .select();
+    
+    if (error) {
+      console.error('Supabase error saving conversation:', {
+        error,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code
       });
+      throw error;
+    }
+    
+    console.log('Successfully saved conversation state:', data);
   } catch (error) {
-    console.error('Error saving conversation state:', error);
+    console.error('Error saving conversation state:', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    throw error; // Re-throw to let the caller handle it
   }
 }
 

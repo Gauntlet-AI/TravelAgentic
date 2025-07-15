@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { langGraphService } from '@/lib/langgraph-service';
+import { createAmadeusClient, AmadeusActivityService } from '@/lib/amadeus';
 import { ActivitySearchParams } from '@/lib/mocks/types';
 
 /**
- * POST endpoint for activity search using the new service architecture
+ * POST endpoint for activity search using direct Amadeus API
  */
 export async function POST(request: NextRequest) {
   try {
@@ -58,48 +58,10 @@ export async function POST(request: NextRequest) {
       maxResults: body.limit || body.maxResults,
     };
 
-    // Call LangGraph orchestrator for activity search
-    const langGraphRequest = {
-      message: `Search for activities near ${body.latitude}, ${body.longitude}`,
-      automation_level: 1,
-      action: 'continue' as const,
-      user_preferences: {
-        latitude: body.latitude,
-        longitude: body.longitude,
-        radius: body.radius || 50,
-        destination: searchParams.destination,
-        start_date: searchParams.startDate,
-        end_date: searchParams.endDate,
-        categories: searchParams.categories,
-        duration: searchParams.duration,
-        group_size: searchParams.groupSize,
-        accessibility: searchParams.accessibility,
-        time_of_day: searchParams.timeOfDay,
-        preferences: searchParams.preferences,
-        filters: searchParams.filters,
-        max_results: searchParams.maxResults
-      }
-    };
-
-    const response = await langGraphService.invokeOrchestrator(langGraphRequest);
-    
-    if (!response.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: response.data?.error || 'Activity search failed',
-        },
-        { status: 500 }
-      );
-    }
-
-    const activities = response.data?.activities || response.data?.results || [];
-    const result = {
-      success: true,
-      data: activities,
-      fallbackUsed: false,
-      responseTime: response.execution_time || 0
-    };
+    // Use Amadeus service directly
+    const amadeusClient = createAmadeusClient();
+    const activityService = new AmadeusActivityService(amadeusClient);
+    const result = await activityService.search(searchParams);
 
     return NextResponse.json({
       success: true,
@@ -179,42 +141,22 @@ export async function GET(request: NextRequest) {
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'status',
-              message: 'Starting activity search with LangGraph...',
+              message: 'Starting activity search with Amadeus API...',
             })}\n\n`
           )
         );
 
-        // Call LangGraph orchestrator for activity search
-        const langGraphRequest = {
-          message: `Search for activities near ${latitude}, ${longitude}`,
-          automation_level: 1,
-          action: 'continue' as const,
-          user_preferences: {
-            latitude: parseFloat(latitude),
-            longitude: parseFloat(longitude),
-            radius: searchParams.get('radius') ? parseInt(searchParams.get('radius')!) : 50,
-            destination: activitySearchParams.destination,
-            start_date: activitySearchParams.startDate,
-            end_date: activitySearchParams.endDate,
-            categories: activitySearchParams.categories,
-            duration: activitySearchParams.duration,
-            group_size: activitySearchParams.groupSize,
-            accessibility: activitySearchParams.accessibility,
-            time_of_day: activitySearchParams.timeOfDay,
-            preferences: activitySearchParams.preferences,
-            filters: activitySearchParams.filters,
-            max_results: activitySearchParams.maxResults
-          }
-        };
+        // Use Amadeus service directly
+        const amadeusClient = createAmadeusClient();
+        const activityService = new AmadeusActivityService(amadeusClient);
+        const result = await activityService.search(activitySearchParams);
 
-        const response = await langGraphService.invokeOrchestrator(langGraphRequest);
-        
-        if (!response.success) {
+        if (!result.success) {
           controller.enqueue(
             new TextEncoder().encode(
               `data: ${JSON.stringify({
                 type: 'error',
-                message: response.data?.error || 'Activity search failed',
+                message: result.error || 'Activity search failed',
               })}\n\n`
             )
           );
@@ -222,16 +164,17 @@ export async function GET(request: NextRequest) {
           return;
         }
 
-        const activities = response.data?.activities || response.data?.results || [];
-        const result = {
-          success: true,
-          data: activities,
-          fallbackUsed: false,
-          responseTime: response.execution_time || 0
-        };
-
-        // Result is always successful at this point since we handled errors above
-        // Stream activities back to client
+        // Send source information
+        controller.enqueue(
+          new TextEncoder().encode(
+            `data: ${JSON.stringify({
+              type: 'info',
+              message: `Using Amadeus API`,
+              source: 'api',
+              fallbackUsed: result.fallbackUsed,
+            })}\n\n`
+          )
+        );
 
         // Stream each activity result
         if (result.data) {

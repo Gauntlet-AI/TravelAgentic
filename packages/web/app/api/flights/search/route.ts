@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAmadeusClient, AmadeusFlightService } from '@/lib/amadeus';
-import { FlightSearchParams } from '@/lib/mocks/types';
+import { FlightSearchParams } from '@/lib/amadeus/services/flight-service';
 
 /**
  * POST endpoint for flight search using LangGraph orchestrator with Amadeus integration
@@ -8,9 +8,15 @@ import { FlightSearchParams } from '@/lib/mocks/types';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('🛫 [FLIGHTS-SEARCH] Received request:', body);
 
     // Validate required parameters (using Amadeus parameter names)
     if (!body.originLocationCode || !body.destinationLocationCode || !body.departureDate) {
+      console.error('❌ [FLIGHTS-SEARCH] Missing required parameters:', {
+        originLocationCode: body.originLocationCode,
+        destinationLocationCode: body.destinationLocationCode,
+        departureDate: body.departureDate
+      });
       return NextResponse.json(
         {
           success: false,
@@ -40,10 +46,21 @@ export async function POST(request: NextRequest) {
       },
     };
 
+    console.log('🔄 [FLIGHTS-SEARCH] Converted search params:', searchParams);
+
     // Use Amadeus service directly
     const amadeusClient = createAmadeusClient();
     const flightService = new AmadeusFlightService(amadeusClient);
+    
+    console.log('🎯 [FLIGHTS-SEARCH] Calling Amadeus flight service...');
     const result = await flightService.search(searchParams);
+    
+    console.log('📊 [FLIGHTS-SEARCH] Amadeus service result:', {
+      success: result.success,
+      dataLength: result.data?.data?.length,
+      error: result.error,
+      fallbackUsed: result.fallbackUsed
+    });
 
     if (!result.success) {
       return NextResponse.json(
@@ -134,7 +151,7 @@ export async function GET(request: NextRequest) {
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'status',
-              message: 'Starting flight search with LangGraph orchestrator...',
+              message: 'Starting flight search with Amadeus API...',
             })}\n\n`
           )
         );
@@ -158,26 +175,26 @@ export async function GET(request: NextRequest) {
         }
 
         // Send source information
-        const dataSource = result.data && result.data.length > 0 ? result.data[0].source : 'api';
         controller.enqueue(
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'info',
-              message: `Using ${dataSource === 'api' ? 'Amadeus API' : 'fallback data'}`,
-              source: dataSource,
+              message: `Using Amadeus API`,
+              source: 'api',
               fallbackUsed: result.fallbackUsed,
             })}\n\n`
           )
         );
 
         // Stream each flight result
-        if (result.data) {
-          for (const flight of result.data) {
+        if (result.data?.data) {
+          for (const flight of result.data.data) {
             controller.enqueue(
               new TextEncoder().encode(
                 `data: ${JSON.stringify({
                   type: 'flight',
                   data: flight,
+                  dictionaries: result.data.dictionaries,
                 })}\n\n`
               )
             );
@@ -192,8 +209,8 @@ export async function GET(request: NextRequest) {
           new TextEncoder().encode(
             `data: ${JSON.stringify({
               type: 'complete',
-              totalResults: result.data?.length || 0,
-              source: dataSource,
+              totalResults: result.data?.data?.length || 0,
+              source: 'api',
               fallbackUsed: result.fallbackUsed,
               responseTime: result.responseTime,
             })}\n\n`

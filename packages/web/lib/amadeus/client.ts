@@ -187,6 +187,8 @@ export class AmadeusClient {
    * Search for flight offers
    */
   async searchFlights(params: AmadeusFlightSearchParams): Promise<AmadeusFlightSearchResponse> {
+    console.log('🌐 [AMADEUS-CLIENT] Building flight search request with params:', params);
+    
     const queryParams = new URLSearchParams({
       originLocationCode: params.originLocationCode,
       destinationLocationCode: params.destinationLocationCode,
@@ -205,7 +207,10 @@ export class AmadeusClient {
     if (params.includedAirlineCodes) queryParams.append('includedAirlineCodes', params.includedAirlineCodes.join(','));
     if (params.excludedAirlineCodes) queryParams.append('excludedAirlineCodes', params.excludedAirlineCodes.join(','));
 
-    return this.makeRequest<AmadeusFlightSearchResponse>(`/v2/shopping/flight-offers?${queryParams}`);
+    const finalUrl = `/v2/shopping/flight-offers?${queryParams}`;
+    console.log('🎯 [AMADEUS-CLIENT] Final API URL:', finalUrl);
+
+    return this.makeRequest<AmadeusFlightSearchResponse>(finalUrl);
   }
 
   /**
